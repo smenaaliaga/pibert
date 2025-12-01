@@ -8,16 +8,16 @@ Implementación adaptada de:  https://github.com/monologg/JointBERT
 
 El objetivo es entrenar un modelo de clasificación conjunta de intención y palabras claves para ser utilizado por el chatbot del Banco Central de Chile (PIBot). 
 
-La clasificación está separada en dos partes, entender la intención de la consulta al chatbot ¿se pregunta por valores o metodología? e, identificar las palabras claves de la consulta: la métrica (PIB o IMACEC), el periodo, tipo de agregación, entre otros.
+La clasificación está separada en dos partes, entender la intención de la consulta, ¿se pregunta por valores o metodología? e, identificar las palabras claves de la consulta: la métrica (PIB o IMACEC), el periodo, tipo de agregación, entre otros.
 
 ## Dataset
 
 ## Training & Evaluation
 
 ```
-$ python3 main.py --task {task_name} \
+$ python main.py --task {task_name} \
                   --model_type {model_type} \
-                  --model_dir {model_dir_name} \
+                  --model_out {model_out_name} \
                   --do_train --do_eval \
                   --use_crf
 ```

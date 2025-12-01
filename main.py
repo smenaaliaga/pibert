@@ -1,3 +1,4 @@
+import os
 import argparse
 
 from trainer import Trainer
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--task", default=None, required=True, type=str, help="The name of the task to train")
-    parser.add_argument("--model_dir", default=None, required=True, type=str, help="Path to save, load model")
+    parser.add_argument("--model_out", default=None, required=True, type=str, help="Model name to save/load (will be saved in model_out/)")
     parser.add_argument("--data_dir", default="./data", type=str, help="The input data dir")
     parser.add_argument("--intent_label_file", default="intent_label.txt", type=str, help="Intent Label file")
     parser.add_argument("--slot_label_file", default="slot_label.txt", type=str, help="Slot Label file")
@@ -68,4 +69,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     args.model_name_or_path = MODEL_PATH_MAP[args.model_type]
+    # Convertir model_out en ruta completa dentro de model_out/
+    args.model_out = os.path.join("model_out", args.model_out)
     main(args)

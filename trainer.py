@@ -5,7 +5,8 @@ from tqdm import tqdm, trange
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
-from transformers import BertConfig, AdamW, get_linear_schedule_with_warmup
+from torch.optim import AdamW
+from transformers import get_linear_schedule_with_warmup
 
 from utils import MODEL_CLASSES, compute_metrics, get_intent_labels, get_slot_labels
 
@@ -214,22 +215,22 @@ class Trainer(object):
 
     def save_model(self):
         # Save model checkpoint (Overwrite)
-        if not os.path.exists(self.args.model_dir):
-            os.makedirs(self.args.model_dir)
+        if not os.path.exists(self.args.model_out):
+            os.makedirs(self.args.model_out)
         model_to_save = self.model.module if hasattr(self.model, 'module') else self.model
-        model_to_save.save_pretrained(self.args.model_dir)
+        model_to_save.save_pretrained(self.args.model_out)
 
         # Save training arguments together with the trained model
-        torch.save(self.args, os.path.join(self.args.model_dir, 'training_args.bin'))
-        logger.info("Saving model checkpoint to %s", self.args.model_dir)
+        torch.save(self.args, os.path.join(self.args.model_out, 'training_args.bin'))
+        logger.info("Saving model checkpoint to %s", self.args.model_out)
 
     def load_model(self):
         # Check whether model exists
-        if not os.path.exists(self.args.model_dir):
+        if not os.path.exists(self.args.model_out):
             raise Exception("Model doesn't exists! Train first!")
 
         try:
-            self.model = self.model_class.from_pretrained(self.args.model_dir,
+            self.model = self.model_class.from_pretrained(self.args.model_out,
                                                           args=self.args,
                                                           intent_label_lst=self.intent_label_lst,
                                                           slot_label_lst=self.slot_label_lst)

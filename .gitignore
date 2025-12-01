@@ -46,13 +46,17 @@ checkpoints/
 *.bin
 *.safetensors
 
+# Model outputs
+model_out/*/
+!model_out/.gitkeep
+
 # Logs
 logs/
 *.log
 tensorboard/
 runs/
 
-# Data (descomentar si no quieres versionar los datos)
+# Data 
 # data/
 *.csv
 *.json
@@ -65,6 +69,7 @@ runs/
 .cache/
 *.cache
 .pytest_cache/
+cached_*
 
 # Environment variables
 .env
