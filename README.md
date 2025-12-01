@@ -1,7 +1,7 @@
 # Clasificador de intención y palabras claves para PIBot usando Joint BERT
 
 Paper DOI: [BERT for Joint Intent Classification and Slot Filling](https://arxiv.org/abs/1810.04805v2) \
-Resumen paper: [docs/BERT_for_Joint_Intent_Classification_and_Slot_Filling.md](docs\BERT_for_Joint_Intent_Classification_and_Slot_Filling.md) \
+Resumen paper: [docs/BERT_for_Joint_Intent_Classification_and_Slot_Filling.md](docs/BERT_for_Joint_Intent_Classification_and_Slot_Filling.md) \
 Implementación adaptada de:  https://github.com/monologg/JointBERT
 
 ## Objetivo
