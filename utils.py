@@ -13,12 +13,14 @@ from model_in import JointBERT #, JointDistilBERT, JointAlbert
 
 MODEL_CLASSES = {
     'bert': (BertConfig, JointBERT, BertTokenizer),
+    'beto': (BertConfig, JointBERT, BertTokenizer),  # BETO usa la misma arquitectura que BERT
     # 'distilbert': (DistilBertConfig, JointDistilBERT, DistilBertTokenizer),
     # 'albert': (AlbertConfig, JointAlbert, AlbertTokenizer)
 }
 
 MODEL_PATH_MAP = {
     'bert': 'bert-base-uncased',
+    'beto': 'dccuchile/bert-base-spanish-wwm-cased',  # BETO del Centro de Modelamiento Matemático, U. de Chile
     # 'distilbert': 'distilbert-base-uncased',
     # 'albert': 'albert-xxlarge-v1'
 }
