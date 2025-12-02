@@ -12,6 +12,87 @@ La clasificación está separada en dos partes, entender la intención de la con
 
 ## Dataset
 
+El principal objetivo de este proyecto es entrenar el modelo Joint BERT con un dataset especializado para detectar la intención y las palabras claves para consultas sobre PIB e IMACEC.
+
+### Definición de BIO
+
+La definición de la BIO propuesta es la siguiente:
+
+#### 1. Indicador Económico (el "qué")
+
+Para preguntas como “cuál fue el IMACEC”, “cómo evolucionó el PIB trimestral”, etc.
+- B-indicator
+- I-indicator
+
+Ejemplos de spans:
+- IMACEC
+- PIB
+- crecimiento económico
+- actividad económica
+- inflación (si lo agregas)
+
+#### 2. Periodo / fecha (el "cuándo")
+
+Para meses, años, trimestres, fechas específicas:
+
+- B-period
+- I-period
+
+Ejemplos:
+
+- en septiembre de 2025
+- en 2024
+- en el tercer trimestre
+- en los últimos doce meses
+- ayer, hoy, último mes reportado
+
+#### 3. Unidad / Métrica solicitada (el “cómo lo quieres”)
+
+- B-measure_type
+- I-measure_type
+
+Ejemplos:
+
+- variación anual / mensual / trimestral
+- variación mensual desestacionalizada
+- constribución / aporte / incidencia
+- defactlor
+- serie original
+- crecimiento
+
+#### 4. Actividad / Sector Económico (si la pregunta lo requiere)
+
+Para capturar consultas específicas sobre sectores:
+
+Slot:
+- B-sector
+- I-sector
+
+Ejemplos:
+- sector minero
+- servicios personales
+- producción de bienes
+- comercio minorista
+
+##### 5. Territorio / Región (si quisieras preguntas regionales)
+
+Si lo incluyes:
+- B-region
+- I-region
+
+Ejemplos:
+- Región Metropolitana, Chile, Valparaíso
+
+##### 6. Comparación (opcional)
+
+Si quieres manejar:
+- “comparado con el mes anterior”
+- “respecto a junio”
+
+Slot:
+- B-comparison_period
+- I-comparison_period
+
 ## Training & Evaluation
 
 ```
