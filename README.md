@@ -107,8 +107,17 @@ Ejemplo:
 python main.py --task pibimacec --model_type beto --model_out pibot_model_beto --do_train --do_eval
 ```
 
-
 ## Prediction
+
+```
+python predict.py --input_file {INPUT_FILE_PATH} --output_file {OUTPUT_FILE_PATH} --model_dir {SAVED_CKPT_PATH}
+```
+
+Ejemplo:
+
+```
+python predict.py --input_file data/atis/test/seq.in --output_file output/atis.txt --model_dir model_out/atis_model
+```
 
 ## Resultados
 
