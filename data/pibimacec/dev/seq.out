@@ -1,0 +1,24 @@
+O O O O B-indicator B-period I-period I-period
+O O O O O O B-indicator
+O O O B-unit O B-indicator B-activity
+O O O B-unit O B-indicator O B-activity
+O O O B-indicator
+O B-activity I-activity O B-indicator
+O O O B-activity I-activity O O O O O O B-indicator
+O O O O O O B-indicator
+O O O B-rank O O O B-period
+O B-activity I-activity O O O O B-indicator
+O B-calculation O B-indicator I-indicator B-seasonality
+O B-calculation O B-indicator I-indicator I-indicator B-seasonality
+O B-rank O O O O O O B-activity O B-activity
+O O O O O O O O O B-indicator I-indicator
+O O O B-period B-unit O O B-indicator
+O O B-unit O B-indicator O O B-period I-period I-period I-period
+O O O B-indicator O B-period I-period I-period
+O O B-unit O B-indicator O O O B-period I-period I-period
+O O B-unit O B-indicator O B-period I-period I-period I-period
+O O B-indicator O O B-period I-period I-period I-period
+O O O B-calculation I-calculation O B-indicator O O B-period
+O O B-unit O O B-calculation I-calculation O B-indicator O O B-period
+O O B-calculation O B-indicator B-seasonality O O B-period I-period I-period
+O B-activity B-rank O B-calculation I-calculation O B-indicator I-indicator O B-period I-period I-period

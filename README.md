@@ -96,12 +96,17 @@ Slot:
 ## Training & Evaluation
 
 ```
-$ python main.py --task {task_name} \
+python main.py --task {task_name} \
                   --model_type {model_type} \
                   --model_out {model_out_name} \
                   --do_train --do_eval \
                   --use_crf
 ```
+Ejemplo:
+```
+python main.py --task pibimacec --model_type beto --model_out pibot_model_beto --do_train --do_eval
+```
+
 
 ## Prediction
 
