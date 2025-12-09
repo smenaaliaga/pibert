@@ -24,7 +24,7 @@ def split_dataset(dataset_name, test_size=0.2, dev_size=0.1, seed=42):
     """
     # Configurar rutas
     base_path = Path("data") / dataset_name
-    raw_path = base_path / "raw"
+    raw_path = base_path / "processed"
     train_path = base_path / "train"
     dev_path = base_path / "dev"
     test_path = base_path / "test"
