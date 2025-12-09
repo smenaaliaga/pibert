@@ -1,0 +1,533 @@
+O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O O B-period B-indicator
+O O O O B-period B-indicator
+O O B-indicator B-period I-period
+O O O O B-indicator B-period I-period
+O O O O B-indicator B-period I-period
+O O O O B-indicator B-period I-period
+O O O O B-indicator B-period I-period
+O O O O B-indicator B-period I-period
+O O O B-indicator B-period
+O O O B-indicator B-period
+O O B-indicator B-period I-period
+O O O B-indicator B-period I-period
+O O B-indicator B-period I-period I-period
+O O O B-indicator B-period
+O O O B-indicator O O B-period I-period
+O O O B-indicator O O B-period I-period
+O O O O B-period O B-indicator
+O O O B-period B-indicator O
+O O O B-period B-indicator O
+O O O B-indicator O O B-period I-period
+O O O B-indicator O B-period I-period
+O O O B-period B-indicator O
+O O B-indicator O B-period I-period
+O O O O B-indicator O O B-period I-period I-period
+O O O O B-indicator O O B-period I-period I-period
+O O O B-indicator B-period I-period O O
+O O B-indicator O O B-period I-period
+O O B-period I-period O B-indicator
+O O O B-period I-period B-indicator
+O O O B-period I-period O B-indicator
+O O O B-period I-period O B-indicator
+O O B-period I-period O B-indicator
+O O O B-period I-period O B-indicator
+O O B-period I-period O B-indicator
+O O B-period I-period O O B-indicator
+O O B-period O O O B-indicator
+O O O B-period I-period O O B-indicator
+O O O B-period I-period O B-indicator
+O O B-period I-period O B-indicator
+O O O B-period I-period O B-indicator
+O O O O B-period I-period O O B-indicator
+O O B-period B-period I-period O B-indicator
+O O O B-period I-period O B-indicator
+O O O B-period B-indicator
+O O O B-period B-indicator
+O O O O B-period B-indicator
+O O O B-period B-indicator
+O O O B-period B-indicator
+O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O B-period B-indicator
+O O O B-period B-indicator
+O O O O B-period B-indicator
+O O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O O O B-period B-indicator
+O O O B-period B-indicator O O O O
+O O B-period B-indicator O O O O
+O O O B-indicator B-period I-period
+O O O O B-indicator B-period I-period
+O O O O B-indicator B-period I-period
+O O O O B-indicator B-period I-period
+O O O O B-indicator B-period I-period O O O O
+O O O O O B-indicator B-period
+O O O O O B-indicator B-period
+O O O B-indicator B-period I-period
+O O O O B-indicator B-period I-period
+O O O B-period B-indicator O O O O
+O O O O B-indicator B-period I-period I-period
+O O O O O B-indicator B-period
+O O O B-indicator O O B-period I-period O O O O
+O O O O O B-indicator O O B-period I-period
+O O O O B-period O B-indicator
+O O O O O B-period B-indicator O
+O O O O O B-period B-indicator O
+O O O B-indicator O O B-period I-period O O O O
+O O O O O B-indicator O B-period I-period
+O O O O O B-period B-indicator O
+O O O O B-indicator O B-period I-period
+O O O O O O B-indicator O O B-period I-period I-period
+O O O O O B-indicator B-period I-period
+O O O O O O B-indicator O O B-period I-period I-period
+O O O O O B-indicator B-period I-period O O
+O O B-indicator O O B-period I-period O O O O
+O O B-period I-period O B-indicator O O
+O O O B-period B-indicator O O O O O
+O O O B-period I-period O O O B-indicator
+O O O O O O O B-period I-period O B-indicator
+O O B-period I-period O O O O O B-indicator
+O O O B-period I-period O O O B-indicator
+O O B-period I-period O O O O O B-indicator
+O O B-period I-period I-period O B-indicator
+O O B-period I-period I-period O B-indicator
+O O O B-period I-period O O B-indicator
+O O O B-period I-period O O B-indicator
+O O B-period I-period O O O O B-indicator
+O O O B-period I-period O B-indicator
+O O O O B-period I-period O O B-indicator
+O O B-period I-period O O O O O B-indicator
+O O B-period I-period I-period O B-indicator
+O O O B-period I-period O O O O B-indicator
+O O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period
+O B-indicator O O B-period I-period
+O O O B-indicator O B-period I-period
+O O O O B-indicator O B-period I-period
+O O O B-indicator O O B-period I-period
+O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period
+O B-indicator O O B-period I-period
+O O O B-indicator O B-period I-period
+O O O B-period B-indicator O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O O O B-period B-indicator O B-frequency I-frequency
+O O O O O B-period I-period O B-indicator
+O O O O O B-period B-indicator B-frequency
+O O O O B-period I-period B-indicator
+O O O O B-period I-period B-indicator
+O O B-indicator B-period I-period B-frequency
+O O O O B-indicator B-frequency B-period I-period
+O O O O B-indicator B-frequency B-period I-period
+O O O B-frequency O B-indicator B-period I-period
+O O O O B-indicator O B-period I-period I-period
+O O O O B-indicator B-frequency B-period I-period
+O O O B-indicator B-frequency O B-period
+O O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period I-period
+O O O B-indicator B-period I-period O B-period I-period
+O O O B-indicator O B-period I-period
+O O B-indicator B-frequency B-period I-period I-period
+O O O B-indicator O B-period I-period
+O O O O O B-indicator O O B-period I-period
+O O O B-indicator O B-period I-period I-period
+O O O O B-period O B-indicator B-frequency
+O O O B-period B-indicator B-frequency O
+O O O B-indicator O O B-period I-period
+O O O B-indicator O O B-period I-period O O
+O O O B-indicator O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O O B-indicator B-period O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O B-period B-indicator B-frequency
+O O O B-indicator O B-period I-period I-period
+O O O O O B-period B-indicator B-frequency
+O O O O B-indicator O B-period I-period
+O O O O B-frequency O B-period B-indicator
+O O O O O B-period B-indicator B-frequency
+O O O O O B-indicator B-period O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O B-period I-period O B-indicator
+O O O O B-period I-period O B-indicator
+O O O O O O B-indicator O B-period I-period
+O O O O O B-period I-period O B-indicator
+O O O O B-frequency O B-period B-indicator O
+O O O O B-indicator O O B-period I-period I-period
+O O O O O B-frequency O B-indicator O O B-period I-period I-period
+O O O O O B-indicator O B-period I-period I-period
+O O O O O O B-indicator O O B-period I-period I-period O O
+O O O O O B-indicator O B-period I-period I-period O O
+O O B-indicator B-frequency O O B-period I-period O O O O
+O O B-period I-period B-frequency O B-indicator O O
+O O O B-indicator O O B-period I-period I-period O O O O
+O O O B-period I-period O O O O O B-indicator
+O O O O O O O B-period I-period O B-indicator B-frequency
+O O O O B-period I-period O O O O O B-indicator
+O O O B-period I-period O O O B-indicator B-frequency
+O O B-period I-period O O O O B-frequency O B-indicator
+O O B-period I-period O O B-indicator B-frequency
+O O B-period I-period O O B-indicator B-frequency
+O O O B-period I-period O O B-indicator B-frequency
+O O O B-period O O B-frequency O B-indicator
+O O B-period O O O O O B-indicator B-frequency
+O O O O O B-period I-period O B-indicator
+O O O O B-period I-period O O B-indicator B-frequency
+O O B-period I-period O O O O O B-indicator B-frequency
+O O B-period O B-frequency O O B-indicator
+O O O B-period I-period O O O O O O B-indicator
+O O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period
+O B-indicator O O B-period I-period
+O O O B-indicator O B-period I-period
+O O O O B-indicator O B-period I-period
+O O O B-indicator O O B-period I-period
+O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period
+O B-indicator O O B-period I-period
+O O O B-indicator O B-period I-period
+O O O B-period B-indicator O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O O O B-period B-indicator O B-frequency I-frequency
+O O O O O B-period I-period O B-indicator
+O O O O O B-period B-indicator B-frequency
+O O O O B-period I-period B-indicator
+O O O O B-period I-period B-indicator
+O O B-indicator B-period I-period B-frequency
+O O O O B-indicator B-frequency B-period I-period
+O O O O B-indicator B-frequency B-period I-period
+O O O B-frequency O B-indicator B-period I-period
+O O O O B-indicator O B-period I-period I-period
+O O O O B-indicator B-frequency B-period I-period
+O O O B-indicator B-frequency O B-period
+O O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period I-period
+O O O B-indicator B-period I-period O B-period I-period
+O O O B-indicator O B-period I-period
+O O B-indicator B-frequency B-period I-period I-period
+O O O B-indicator O B-period I-period
+O O O B-frequency O B-indicator O O B-period I-period
+O O O B-indicator O B-period I-period I-period
+O O O O B-period O B-indicator B-frequency
+O O O B-period B-indicator B-frequency O
+O O O B-indicator O O B-period I-period
+O O O B-indicator O O B-period I-period O B-frequency
+O O O B-indicator O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O O B-indicator B-period O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O B-period B-indicator B-frequency
+O O O B-indicator O B-period I-period I-period
+O O O O O B-period B-indicator B-frequency
+O O O O B-indicator O B-period I-period
+O O O O B-frequency O B-period B-indicator
+O O O O O B-period B-indicator B-frequency
+O O O O O B-indicator B-period O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O B-period I-period O B-indicator
+O O O O B-period I-period O B-indicator
+O O O O O O B-indicator O B-period I-period
+O O O O O B-period I-period O B-indicator
+O O O O B-frequency O B-period B-indicator O
+O O O O B-indicator O O B-period I-period I-period
+O O O O O B-frequency O B-indicator O O B-period I-period O
+O O O O O B-indicator O B-period I-period I-period
+O O O O O O B-indicator O O B-period I-period I-period O B-frequency
+O O O O O B-indicator O B-period I-period I-period O O
+O O B-indicator B-frequency O O B-period I-period O O O O
+O O B-period I-period B-frequency O B-indicator O O
+O O O B-indicator O O B-period I-period O O O O O
+O O O B-period I-period O O O O O B-indicator
+O O O O O O O B-period I-period O B-indicator B-frequency
+O O O O B-period I-period O O O O O B-indicator
+O O O B-period I-period O O O B-indicator B-frequency
+O O B-period I-period O O O O B-frequency O B-indicator
+O O B-period I-period O O B-indicator B-frequency
+O O B-period I-period O O B-indicator B-frequency
+O O O B-period I-period O O B-indicator B-frequency
+O O O B-period I-period O B-frequency O B-indicator
+O O B-period I-period O O O O B-indicator B-frequency
+O O O O O B-period I-period O B-indicator
+O O O O B-period I-period O O B-indicator B-frequency
+O O B-period I-period O O O O O B-indicator B-frequency
+O O B-period I-period B-frequency O O B-period
+O O O B-period I-period O B-frequency O O O O B-indicator
+O O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period
+O B-indicator O O B-period I-period
+O O O B-indicator O B-period I-period
+O O O B-period B-indicator O B-period I-period
+O O O B-indicator O O B-period I-period
+O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period
+O B-indicator O O B-period I-period
+O O O B-indicator O B-period I-period
+O O O B-period B-indicator O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O O O B-period B-indicator O B-frequency I-frequency
+O O O O O B-indicator I-indicator O B-indicator
+O O O O O B-period B-indicator B-frequency
+O O O O B-period I-period B-indicator
+O O O O B-period I-period B-indicator
+O O B-indicator B-period I-period B-frequency
+O O O O B-indicator B-frequency B-period I-period
+O O O O B-indicator B-frequency B-period I-period
+O O O B-frequency O B-indicator B-period I-period
+O O O O B-indicator O B-period I-period I-period
+O O O O B-indicator B-frequency B-period I-period
+O O O B-indicator B-frequency O B-period
+O O O B-indicator O B-period I-period
+O O B-indicator O B-period I-period I-period
+O O O B-indicator B-period I-period O B-period I-period
+O O O B-indicator O B-period I-period
+O O B-indicator B-frequency B-period I-period I-period
+O O O B-indicator O B-period I-period
+O O O B-frequency O B-indicator O O B-period I-period
+O O O B-indicator O B-period I-period I-period
+O O O O B-period O B-indicator B-frequency
+O O O B-period B-indicator B-period I-period
+O O O B-indicator O O B-period I-period
+O O O B-indicator O O B-period I-period O B-frequency
+O O O B-indicator O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O O B-indicator B-period O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O B-period B-indicator B-frequency
+O O O B-indicator O B-period I-period I-period
+O O O O O B-period B-indicator B-frequency
+O O O O B-indicator O B-period I-period
+O O O O B-frequency O B-period B-indicator
+O O O O O B-period B-indicator B-frequency
+O O O O O B-indicator B-period O B-period I-period
+O O O B-period B-indicator B-frequency
+O O O B-period I-period O B-indicator
+O O O O B-period I-period O B-indicator
+O O O O O O B-indicator O B-period I-period
+O O O O O B-period I-period O B-indicator
+O O O O B-frequency O B-period B-indicator O
+O O O O B-indicator O O B-period I-period I-period
+O O O O O B-frequency O B-indicator O O B-period I-period I-period
+O O O O O B-indicator O B-period I-period I-period
+O O O O O O B-indicator O O B-period I-period I-period O B-frequency
+O O O O O B-indicator O B-period I-period I-period O O
+O O B-indicator B-frequency O O B-period I-period O O O O
+O O B-period I-period B-frequency O B-indicator O O
+O O O B-indicator O O B-period I-period O O O O O
+O O O B-period I-period O O O O O B-indicator
+O O O O O O O B-period I-period O B-indicator B-frequency
+O O O O B-period I-period O O O O O B-indicator
+O O O B-period I-period O O O B-indicator B-frequency
+O O B-period I-period O O O O B-frequency O B-indicator
+O O B-period I-period O O B-indicator B-frequency
+O O B-period I-period O O B-indicator B-frequency
+O O O B-period I-period O O B-indicator B-frequency
+O O O B-period O O B-frequency O B-indicator
+O O B-period O O O O O B-indicator B-frequency
+O O O O O B-period I-period O B-indicator
+O O O O B-period I-period O O B-indicator B-frequency
+O O B-period I-period O O O O O B-indicator B-frequency
+O O B-period O B-frequency O O B-indicator
+O O O B-period I-period O B-frequency O O O O B-indicator
+O O O B-indicator O B-component I-component I-component
+O O O B-indicator B-component
+O O O B-indicator O O B-component I-component
+O O O B-indicator O B-component I-component I-component
+O O O B-indicator O O B-component
+O O O B-indicator O B-component
+O O O B-indicator B-component I-component I-component I-component
+O O O B-indicator B-component I-component I-component I-component
+O O O B-indicator B-component I-component
+O O O O O O B-component I-component I-component O B-period B-indicator
+O O O B-component I-component I-component O B-period B-indicator
+O O O B-component I-component I-component O O B-period B-indicator
+O O O O O B-indicator B-component O O B-period I-period
+O O O O B-frequency O O B-indicator B-period I-period
+O O O B-component O O O O O B-frequency O O O
+O O O O B-frequency O O B-component
+O O O O O O B-component O B-indicator
+O O O O B-component O O B-period B-indicator
+O O O B-component O
+O O O O O B-component I-component I-component O O B-period I-period
+O O O O B-component I-component I-component O B-period I-period
+O O O O B-frequency O B-component I-component I-component
+O O O B-component I-component I-component O
+O O O O O B-component O O B-period B-indicator
+O O B-period O O B-component O B-frequency
+O O O B-component O O O O
+O O B-period I-period O B-component
+O O O O O B-component O O B-period I-period I-period
+O O O O B-component B-period I-period
+O O O B-component O B-period I-period I-period
+O O O O B-frequency O B-component
+O O O O O B-indicator B-component I-component I-component I-component O B-period I-period
+O O B-period O O B-indicator B-component I-component I-component I-component
+O O O B-indicator B-component I-component I-component I-component O O O O
+O O O O B-indicator B-component I-component I-component I-component O O O O
+O O O O O O B-component I-component I-component I-component
+O O O O B-component I-component I-component I-component O B-period I-period
+O O O B-component I-component I-component I-component O
+O O O O B-frequency O O O B-component I-component I-component I-component
+O O O O O B-indicator B-component I-component O B-period I-period
+O O O O B-period B-indicator B-component I-component
+O O O B-indicator B-component I-component O O O O
+O O O O B-frequency O B-indicator B-component I-component
+O O O O B-period I-period O O B-indicator O B-component I-component I-component
+O O O B-indicator B-component O B-period I-period
+O O B-indicator B-period I-period B-frequency O O O O B-component
+O O O B-period I-period O B-indicator O B-component I-component I-component
+O O O O O B-component O O B-indicator B-period I-period
+O O O B-period I-period O O O B-component O O B-indicator B-frequency
+O O B-indicator O B-component I-component I-component O B-period I-period
+O O O O O O B-component I-component I-component I-component O B-indicator O B-period I-period
+O O O O B-indicator B-component I-component B-period I-period
+O O O B-period I-period O O O B-indicator O B-component I-component I-component
+O O O O O B-period B-indicator B-component
+O O O O B-component O B-period I-period O B-indicator
+O O O B-period I-period O B-indicator B-frequency O B-component I-component I-component I-component
+O O O B-component I-component O B-period B-indicator O O O O
+O O O O O O B-component O O B-period B-indicator B-frequency
+O O O O B-period I-period B-indicator O B-component I-component I-component
+O O O B-indicator O B-period I-period O B-component I-component I-component I-component I-component
+O O O B-period O O B-indicator O B-component I-component I-component
+O O O B-component O O B-period B-indicator B-frequency
+O O O O B-frequency O O B-component O B-period B-indicator
+O O O O O O B-indicator O O B-period I-period I-period O B-frequency
+O O O B-indicator O B-period I-period O O B-component I-component I-component I-component
+O O O O O O O B-period I-period O B-indicator B-frequency O O B-component I-component
+O O O O O B-indicator B-period I-period O O O O B-component
+O O O B-period I-period B-component I-component I-component I-component O B-indicator
+O O O O B-period O B-indicator O O O B-component I-component I-component I-component
+O O O B-frequency O B-indicator O O B-period I-period O O O O B-component I-component I-component I-component I-component
+O O O O O O B-indicator O B-component O B-period I-period
+O O B-component O O O O B-indicator B-period I-period
+O O B-component O O B-period I-period I-period O B-indicator
+O B-component I-component I-component O O O O O B-period B-indicator
+O O O O B-indicator B-frequency B-period I-period O O B-component I-component
+O O O O B-period O O B-component O O B-indicator
+O O O O B-period I-period O O O O O B-indicator B-component I-component I-component I-component
+O O B-period O O O O O B-indicator B-component I-component I-component I-component
+O O O B-period B-indicator B-frequency O O O O B-component I-component I-component
+O O O B-period B-indicator O O B-component I-component I-component
+O O O O O O B-component O O B-indicator O O B-period I-period
+O O O B-indicator O O O B-component O B-period I-period
+O O O B-indicator O O B-period I-period O O O O O O B-component I-component I-component I-component
+O O B-period I-period O O B-indicator O B-component
+O O O B-indicator O B-period I-period O B-component
+O O O B-indicator B-period I-period O B-period I-period B-component I-component I-component I-component
+O O O B-period B-indicator B-component I-component I-component I-component O O O O O
+O O O B-period I-period O B-frequency O O O O O B-component O B-indicator
+O O B-period O O O O B-component O O B-indicator
+O O O O B-indicator B-period I-period O O O B-component
+O O B-component I-component I-component I-component O O O O B-indicator O O B-period I-period I-period
+O O O O O B-component O O B-indicator O B-period I-period I-period
+O O O O B-indicator B-frequency B-period I-period O O B-component
+O O O O O O B-indicator B-component I-component I-component I-component O B-period I-period
+O O B-indicator B-frequency B-period I-period O O O B-component I-component I-component I-component
+O O O B-indicator B-component I-component O B-period I-period
+O O O O O B-indicator O B-component I-component I-component O O B-period I-period I-period
+O O O O B-period I-period O O O B-component I-component I-component O B-indicator
+O O O O B-component I-component I-component O O B-period B-indicator
+O O O O O O O B-period B-indicator
+O O O B-component O O O O O B-period B-indicator
+O O O O O O B-component O O O O O B-period B-indicator
+O O O O B-component O O O O O B-indicator B-period I-period
+O O B-component O O B-indicator O O O O O O O B-period I-period
+O O O B-component I-component I-component O O O O O B-period B-indicator O
+O O O O O O O B-period B-indicator B-component I-component
+O O O O O O B-period O B-indicator O B-component I-component I-component
+O O O O O O B-period B-indicator O B-period I-period
+O O O B-component O O O O O B-period B-indicator B-frequency
+O O O O O O B-component O O O O B-period I-period O B-indicator
+O O O O O O O O B-indicator B-frequency B-component I-component B-period I-period
+O O B-component I-component I-component O O B-indicator O O O O O O O B-period I-period
+O O O B-component O O O O O B-period I-period I-period O B-indicator
+O O O O O O O B-period B-indicator O O B-component O B-period I-period I-period
+O O O O O O B-period I-period O B-indicator O O B-component I-component
+O O O O O B-indicator O B-component O O B-period I-period I-period
+O O O B-period I-period O O O O O B-indicator O B-component
+O O O O B-frequency O B-component O O O B-period I-period O B-indicator
+O O O O O B-indicator B-component I-component I-component I-component O B-period I-period I-period
+O O O B-period I-period O B-indicator B-component I-component I-component I-component
+O O O B-indicator B-component I-component I-component I-component O O O O O O B-period I-period
+O O O O O B-indicator B-component I-component I-component I-component O O O O O O B-period I-period O
+O O O O O O B-component I-component I-component I-component O O B-period B-indicator
+O O O O B-period I-period O O O B-indicator O B-component I-component I-component I-component
+O O O O B-component I-component I-component I-component O O B-period I-period
+O O O O B-frequency O O B-component I-component I-component I-component I-component O O B-indicator B-period I-period
+O O O O B-period I-period O B-indicator O O B-component I-component
+O O O O O O B-component O O B-period B-indicator O
+O O O B-component O O O O O B-period I-period O B-indicator
+O O O O O B-indicator B-component O O B-period I-period O
+O O O O B-period I-period O O O O O B-indicator B-component
+O O O B-component O O O B-period B-indicator
+O O O O B-frequency O B-indicator B-component O O O B-period I-period
+O O O O O B-indicator B-component I-component O B-period I-period I-period
+O O O B-period I-period O B-indicator B-component I-component O O O
+O O O B-indicator B-component I-component O O O O
+O O O O B-frequency O B-indicator B-component I-component O O B-period I-period I-period
+O O O O O B-indicator O B-component I-component I-component O O B-period I-period I-period
+O O O O B-period I-period O O O B-component I-component I-component O B-indicator
+O O O O B-component I-component I-component O O B-period B-indicator
+O O O O B-frequency O B-component I-component I-component O O O B-period I-period
+O O O O O B-indicator O B-component O O B-period I-period O
+O O O B-period I-period O O O B-component O O B-indicator
+O O O B-component O O B-period I-period O B-indicator
+O O O O B-period I-period O B-indicator O O O O O O
+O O B-indicator O B-period I-period O O O O O O
+O O O B-indicator O O O B-component O B-period I-period O O O O
+O O O B-component I-component I-component O O B-period B-indicator O O O O O
+O O O O O B-period B-indicator B-frequency O O O O O O
+O O O B-indicator O B-period I-period I-period O O O O
+O O O O O B-period B-indicator B-frequency O O O O O
+O O O B-indicator B-component I-component O O O O
+O O O B-component I-component I-component O O O O O B-period I-period I-period O O O O
+O O O O B-period I-period B-indicator O O O O O O O
+O O O B-indicator O O B-period I-period O O O O O O
+O O O O O O B-component O O B-period B-indicator B-frequency O O O O O O O
+O O O B-indicator O B-period I-period O O O O O O O O
+O O O O O B-period B-indicator O B-frequency I-frequency O O O O
+O O O B-period B-indicator B-frequency O O O O O
+O O O B-frequency O B-indicator B-period I-period O O O O O
+O O O O O B-period B-indicator B-frequency O O O O O O
+O O B-indicator B-period I-period B-frequency O O O O O O
+O O O B-period I-period O B-indicator O O O O O O O
+O O O B-period I-period B-indicator O O O O O O O O
+O O O B-period B-indicator O O O O O O O
+O O O O B-indicator O B-period I-period O O O O O O
+O O B-indicator O B-period I-period O O O O O O O
+O O O O O O B-indicator O B-period I-period O O O O O O O O
+O O O O B-frequency O B-component I-component I-component O O O O
+O O O O O B-indicator B-period O B-period I-period O O O O O O
+O O B-indicator B-frequency B-period I-period O O O O O O O
+O O O O B-indicator B-period I-period O O O O O O
+O O O O B-frequency O O O O O O O B-component I-component I-component I-component
+O O O O B-period O B-indicator B-frequency O O O O O O
+O O O O O B-period B-indicator O B-frequency I-frequency O O O O O O
+O O O O O B-period I-period O O O O O B-indicator
+O O B-indicator O B-period I-period O O O O
+O B-indicator O O B-period I-period O O O O O
+O O O B-indicator O B-component O O O O O O O
+O O O B-indicator O B-period I-period O O O O
+O O O B-indicator O O B-period I-period O O O O O O O
+O O O B-indicator O B-period I-period O O O O O O
+O O O O B-period I-period B-indicator O O O O O O
+O O O O O B-indicator O B-period I-period O O O O O O O
+O O O B-indicator O B-period I-period O O O O
+O O O O B-indicator B-component I-component B-period I-period O O O O O O
+O O B-indicator B-frequency B-period I-period O O O O
+O O O O B-indicator O O B-period I-period I-period O O O O O O O
+O O O B-indicator O O B-period I-period O O O O O O O
+O O O B-indicator O B-period I-period I-period O O O O O O O
+O O O O B-period I-period O O B-indicator O O O O O O O O
+O O O B-indicator O B-period I-period I-period O O O O O O O O
