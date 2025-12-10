@@ -9,10 +9,13 @@ import argparse
 import os
 import logging
 import torch
+from datetime import date
 from transformers import BertTokenizer
 from colorama import init, Fore, Style
 
 from utils import get_intent_labels, get_slot_labels, MODEL_CLASSES, init_logger
+from util.period_normalizer import standardize_imacec_time_ref
+from util.indicator_normalizer import detect_indicator
 
 # Inicializar colorama para Windows
 init(autoreset=True)
@@ -190,6 +193,55 @@ class ChatBot:
                 display_value = entity_value if len(entity_value) <= max_value_len else entity_value[:max_value_len-3] + "..."
                 entity_padding = 51 - len(entity_type) - len(display_value)
                 print(f"{Fore.CYAN}║   {Fore.MAGENTA}• {entity_type}:{Style.RESET_ALL} {display_value}{' '*entity_padding}{Fore.CYAN}║")
+        
+        # Normalización de período si se detectó
+        if 'period' in entities:
+            period_text = entities['period']
+            normalized = standardize_imacec_time_ref(period_text, date.today())
+            if normalized:
+                print(f"{Fore.CYAN}╠{'═'*58}╣")
+                print(f"{Fore.CYAN}║ {Fore.YELLOW}Período normalizado:{' '*37}{Fore.CYAN}║")
+                
+                # Formato de fecha según granularidad
+                granularity = normalized['granularity']
+                period_key = normalized['period_key']
+                norm_confidence = normalized['confidence']
+                
+                # Icono según confianza
+                conf_icon = '✓' if norm_confidence == 'high' else '~' if norm_confidence == 'medium' else '?'
+                
+                if granularity == 'month':
+                    date_str = normalized['start_date'].strftime('%B %Y').capitalize()
+                elif granularity == 'quarter':
+                    date_str = f"Trimestre {period_key.split('-Q')[1]} de {period_key.split('-')[0]}"
+                elif granularity == 'year':
+                    date_str = f"Año {period_key}"
+                else:
+                    date_str = period_key
+                
+                display_str = f"{conf_icon} {date_str}"
+                # Ancho total: 60 - 1 (║) - 3 (espacios) - 2 (espacios finales) - 1 (║) = 53 para display_str + padding
+                padding = 53 - len(display_str)
+                print(f"{Fore.CYAN}║   {Fore.CYAN}{display_str}{' '*padding}  {Fore.CYAN}║")
+        
+        # Normalización de indicador si se detectó
+        if 'indicator' in entities:
+            indicator_text = entities['indicator']
+            normalized_indicator = detect_indicator(indicator_text, use_fuzzy=True)
+            if normalized_indicator:
+                print(f"{Fore.CYAN}╠{'═'*58}╣")
+                print(f"{Fore.CYAN}║ {Fore.YELLOW}Indicador normalizado:{' '*35}{Fore.CYAN}║")
+                
+                if normalized_indicator == 'imacec':
+                    display_str = "✓ IMACEC - Indicador Mensual de Actividad Económica"
+                elif normalized_indicator == 'pib':
+                    display_str = "✓ PIB - Producto Interno Bruto"
+                else:
+                    display_str = f"✓ {normalized_indicator.upper()}"
+                
+                # Ancho total: 60 - 1 (║ izq) - 3 (espacios antes) - 1 (║ der) = 55 para display_str + padding
+                padding = 55 - len(display_str)
+                print(f"{Fore.CYAN}║   {Fore.GREEN}{display_str}{' '*padding}{Fore.CYAN}║")
         
         print(f"{Fore.CYAN}╚{'═'*58}╝{Style.RESET_ALL}\n")
     

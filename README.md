@@ -126,6 +126,9 @@ Permite hacer consultas en tiempo real desde la terminal:
 
 ```bash
 python predict_cli.py --model_dir model_out/pibot_model_beto
+
+# Forzar uso de CPU
+python predict_cli.py --model_dir model_out/pibot_model_beto --no_cuda
 ```
 
 #### Consulta única
@@ -142,12 +145,23 @@ Para procesar múltiples consultas desde un archivo:
 python predict_cli.py --model_dir model_out/pibot_model_beto --input_file consultas.txt --output_file resultados.txt
 ```
 
+**Opciones disponibles:**
+- `--model_dir`: Directorio del modelo entrenado (requerido)
+- `--text`: Texto único a predecir (opcional)
+- `--input_file`: Archivo con textos para modo batch (opcional)
+- `--output_file`: Archivo de salida para resultados (opcional, solo con --input_file)
+- `--no_cuda`: Usar CPU en lugar de GPU (opcional)
+
 ### Chat interactivo (chat.py)
 
 Para una experiencia de chat más amigable con colores y formato mejorado:
 
 ```bash
+# Usar GPU (por defecto si está disponible)
 python chat.py --model_dir model_out/pibot_model_beto
+
+# Forzar uso de CPU
+python chat.py --model_dir model_out/pibot_model_beto --no_cuda
 ```
 
 El chat muestra:
@@ -156,6 +170,10 @@ El chat muestra:
 - **Normalización de período**: Convierte expresiones de fechas a formato estándar (ej: "agosto 2024" → "Agosto 2024", "ultimo trimestre" → "Trimestre 3 de 2025")
 - **Normalización de indicador**: Identifica y estandariza indicadores económicos (IMACEC, PIB) con tolerancia a errores tipográficos
 - Formato visual con colores para mejor legibilidad
+
+**Opciones:**
+- `--model_dir`: Directorio del modelo entrenado (requerido)
+- `--no_cuda`: Usar CPU en lugar de GPU (opcional)
 
 Para salir del chat, escribe `salir`, `exit` o presiona `Ctrl+C`.
 
