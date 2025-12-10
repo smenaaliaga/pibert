@@ -15,6 +15,7 @@ from colorama import init, Fore, Style
 
 from utils import get_intent_labels, get_slot_labels, MODEL_CLASSES, init_logger
 from util.period_normalizer import standardize_imacec_time_ref
+from util.indicator_normalizer import standardize_indicator
 
 # Inicializar colorama para Windows
 init(autoreset=True)
@@ -222,6 +223,31 @@ class ChatBot:
                 # Ancho total: 60 - 1 (║) - 3 (espacios) - 2 (espacios finales) - 1 (║) = 53 para display_str + padding
                 padding = 53 - len(display_str)
                 print(f"{Fore.CYAN}║   {Fore.CYAN}{display_str}{' '*padding}  {Fore.CYAN}║")
+        
+        # Normalización de indicador si se detectó
+        if 'indicator' in entities:
+            indicator_text = entities['indicator']
+            normalized = standardize_indicator(indicator_text)
+            if normalized and normalized['indicator']:
+                print(f"{Fore.CYAN}╠{'═'*58}╣")
+                print(f"{Fore.CYAN}║ {Fore.YELLOW}Indicador normalizado:{' '*35}{Fore.CYAN}║")
+                
+                indicator_name = normalized['indicator'].upper()
+                
+                # Nombre completo según el indicador
+                if indicator_name in ['IMACEC', 'PIB']:
+                    if indicator_name == 'IMACEC':
+                        full_name = 'Indicador Mensual de Actividad Económica'
+                    else:
+                        full_name = 'Producto Interno Bruto'
+                    
+                    display_str = f"✓ {indicator_name} - {full_name}"
+                else:
+                    display_str = f"✓ {indicator_name}"
+                
+                # Ancho total: 60 - 1 (║) - 3 (espacios) - 2 (espacios finales) - 1 (║) = 53 para display_str + padding
+                padding = 53 - len(display_str)
+                print(f"{Fore.CYAN}║   {Fore.GREEN}{display_str}{' '*padding}  {Fore.CYAN}║")
         
         print(f"{Fore.CYAN}╚{'═'*58}╝{Style.RESET_ALL}\n")
     

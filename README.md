@@ -153,9 +153,27 @@ python chat.py --model_dir model_out/pibot_model_beto
 El chat muestra:
 - Intención detectada con nivel de confianza
 - Slots (palabras clave) identificados con sus etiquetas
+- **Normalización de período**: Convierte expresiones de fechas a formato estándar (ej: "agosto 2024" → "Agosto 2024", "ultimo trimestre" → "Trimestre 3 de 2025")
+- **Normalización de indicador**: Identifica y estandariza indicadores económicos (IMACEC, PIB) con tolerancia a errores tipográficos
 - Formato visual con colores para mejor legibilidad
 
 Para salir del chat, escribe `salir`, `exit` o presiona `Ctrl+C`.
+
+#### Normalizadores
+
+El proyecto incluye dos módulos de normalización en `util/`:
+
+**`period_normalizer.py`**: Normaliza expresiones de tiempo/fechas
+- Soporta formatos explícitos: "agosto 2024", "08/2024", "2024-08", "trimestre 3 2023"
+- Periodos relativos: "mes pasado", "ultimo trimestre", "año actual"
+- Fuzzy matching para typos: "agousto" → agosto, "feberero" → febrero
+- Output: granularidad (month/quarter/year), fechas inicio/fin, periodo_key
+
+**`indicator_normalizer.py`**: Normaliza nombres de indicadores económicos
+- Detecta IMACEC con variantes: "imacec", "indicador mensual de actividad económica", "termómetro mensual"
+- Detecta PIB: "pib", "producto interno bruto"
+- Desambigua por contexto temporal (mensual → IMACEC, trimestral → PIB)
+- Fuzzy matching opcional con rapidfuzz para variantes con typos
 
 ## Resultados
 
