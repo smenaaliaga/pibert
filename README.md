@@ -109,6 +109,10 @@ python main.py --task pibimacec --model_type beto --model_out pibot_model_beto -
 
 ## Prediction
 
+### Predicción en lote (predict.py)
+
+Para procesar múltiples consultas desde un archivo:
+
 ```
 python predict.py --input_file {INPUT_FILE_PATH} --output_file {OUTPUT_FILE_PATH} --model_dir {SAVED_CKPT_PATH}
 ```
@@ -118,6 +122,44 @@ Ejemplo:
 ```
 python predict.py --input_file data/atis/test/seq.in --output_file output/atis.txt --model_dir model_out/atis_model
 ```
+
+### Predicción desde línea de comandos (predict_cli.py)
+
+#### Modo interactivo
+Permite hacer consultas en tiempo real desde la terminal:
+
+```bash
+python predict_cli.py --model_dir model_out/pibot_model_beto
+```
+
+#### Consulta única
+Para predecir un texto específico:
+
+```bash
+python predict_cli.py --model_dir model_out/pibot_model_beto --text "cual fue el ultimo imacec"
+```
+
+#### Modo batch
+Para procesar múltiples consultas desde un archivo:
+
+```bash
+python predict_cli.py --model_dir model_out/pibot_model_beto --input_file consultas.txt --output_file resultados.txt
+```
+
+### Chat interactivo (chat.py)
+
+Para una experiencia de chat más amigable con colores y formato mejorado:
+
+```bash
+python chat.py --model_dir model_out/pibot_model_beto
+```
+
+El chat muestra:
+- Intención detectada con nivel de confianza
+- Slots (palabras clave) identificados con sus etiquetas
+- Formato visual con colores para mejor legibilidad
+
+Para salir del chat, escribe `salir`, `exit` o presiona `Ctrl+C`.
 
 ## Resultados
 

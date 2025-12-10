@@ -42,7 +42,10 @@ class JointBERT(BertPreTrainedModel):
         # 2. Slot Softmax
         if slot_labels_ids is not None:
             if self.args.use_crf:
-                slot_loss = self.crf(slot_logits, slot_labels_ids, mask=attention_mask.byte(), reduction='mean')
+                # CRF doesn't handle ignore_index (-100), so we replace it with PAD (0)
+                slot_labels_ids_crf = slot_labels_ids.clone()
+                slot_labels_ids_crf[slot_labels_ids_crf == self.args.ignore_index] = 0
+                slot_loss = self.crf(slot_logits, slot_labels_ids_crf, mask=attention_mask.bool(), reduction='mean')
                 slot_loss = -1 * slot_loss  # negative log-likelihood
             else:
                 slot_loss_fct = nn.CrossEntropyLoss(ignore_index=self.args.ignore_index)

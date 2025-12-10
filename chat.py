@@ -113,7 +113,7 @@ class ChatBot:
             
             # Slots
             if self.args.use_crf:
-                slot_preds = self.model.crf.decode(slot_logits)[0]
+                slot_preds = self.model.crf.decode(slot_logits, mask=attention_mask.bool())[0]
             else:
                 slot_preds = slot_logits.argmax(dim=-1)[0].cpu().numpy()
             
