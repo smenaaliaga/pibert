@@ -14,6 +14,10 @@ La clasificación está separada en dos partes, entender la intención de la con
 
 El principal objetivo de este proyecto es entrenar el modelo Joint BERT con un dataset especializado para detectar la intención y las palabras claves para consultas sobre PIB e IMACEC.
 
+### label
+
+TODO
+
 ### Definición de BIO
 
 La definición de la BIO propuesta es la siguiente:
@@ -29,69 +33,48 @@ Ejemplos de spans:
 - PIB
 - crecimiento económico
 - actividad económica
-- inflación (si lo agregas)
 
-#### 2. Periodo / fecha (el "cuándo")
+...
 
-Para meses, años, trimestres, fechas específicas:
+### Anotación con Label Studio
 
-- B-period
-- I-period
+Para anotar datos de entrenamiento, el proyecto utiliza Label Studio. A continuación se detallan los pasos para ejecutarlo:
 
-Ejemplos:
+#### Iniciar Label Studio
 
-- en septiembre de 2025
-- en 2024
-- en el tercer trimestre
-- en los últimos doce meses
-- ayer, hoy, último mes reportado
+```bash
+label-studio start
+```
 
-#### 3. Unidad / Métrica solicitada (el “cómo lo quieres”)
+Esto abrirá Label Studio en tu navegador (por defecto en `http://localhost:8080`).
 
-- B-measure_type
-- I-measure_type
+#### Configuración del proyecto
 
-Ejemplos:
+1. Crea un nuevo proyecto en Label Studio
+2. Importa tus datos (archivos de texto con consultas)
+3. Configura la interfaz de anotación para:
+   - **Clasificación de intención**: prev_year, calc_mode, etc.
+   - **Etiquetado de entidades (NER)**: indicator, period, measure_type, sector, etc.
 
-- variación anual / mensual / trimestral
-- variación mensual desestacionalizada
-- constribución / aporte / incidencia
-- defactlor
-- serie original
-- crecimiento
+#### Exportación de datos
 
-#### 4. Actividad / Sector Económico (si la pregunta lo requiere)
+Una vez anotados los datos:
+1. Exporta en formato CSV desde Label Studio
+2. Utiliza el script de procesamiento:
 
-Para capturar consultas específicas sobre sectores:
+```bash
+python util/process_raw_labels.py data/pibimacec/raw/annotations.csv data/pibimacec/processed
+```
 
-Slot:
-- B-sector
-- I-sector
+Este script convierte las anotaciones de Label Studio al formato BIO requerido por Joint BERT.
 
-Ejemplos:
-- sector minero
-- servicios personales
-- producción de bienes
-- comercio minorista
+### División de datos
 
-##### 5. Territorio / Región (si quisieras preguntas regionales)
+Para crear los conjuntos de entrenamiento, desarrollo y prueba:
 
-Si lo incluyes:
-- B-region
-- I-region
-
-Ejemplos:
-- Región Metropolitana, Chile, Valparaíso
-
-##### 6. Comparación (opcional)
-
-Si quieres manejar:
-- “comparado con el mes anterior”
-- “respecto a junio”
-
-Slot:
-- B-comparison_period
-- I-comparison_period
+```bash
+python util/split_data.py data/pibimacec/processed data/pibimacec --test_size 0.2 --dev_size 0.1
+```
 
 ## Training & Evaluation
 
@@ -102,10 +85,23 @@ python main.py --task {task_name} \
                   --do_train --do_eval \
                   --use_crf
 ```
-Ejemplo:
-```
+Ejemplo básico:
+```bash
 python main.py --task pibimacec --model_type beto --model_out pibot_model_beto --do_train --do_eval
 ```
+
+Configuración optimizada para dataset pibimacec (816 ejemplos):
+```bash
+python main.py --task pibimacec --model_type beto --model_out pibot_model_beto_largo --do_train --do_eval --num_train_epochs 20 --learning_rate 3e-5 --train_batch_size 16 --eval_batch_size 32 --max_seq_len 64 --save_steps 20 --logging_steps 10 --ignore_index -100
+```
+
+Parámetros justificados:
+- `--num_train_epochs 20`: Mayor número de épocas para dataset pequeño
+- `--learning_rate 3e-5`: Tasa reducida para evitar overfitting
+- `--train_batch_size 16`: Batch pequeño para más actualizaciones con pocos datos
+- `--max_seq_len 32`: Secuencias cortas (promedio 10 palabras, máx 20)
+- `--save_steps 20`: Checkpoints cada ~0.5 épocas
+
 
 ## Prediction
 
