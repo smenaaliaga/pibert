@@ -4,6 +4,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from typing import Optional, List, Pattern, Tuple
+from difflib import SequenceMatcher
 
 
 # =========================
@@ -57,6 +58,32 @@ def normalize_text(s: str) -> str:
     s = re.sub(r"\s+", " ", s).strip()
     return s
 
+def fuzzy_match_word(word: str, candidates: List[str], threshold: float = 0.75) -> Optional[str]:
+    """
+    Encuentra la mejor coincidencia fuzzy para una palabra en una lista de candidatos.
+    Usa SequenceMatcher de difflib para tolerancia a typos.
+    
+    Args:
+        word: Palabra a buscar
+        candidates: Lista de palabras candidatas
+        threshold: Umbral de similitud (0-1), por defecto 0.75
+        
+    Returns:
+        La palabra candidata con mejor match o None si no supera el umbral
+    """
+    word_norm = normalize_text(word)
+    best_match = None
+    best_ratio = 0.0
+    
+    for candidate in candidates:
+        candidate_norm = normalize_text(candidate)
+        ratio = SequenceMatcher(None, word_norm, candidate_norm).ratio()
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_match = candidate
+    
+    return best_match if best_ratio >= threshold else None
+
 
 # =========================
 # Patrones regex compilados
@@ -66,8 +93,11 @@ def compile_patterns(patterns: List[str]) -> List[Pattern]:
     return [re.compile(p) for p in patterns]
 
 # Patrones "de superficie" para detectar menciones explícitas
+# Incluye variantes con typos comunes
 IMACEC_PATTERNS_RAW = [
     r"\bimacec\b",
+    r"\bima[cs]e[cs]\b",  # imaces, imasec, imasec
+    r"\bi[mn]ac[ae]c\b",  # inacec, imacac, etc
     r"\bindice mensual de actividad economica\b",
     r"\bindice de actividad economica mensual\b",
     r"\bindicador mensual de actividad economica\b",
@@ -78,6 +108,7 @@ IMACEC_PATTERNS_RAW = [
 
 PIB_PATTERNS_RAW = [
     r"\bpib\b",
+    r"\bp[ií]b\b",  # tolera píb
     r"\bproducto interno bruto\b",
     r"\bproducto interior bruto\b",
     r"\bcuentas nacionales\b",
@@ -139,7 +170,7 @@ DEFAULT_POLICY = IndicatorPolicy()
 def _has_any(patterns: List[Pattern], text_norm: str) -> bool:
     return any(p.search(text_norm) for p in patterns)
 
-def detect_indicator(text: str, policy: IndicatorPolicy = DEFAULT_POLICY) -> Optional[str]:
+def detect_indicator(text: str, policy: IndicatorPolicy = DEFAULT_POLICY, use_fuzzy: bool = True) -> Optional[str]:
     """
     Devuelve:
       - "imacec"
@@ -150,8 +181,9 @@ def detect_indicator(text: str, policy: IndicatorPolicy = DEFAULT_POLICY) -> Opt
     1) Mención explícita fuerte (PIB primero para evitar colisiones en frases largas).
     2) Mención explícita IMACEC, con tratamiento especial del patrón ambiguo
        'indice de actividad economica'.
-    3) Pistas temporales.
-    4) Heurísticas suaves opcionales.
+    3) Fuzzy matching para detectar typos (si use_fuzzy=True)
+    4) Pistas temporales.
+    5) Heurísticas suaves opcionales.
     """
     t = normalize_text(text)
 
@@ -174,13 +206,25 @@ def detect_indicator(text: str, policy: IndicatorPolicy = DEFAULT_POLICY) -> Opt
             return policy.ambiguous_activity_index_default
         return "imacec"
 
-    # 3) Desambiguación por pistas temporales
+    # 3) Fuzzy matching para detectar typos en palabras individuales
+    if use_fuzzy:
+        words = t.split()
+        for word in words:
+            if len(word) >= 4:  # Solo palabras de 4+ caracteres
+                # Buscar similitud con "imacec"
+                if fuzzy_match_word(word, ["imacec"], threshold=0.7):
+                    return "imacec"
+                # Buscar similitud con "pib" (más corta, requiere mayor threshold)
+                if len(word) == 3 and fuzzy_match_word(word, ["pib"], threshold=0.66):
+                    return "pib"
+
+    # 4) Desambiguación por pistas temporales
     if _has_any(PIB_TIME_CUES, t):
         return "pib"
     if _has_any(IMACEC_TIME_CUES, t):
         return "imacec"
 
-    # 4) Heurísticas suaves opcionales
+    # 5) Heurísticas suaves opcionales
     if policy.allow_soft_guessing:
         # "actividad economica" + mención de mes
         if "actividad economica" in t and any(m in t for m in MONTHS):

@@ -9,13 +9,10 @@ import argparse
 import os
 import logging
 import torch
-from datetime import date
 from transformers import BertTokenizer
 from colorama import init, Fore, Style
 
 from utils import get_intent_labels, get_slot_labels, MODEL_CLASSES, init_logger
-from util.period_normalizer import standardize_imacec_time_ref
-from util.indicator_normalizer import standardize_indicator
 
 # Inicializar colorama para Windows
 init(autoreset=True)
@@ -116,7 +113,7 @@ class ChatBot:
             
             # Slots
             if self.args.use_crf:
-                slot_preds = self.model.crf.decode(slot_logits, mask=attention_mask.bool())[0]
+                slot_preds = self.model.crf.decode(slot_logits)[0]
             else:
                 slot_preds = slot_logits.argmax(dim=-1)[0].cpu().numpy()
             
@@ -193,61 +190,6 @@ class ChatBot:
                 display_value = entity_value if len(entity_value) <= max_value_len else entity_value[:max_value_len-3] + "..."
                 entity_padding = 51 - len(entity_type) - len(display_value)
                 print(f"{Fore.CYAN}║   {Fore.MAGENTA}• {entity_type}:{Style.RESET_ALL} {display_value}{' '*entity_padding}{Fore.CYAN}║")
-        
-        # Normalización de período si se detectó
-        if 'period' in entities:
-            period_text = entities['period']
-            normalized = standardize_imacec_time_ref(period_text, date.today())
-            if normalized:
-                print(f"{Fore.CYAN}╠{'═'*58}╣")
-                print(f"{Fore.CYAN}║ {Fore.YELLOW}Período normalizado:{' '*37}{Fore.CYAN}║")
-                
-                # Formato de fecha según granularidad
-                granularity = normalized['granularity']
-                period_key = normalized['period_key']
-                confidence = normalized['confidence']
-                
-                # Icono según confianza
-                conf_icon = '✓' if confidence == 'high' else '~' if confidence == 'medium' else '?'
-                
-                if granularity == 'month':
-                    date_str = normalized['start_date'].strftime('%B %Y')
-                elif granularity == 'quarter':
-                    date_str = f"Trimestre {period_key.split('-Q')[1]} de {period_key.split('-')[0]}"
-                elif granularity == 'year':
-                    date_str = f"Año {period_key}"
-                else:
-                    date_str = period_key
-                
-                display_str = f"{conf_icon} {date_str}"
-                # Ancho total: 60 - 1 (║) - 3 (espacios) - 2 (espacios finales) - 1 (║) = 53 para display_str + padding
-                padding = 53 - len(display_str)
-                print(f"{Fore.CYAN}║   {Fore.CYAN}{display_str}{' '*padding}  {Fore.CYAN}║")
-        
-        # Normalización de indicador si se detectó
-        if 'indicator' in entities:
-            indicator_text = entities['indicator']
-            normalized = standardize_indicator(indicator_text)
-            if normalized and normalized['indicator']:
-                print(f"{Fore.CYAN}╠{'═'*58}╣")
-                print(f"{Fore.CYAN}║ {Fore.YELLOW}Indicador normalizado:{' '*35}{Fore.CYAN}║")
-                
-                indicator_name = normalized['indicator'].upper()
-                
-                # Nombre completo según el indicador
-                if indicator_name in ['IMACEC', 'PIB']:
-                    if indicator_name == 'IMACEC':
-                        full_name = 'Indicador Mensual de Actividad Económica'
-                    else:
-                        full_name = 'Producto Interno Bruto'
-                    
-                    display_str = f"✓ {indicator_name} - {full_name}"
-                else:
-                    display_str = f"✓ {indicator_name}"
-                
-                # Ancho total: 60 - 1 (║) - 3 (espacios) - 2 (espacios finales) - 1 (║) = 53 para display_str + padding
-                padding = 53 - len(display_str)
-                print(f"{Fore.CYAN}║   {Fore.GREEN}{display_str}{' '*padding}  {Fore.CYAN}║")
         
         print(f"{Fore.CYAN}╚{'═'*58}╝{Style.RESET_ALL}\n")
     
