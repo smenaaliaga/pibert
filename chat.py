@@ -16,6 +16,7 @@ from colorama import init, Fore, Style
 from utils import get_intent_labels, get_slot_labels, MODEL_CLASSES, init_logger
 from util.period_normalizer import standardize_imacec_time_ref
 from util.indicator_normalizer import detect_indicator
+from util.component_normalizer import ComponentNormalizer
 
 # Inicializar colorama para Windows
 init(autoreset=True)
@@ -51,6 +52,9 @@ class ChatBot:
         )
         self.model.to(self.device)
         self.model.eval()
+        
+        # Inicializar normalizadores
+        self.component_normalizer = ComponentNormalizer()
         
         print(f"{Fore.GREEN}✓ Modelo cargado correctamente{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}  Dispositivo: {self.device.upper()}{Style.RESET_ALL}")
@@ -242,6 +246,20 @@ class ChatBot:
                 # Ancho total: 60 - 1 (║ izq) - 3 (espacios antes) - 1 (║ der) = 55 para display_str + padding
                 padding = 55 - len(display_str)
                 print(f"{Fore.CYAN}║   {Fore.GREEN}{display_str}{' '*padding}{Fore.CYAN}║")
+        
+        # Normalización de componente si se detectó
+        if 'component' in entities:
+            component_text = entities['component']
+            normalized_component = self.component_normalizer.normalize(component_text)
+            
+            print(f"{Fore.CYAN}╠{'═'*58}╣")
+            print(f"{Fore.CYAN}║ {Fore.YELLOW}Componente normalizado:{' '*34}{Fore.CYAN}║")
+            
+            display_str = f"✓ {normalized_component.title()}"
+            
+            # Ancho total: 60 - 1 (║ izq) - 3 (espacios antes) - 1 (║ der) = 55 para display_str + padding
+            padding = 55 - len(display_str)
+            print(f"{Fore.CYAN}║   {Fore.GREEN}{display_str}{' '*padding}{Fore.CYAN}║")
         
         print(f"{Fore.CYAN}╚{'═'*58}╝{Style.RESET_ALL}\n")
     
