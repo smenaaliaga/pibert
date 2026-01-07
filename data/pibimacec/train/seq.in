@@ -19,7 +19,6 @@ como estuvo el ultimo imacec publicado
 dame el imacec correspondiente mas reciente
 que tal salio el imacec en el ultimo dato reportado
 quiero el imacec de la ultima medicion
-dame el ultimo registro del imacec
 como va el ultimo informado imacec
 el resultado oficial mas reciente del imacec
 dame la ultima lectura del imacec
@@ -28,7 +27,6 @@ quiero el ultimo dato oficial del imacec
 cual es el ultimo boletin del imacec
 cual es el ultimo comunicado del imacec
 cual fue el dato mas reciente informado del imacec
-necesito el ultimo dato disponible del imacec
 cual es la ultima actualizacion del imacec
 cuanto aumento el ultimo imacec
 cuanto subio el ultimo imacec
@@ -38,7 +36,6 @@ cuanto cambio el ultimo imacec
 cual fue el crecimiento del ultimo imacec
 cual fue la expansion del ultimo imacec
 cual fue el aumento del ultimo imacec
-cual fue la variacion del ultimo imacec
 cual fue el cambio del ultimo imacec
 como vario el ultimo imacec
 como crecio el ultimo imacec
@@ -91,7 +88,6 @@ como salio el imacec de este mes
 cual fue el ultimo imacec de este mes
 cual fue el imacec de el mes anterior
 dame el imacec del mes anterior
-necesito el imacec del mes anterior
 como salio el imacec del mes anterior
 cual fue el ultimo imacec del mes anterior
 cual fue el ultimo imacec mensual
@@ -102,7 +98,6 @@ dame la publicacion del ultimo mes imacec
 dame el imacec mas reciente mensual
 dame el registro del imacec mensual mas reciente
 dame el resultado mensual del imacec mas reciente
-dame el reporte del imacec del mes mas reciente
 dame la publicacion del imacec mensual mas reciente
 como salio el imacec mensual de hoy
 como salio el imacec del mes actual
@@ -116,7 +111,6 @@ cual fue el imacec publicado el ultimo mes
 cual fue el imacec en el ultimo reporte del mes
 cuanto aumento el imacec del ultimo mes
 cuanto crecio el ultimo imacec mensual
-cuanto cambio el imacec del ultimo mes disponible
 cual fue el crecimiento del ultimo imacec mensual
 cual fue la expansion imacec el ultimo mes
 cual fue el aumento mensual del ultimo imacec
@@ -142,17 +136,13 @@ cual es la ultimo cifra oficial del imacec mensual
 dame el ultimo indice base del boletin del imacec mensual
 cual es el comunicado del ultimo mes del imacec
 cual fue el valor mas reciente informado del imacec mensual
-dame la ultima lectura de la serie original del imacec mensual
 cual es la ultima actualizacion del mes del indice base del imacec
 cual fue el imacec de este trimestre
 necesito el imacec de este trimestre
-cual fue el ultimo imacec de este trimestre
-cual fue el imacec de el trimestre anterior
 dame el imacec del trimestre anterior
 necesito el imacec del trimestre anterior
 que imacec corresponde al trimestre anterior
 como salio el imacec del trimestre anterior
-cual fue el ultimo imacec trimestral
 cual fue el resultado del ultimo imacec trimestral
 dame el reporte del ultimo trimestre imacec
 dame la publicacion del ultimo trimestre imacec
@@ -170,7 +160,6 @@ cual es el imacec del trimestre vigente
 como cerro el trimestre el imacec en su ultima publicacion
 cual fue el imacec del trimestre mas reciente
 cual es el dato actual del imacec trimestral
-cual es el ultimo imacec trimestral reportado
 cual fue el imacec publicado el ultimo trimestre
 cual fue el imacec en el ultimo reporte del trimestre
 cuanto aumento el imacec del ultimo trimestre
@@ -208,7 +197,6 @@ que imacec corresponde al annio anterior
 como salio el imacec del annio anterior
 cual fue el ultimo imacec del annio anterior
 cual fue el ultimo imacec anual
-cual fue el dato del ultimo imacec con frecuencia anual
 cual fue el registro del ultimo annio del imacec
 cual fue el resultado del ultimo imacec anual
 dame el reporte del ultimo annio imacec
@@ -223,7 +211,6 @@ como salio el imacec anual de hoy
 como salio el imacec del annio actual
 cual es el imacec mas actual del ultimo annio
 como estuvo el imacec el ultimo annio
-quiero el imacec anual mas reciente disponible
 como cerro el annio el imacec en su ultima publicacion
 cual fue el imacec del annio mas reciente
 cual es el dato actual del imacec anual
@@ -267,12 +254,10 @@ cuanto fue el imacec en servicios
 cuanto fue el imacec a costo de factores
 cuanto fue el imacec impuestos sobre los productos
 cuanto fue el imacec no minero
-cual es el valor de la produccion de bienes el ultimo imacec
 que indice registro produccion de bienes el ultimo mes
 cuanto vario la produccion de bienes en el ultimo imacec
 cual es el valor del imacec minero en el ultimo mes
 que indice tuvo la mineria en el imacec mas reciente
-cuanto vario la mineria en comparacion con el mismo mes del annio anterior
 que indice presento la industria en el ultimo imacec
 cual es el valor del resto de bienes en los ultimos datos
 que indice tuvo el resto de bienes el ultimo mes
@@ -285,7 +270,6 @@ cuanto crecieron los servicios el ultimo mes reportado
 cual fue la variacion mensual de servicios
 dame el ultimo indice del imacec a costo de factores
 cuanto vario el imacec a costo de factores respecto al annio anterior
-como se movio el imacec a costo de factores frente al annio pasado
 cual es el valor del componente impuestos sobre los productos
 que indice restraron los impuestos sobre los productos el ultimo mes
 cual fue la variacion mensual del componente de impuestos sobre los productos
@@ -293,7 +277,6 @@ cual es el valor del imacec no minero del ultimo mes
 cuanto crecio el imacec no minero respecto al annio anterior
 cual fue la variacion mensual del imacec no minero
 cual fue el valor mas reciente informado del imacec de produccion de bienes
-dame el imacec mas reciente mensual para el componente de industria
 el resultado oficial mas reciente del imacec del resto de bienes
 cual es el valor de comercio en el imacec en curso
 cual es la ultima lectura del indice de servicio para el imacec mensual
@@ -305,13 +288,10 @@ dame la publicacion del ultimo mes imacec a costo de factores
 como salio el imacec del trimestre actual de los impuestos sobre los productos
 como salio el imacec del mes actual para el resto de los bienes
 el resultado oficial de la serie original mas reciente del imacec mensual para la actividad comerical
-puedes darme el valor del imacec mas reciente que tengas de los servicios
 cual es la ultima lectura a costo de factores del imacec
 como cerro el trimestre el imacec en su ultima publicacion para la actividad que no pertenece a la mineria
-necesito saber en cuanto crecio el imacec de bienes del ultimo trimestre
 para la mineria dame la publicacion del imacec mas reciente
 de la industria necesito el ultimo dato disponible del imacec
-dame el dato del imacec anual mas reciente para la actividad comercial
 cual es el indice actual para los servicios en el imacec
 dame la lectura del ultimo trimestre de la serie original del imacec a costo de factores
 dame el ultimo indice base del boletin del imacec impuesto sobre los productos
@@ -332,23 +312,18 @@ cuanto vario interanualmente la produccion de bienes en el ultimo imacec
 cuanto crecio en doce meses en el ultimo imacec
 cuanto aumento el comercio en doce meses en el ultimo imacec
 cual fue el crecimiento de la industria en doce meses para el ultimo imacec
-para los servicios en el imacec cuanto vario en doce meses respecto al ultimo periodo
 cuanto aumento la produccion de bienes en doce meses para el ultimo imacec disponible
-dame la variacion a doce meses del ultimo imacec no minero
 cuanto crecio en doce meses el ultimo imacec del ultimo trimestre
-cuanto aumento los servicios en doce meses en el ultimo imacec trimestral
 cual fue el crecimiento de la mineria en doce meses del ultimo trimestre del imacec
 cuanto se expandio en doce meses para el imacec trimestral no minero mas reciente
 para la produccion de bienes en el imacec cuanto vario en doce meses respecto al ultimo annio
 cuanto aumento la industria en doce meses para el ultimo annio disponible del imacec
 cuanto cambio a doce meses el ultimo annio el imace para el resto bienes
 cual fue el valor del imacec de comercio en el ultimo mes informado
-dame la cifra mas reciente de la serie original del imacec en comercio
 cual fue el valor del imacec a costo de factores del ultimo periodo disponible
 dame el indice mas reciente del imacec a costo de factores
 cuanto vario el imacec a costo de factores respecto al annio anterior en el ultimo dato
 cual fue la variacion del imacec a costo de factores frente al periodo anterior en el ultimo mes informado
-cual fue el valor del componente impuesto sobre los productos en el ultimo imacec
 cual es la cifra mas reciente del indice del imacec de impuestos sobre los productos
 cuanto crecieron interanualmente los impuestos sobre los productos en el ultimo dato
 cual fue la variacion mensual del componente de impuestos sobre los productos en el imacec mas reciente
@@ -371,7 +346,6 @@ que tanto aumento el ultimo annio del imacec con igual periodo al annio anterior
 necesito el imacec del annio anterior con variacion respecto al annio anterior
 cuanto vario la produccion de bienes en el ultimo imacec en comparacion al annio anterior
 cual fue el resultado del ultimo imacec trimestral versus el trimestre del annio anterior
-cuanto cambio el imacec del ultimo annio disponible respecto al annio anterior
 cuanto vario el imacec no minero respecto al annio anterior
 cuanto aumento la produccion de bienes en doce meses para el ultimo imacec disponible respecto al annio anterior
 dame el reporte del ultimo trimestre imacec en comparacion con igual periodo annio anterior
@@ -382,7 +356,6 @@ dame el resultado trimestral del imacec mas reciente en comparacion al annio ant
 dame el imacec mas reciente mensual respecto al mes del annio anterior
 como crecio el ultimo trimestre del imacec con el mismo periodo al annio anterior
 como crecio el ultimo imacec respecto a igual periodo al annio anterior
-cual fue la expansion imacec el ultimo trimestre comparado al trimestre del annio previo
 necesito el imacec de este mes versus el mismo mes del annio anterior
 necesito saber en cuanto crecio el imacec del ultimo trimestre en relacion con igual trimestre al annio anterior
 quiero el imacec trimestral mas reciente disponible en comparacion con el annio anterior
@@ -397,14 +370,11 @@ cual fue el imacec de el trimestre anterior comparado con el trimestre del annio
 dame la publicacion del ultimo annio imacec en relacion con el annio anterior
 cual fue el cambio del imacec del ultimo trimestre frente a igual periodo del annio anterior
 dame el dato del imacec no minero mas reciente vs el periodo del annio pasado
-que tal salio el imacec en el ultimo dato disponible versus al mismo periodo del annio pasado
 cual fue el imacec publicado el ultimo mes en relacion con igual mes annio pasado
 cuanto cambio el imacec del ultimo trimestre disponible frente al mismo trimestre del annio pasado
 cual fue el imacec del trimestre mas reciente en relacion al mismo trimestre del annio pasado
 que imacec registro produccion de bienes el ultimo mes
 cuanto crecio la industria interanualmente del imacec
-que indice tuvo el resto de bienes el ultimo mes para el imacec
-cual fue la variacion del imacec mensual del resto de bienes
 cuanto vario el imacec resto de bienes interanualmente
 dame el ultimo indice del imacec de comercio del mes
 cuanto vario el comercio respecto al anio anterior para el imacec
@@ -412,11 +382,9 @@ como cambio el ultimo valor del imacec para el comercio
 cual es el valor de servicios del ultimo mes informado del imacec
 que indice tuvieron los servicios mas reciente del imacec
 cuanto crecieron los servicios el ultimo mes reportado del imacec
-cual es el valor del componente impuestos sobre los productos del imacec
 cual fue el imacec de los impuestos sobre los productos en el ultimo mes
 cual fue la variacion mensual del componente de impuestos sobre los productos del imacec
 cuanto cambio a doce meses el ultimo anio el imace para el resto bienes del imacec
-cuanto crecio interanualmente el imacec de los impuestos sobre los productos en el ultimo dato
 cual fue la variacion mensual del imacec del resto de bienes en el dato mas reciente
 cual fue la variacion mensual de actividad economica del resto de bienes respecto al anio anterior del imacec
 cual fue la variacion mensual de la actividad economica respecto al mes anterior del componente de impuestos sobre los productos
@@ -436,7 +404,6 @@ cual es el valor del comercio del imacec para el primer mes del anio
 que tal salio el imacec en el 2do trimestre versus al mismo periodo del anio pasado
 como estuvo la cifra del anio 2021 del imacec
 cual fue el valor del imacec de los servicios en junio 2025
-cual es el comunicado del anio pasado del imacec
 necesito indice del imacec tercer trimestre
 cual fue el crecimiento del ultimo imacec del mes ante pasado
 dame la variacion a doce meses del imacec minero en septiembre
@@ -454,13 +421,10 @@ cual fue la variacion mensual de la actividad economica del componente de impues
 cual es el valor del resto de bienes del mes de cierre del 2025 del imacec
 cual es el imacec reportado dos meses atras
 asociado a noviembre del 2023 cual fue el imacec informado
-cual fue la expansion imacec para 01/2024
 cuanto se expandio el imacec de 2T23
 cual fue el dato del imacec 2T23 respecto al anio anterior
 cuanto vario el imacec resto de bienes en Q1 2023
 el resultado oficial del imacec del resto de bienes may 2024
-cuanto vario el imacec tres trimestres atras
-dame del segundo trimestre el imacec en su serie original
 como crecio imacec del mes antepasado respecto a igual periodo al anio anterior
 del resto de bienes del imacec cual fue el resultado de tres meses atras
 que tal salio la cifra del imacec en el ultimo dato disponible
@@ -489,7 +453,6 @@ cual es la ultima lectura del indice del imacec del 2T
 quiero el valor del imacec del 1Q
 cual es el reporte del imacec para el 2023-07
 cuanto fue el imacec impuestos sobre los productos en 1T
-dame el imacec del mes pasado para el componente de comercio
 cuanto vario la produccion de bienes en mayo del imacec en comparacion al anio anterior
 como va el imacec en el 4to trimestre informado en su serie original
 cuanto fue el imacec del resto de bienes en feb 2021
@@ -507,7 +470,6 @@ dame el valor del de actividad economica de septiembre 2022
 cual es la ultima lectura de la actividad economica mensual
 cual fue el indicador mensual de actividad economica en el ultimo reporte del anio
 como salio la actividad economica mensual de este anio frente al anio pasado
-dame la publicacion del indicador mensual de actividad economica para el mes de octubre del anio 2020
 como estuvo la cifra trimestral del ultimo indice mensual de actividad economica publicado
 como salio la variacion de actividad economica mensual de hoy
 dame el resultado anual del indice de actividad economica 02-2025
@@ -587,12 +549,10 @@ por que el efecto calendario es importante en el analisis del imacec
 como influye un ano bisiesto en la actividad economica
 como fue la composicion del calendario en 2024 y su impacto en la actividad economica
 cual es el efecto calendario para el 2024
-como influira el ano bisiesto 2024 en la economia chilena
 cuando comenzo a publicarse el nuevo desglose del imacec
 de donde provienen los datos para calcular el imacec
 que registros y encuestas sustentan el calculo del imacec
 en que consiste el nuevo desglose del imacec
-cual es el actual desglose del imacec
 por que se realizo el nuevo desglose del imacec
 que motivo el desglose actualizado del imacec
 que beneficios aporta el nuevo desglose del imacec
@@ -607,7 +567,6 @@ con que frecuencia se publica el pib y el imacec
 cuales son los principales componentes del efecto calendario imacec
 que factores influyen en el efecto calendario imacec
 como se descompone el efecto calendario en las series economicas
-como afecta el numero de dias laborales a la actividad economica
 que impacto tienen los dias laborales en la produccion y ventas
 como se mide el efecto calendario en la industria manufacturera
 por que algunos procesos industriales no se ven afectados por el efecto calendario

@@ -50,6 +50,8 @@ def set_seed(args):
     torch.manual_seed(args.seed)
     if not args.no_cuda and torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
+    elif not args.no_cuda and torch.backends.mps.is_available():
+        torch.mps.manual_seed(args.seed)
 
 
 def compute_metrics(intent_preds, intent_labels, slot_preds, slot_labels):

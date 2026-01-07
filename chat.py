@@ -27,7 +27,13 @@ logger = logging.getLogger(__name__)
 class ChatBot:
     def __init__(self, model_dir, no_cuda=False):
         self.model_dir = model_dir
-        self.device = "cuda" if torch.cuda.is_available() and not no_cuda else "cpu"
+        # Detectar dispositivo: CUDA > MPS > CPU
+        if torch.cuda.is_available() and not no_cuda:
+            self.device = "cuda"
+        elif torch.backends.mps.is_available() and not no_cuda:
+            self.device = "mps"
+        else:
+            self.device = "cpu"
         
         print(f"\n{Fore.CYAN}Cargando modelo PIBot...{Style.RESET_ALL}")
         
@@ -170,6 +176,10 @@ class ChatBot:
         
         if current_entity:
             entities[current_entity] = ' '.join(current_value)
+
+        # Cambiar visualización de 'component' a 'region'
+        if 'component' in entities:
+            entities['region'] = entities.pop('component')
         
         # Construir respuesta
         print(f"\n{Fore.CYAN}╔{'═'*58}╗")

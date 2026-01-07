@@ -26,7 +26,13 @@ logger = logging.getLogger(__name__)
 class Predictor:
     def __init__(self, model_dir, no_cuda=False):
         self.model_dir = model_dir
-        self.device = "cuda" if torch.cuda.is_available() and not no_cuda else "cpu"
+        # Detectar dispositivo: CUDA > MPS > CPU
+        if torch.cuda.is_available() and not no_cuda:
+            self.device = "cuda"
+        elif torch.backends.mps.is_available() and not no_cuda:
+            self.device = "mps"
+        else:
+            self.device = "cpu"
         
         # Cargar args del entrenamiento
         self.args = torch.load(os.path.join(model_dir, 'training_args.bin'), weights_only=False)

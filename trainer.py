@@ -33,8 +33,13 @@ class Trainer(object):
                                                       intent_label_lst=self.intent_label_lst,
                                                       slot_label_lst=self.slot_label_lst)
 
-        # GPU or CPU
-        self.device = "cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu"
+        # GPU or CPU or MPS (Apple Silicon)
+        if torch.cuda.is_available() and not args.no_cuda:
+            self.device = "cuda"
+        elif torch.backends.mps.is_available() and not args.no_cuda:
+            self.device = "mps"
+        else:
+            self.device = "cpu"
         self.model.to(self.device)
 
     def train(self):
