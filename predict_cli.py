@@ -3,7 +3,7 @@ Predicción interactiva desde línea de comandos.
 
 Uso:
     # Modo interactivo
-    python predict_cli.py --model_dir model_out/pibot_model_beto
+    python predict_cli.py --model_dir model_out/pibot_model_beto_v2
     
     # Texto único
     python predict_cli.py --model_dir model_out/pibot_model_beto --text "cual fue el ultimo imacec"
@@ -15,10 +15,82 @@ Uso:
 import argparse
 import os
 import logging
+import sys
+import json
+from pathlib import Path
+from datetime import date
 import torch
 from transformers import BertTokenizer
 
-from utils import get_intent_labels, get_slot_labels, MODEL_CLASSES, init_logger
+from utils import (
+    get_intent_labels,
+    get_indicator_labels,
+    get_metric_type_labels,
+    get_calc_mode_labels,
+    get_seasonal_labels,
+    get_req_form_labels,
+    get_context_mode_labels,
+    get_activity_labels,
+    get_slot_labels,
+    MODEL_CLASSES,
+    init_logger,
+)
+
+# Cargar normalizador de fechas desde util/normalizer_date.py
+_util_path = Path(__file__).resolve().parent / "util"
+if not _util_path.exists():
+    _util_path = Path(__file__).resolve().parent.parent / "util"
+sys.path.append(str(_util_path))
+from normalizer_date import extract_month_period, extract_month_range  # noqa: E402
+
+_SERIES_PATH = Path(__file__).resolve().parent / "series_catalog.json"
+
+
+def _load_series_catalog():
+    if not hasattr(_load_series_catalog, "_cache"):
+        try:
+            with open(_SERIES_PATH, "r", encoding="utf-8") as f:
+                _load_series_catalog._cache = json.load(f)
+        except Exception:
+            _load_series_catalog._cache = {}
+    return _load_series_catalog._cache
+
+
+def _find_series(indicator: str, activity: str, seasonal: str, metric_type: str):
+    catalog = _load_series_catalog()
+    indicator_l = indicator.lower() if indicator else None
+    activity_l = activity.lower() if activity else None
+    seasonal_l = seasonal.lower() if seasonal else None
+    metric_type_l = metric_type.lower() if metric_type else None
+
+    best = None
+    for sid, entry in catalog.items():
+        if not isinstance(entry, dict):
+            continue
+        sn = entry.get("standard_names", {}) or {}
+        ind = (sn.get("indicator") or "").lower()
+        act = (sn.get("activity") or "").lower()
+        seas = (sn.get("seasonal") or sn.get("seasonality") or "").lower()
+        mt = (sn.get("metric_type") or "").lower()
+
+        if indicator_l and ind != indicator_l:
+            continue
+        if activity_l and act and act != activity_l:
+            continue
+        if seasonal_l and seas and seas != seasonal_l:
+            continue
+        if metric_type_l:
+            if not mt or mt != metric_type_l:
+                continue
+
+        best = {
+            "id": sid,
+            "title": entry.get("title"),
+            "source_url": entry.get("source_url"),
+        }
+        break
+
+    return best
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +111,13 @@ class Predictor:
         
         # Cargar labels
         self.intent_label_lst = get_intent_labels(self.args)
+        self.indicator_label_lst = get_indicator_labels(self.args)
+        self.metric_type_label_lst = get_metric_type_labels(self.args)
+        self.calc_mode_label_lst = get_calc_mode_labels(self.args)
+        self.seasonal_label_lst = get_seasonal_labels(self.args)
+        self.req_form_label_lst = get_req_form_labels(self.args)
+        self.context_mode_label_lst = get_context_mode_labels(self.args)
+        self.activity_label_lst = get_activity_labels(self.args)
         self.slot_label_lst = get_slot_labels(self.args)
         
         # Cargar tokenizer
@@ -51,6 +130,13 @@ class Predictor:
             config=config_class.from_pretrained(model_dir),
             args=self.args,
             intent_label_lst=self.intent_label_lst,
+            indicator_label_lst=self.indicator_label_lst,
+            metric_type_label_lst=self.metric_type_label_lst,
+            calc_mode_label_lst=self.calc_mode_label_lst,
+            seasonal_label_lst=self.seasonal_label_lst,
+            req_form_label_lst=self.req_form_label_lst,
+            context_mode_label_lst=self.context_mode_label_lst,
+            activity_label_lst=self.activity_label_lst,
             slot_label_lst=self.slot_label_lst
         )
         self.model.to(self.device)
@@ -106,37 +192,108 @@ class Predictor:
                 'attention_mask': attention_mask,
                 'token_type_ids': token_type_ids,
                 'intent_label_ids': None,
+                'indicator_label_ids': None,
+                'metric_type_label_ids': None,
+                'calc_mode_label_ids': None,
+                'seasonal_label_ids': None,
+                'req_form_label_ids': None,
+                'context_mode_label_ids': None,
+                'activity_label_ids': None,
                 'slot_labels_ids': None
             }
             outputs = self.model(**inputs)
-            _, (intent_logits, slot_logits) = outputs[:2]
+            logits = outputs[1]
+            (
+                intent_logits,
+                indicator_logits,
+                metric_type_logits,
+                calc_mode_logits,
+                seasonal_logits,
+                req_form_logits,
+                context_mode_logits,
+                activity_logits,
+                slot_logits,
+            ) = logits
             
             # Intent
             intent_pred = intent_logits.argmax(dim=-1).item()
             intent_label = self.intent_label_lst[intent_pred]
             intent_confidence = torch.softmax(intent_logits, dim=-1)[0][intent_pred].item()
-            
-            # Slots
-            if self.args.use_crf:
-                slot_preds = self.model.crf.decode(slot_logits, mask=attention_mask.bool())[0]
+
+            def predict_head(logit_tensor, label_list):
+                """Return (label, confidence) for a classification head."""
+                if logit_tensor is None or logit_tensor.numel() == 0:
+                    return None, None
+                pred_idx = logit_tensor.argmax(dim=-1).item()
+                label = label_list[pred_idx] if label_list else None
+                confidence = torch.softmax(logit_tensor, dim=-1)[0][pred_idx].item()
+                return label, confidence
+
+            indicator_label, indicator_confidence = predict_head(indicator_logits, self.indicator_label_lst)
+            metric_type_label, metric_type_confidence = predict_head(metric_type_logits, self.metric_type_label_lst)
+            calc_mode_label, calc_mode_confidence = predict_head(calc_mode_logits, self.calc_mode_label_lst)
+            seasonal_label, seasonal_confidence = predict_head(seasonal_logits, self.seasonal_label_lst)
+            req_form_label, req_form_confidence = predict_head(req_form_logits, self.req_form_label_lst)
+            context_mode_label, context_mode_confidence = predict_head(context_mode_logits, self.context_mode_label_lst)
+            activity_label, activity_confidence = predict_head(activity_logits, self.activity_label_lst)
+
+            # Fechas según req_form
+            point_period = None
+            point_period_meta = None
+            range_period = None
+            range_period_meta = None
+            if req_form_label == 'point':
+                parsed = extract_month_period(text)
+                if parsed:
+                    point_period = parsed.get('period')
+                    point_period_meta = parsed
+            elif req_form_label == 'range':
+                parsed_range = extract_month_range(text)
+                if parsed_range:
+                    range_period = {
+                        'start': parsed_range['start']['period'],
+                        'end': parsed_range['end']['period'],
+                    }
+                    range_period_meta = parsed_range
+
+            series_info = None
+            series_note = None
+        if metric_type_label == 'contribution' and (not activity_label or activity_label == 'none'):
+            if calc_mode_label == 'yoy':
+                series_note = "Buscar actividad mas relevante en imacec contrib. a/a"
+            elif calc_mode_label == 'prev_period':
+                series_note = "Buscar actividad mas relevante en imacec contrib. mes/mes"
             else:
-                slot_preds = slot_logits.argmax(dim=-1)[0].cpu().numpy()
-            
-            # Mapear slots a palabras originales
+                series_note = "Buscar actividad mas relevante en imacec contribución"
+        else:
+            series_info = _find_series(indicator_label, activity_label, seasonal_label, metric_type_label)
             slot_labels = []
-            for i, word in enumerate(words):
-                # Encontrar el primer subtoken de esta palabra
-                subtoken_idx = word_ids.index(i) if i in word_ids else -1
-                if subtoken_idx >= 0 and subtoken_idx < len(slot_preds):
-                    slot_labels.append(self.slot_label_lst[slot_preds[subtoken_idx]])
-                else:
-                    slot_labels.append("O")
         
         return {
             'text': text,
             'words': words,
             'intent': intent_label,
             'intent_confidence': intent_confidence,
+            'indicator': indicator_label,
+            'indicator_confidence': indicator_confidence,
+            'metric_type': metric_type_label,
+            'metric_type_confidence': metric_type_confidence,
+            'calc_mode': calc_mode_label,
+            'calc_mode_confidence': calc_mode_confidence,
+            'seasonal': seasonal_label,
+            'seasonal_confidence': seasonal_confidence,
+            'req_form': req_form_label,
+            'req_form_confidence': req_form_confidence,
+            'context_mode': context_mode_label,
+            'context_mode_confidence': context_mode_confidence,
+            'activity': activity_label,
+            'activity_confidence': activity_confidence,
+            'point_period': point_period,
+            'point_period_meta': point_period_meta,
+            'range_period': range_period,
+            'range_period_meta': range_period_meta,
+            'series_info': series_info,
+            'series_note': series_note,
             'slots': slot_labels
         }
     
@@ -147,17 +304,43 @@ class Predictor:
         output.append(f"Texto: {result['text']}")
         output.append(f"{'='*60}")
         output.append(f"\nIntención: {result['intent']} (confianza: {result['intent_confidence']:.2%})")
-        output.append(f"\nSlots detectados:")
-        output.append(f"{'Palabra':<20} {'Etiqueta':<20}")
-        output.append(f"{'-'*40}")
+        output.append(f"Indicador: {result.get('indicator') or 'N/A'}" + (f" (confianza: {result.get('indicator_confidence', 0):.2%})" if result.get('indicator_confidence') is not None else ""))
+        output.append(f"Tipo de métrica: {result.get('metric_type') or 'N/A'}" + (f" (confianza: {result.get('metric_type_confidence', 0):.2%})" if result.get('metric_type_confidence') is not None else ""))
+        output.append(f"Modo de cálculo: {result.get('calc_mode') or 'N/A'}" + (f" (confianza: {result.get('calc_mode_confidence', 0):.2%})" if result.get('calc_mode_confidence') is not None else ""))
+        output.append(f"Temporalidad: {result.get('seasonal') or 'N/A'}" + (f" (confianza: {result.get('seasonal_confidence', 0):.2%})" if result.get('seasonal_confidence') is not None else ""))
+        output.append(f"Formato de req.: {result.get('req_form') or 'N/A'}" + (f" (confianza: {result.get('req_form_confidence', 0):.2%})" if result.get('req_form_confidence') is not None else ""))
+        output.append(f"Contexto: {result.get('context_mode') or 'N/A'}" + (f" (confianza: {result.get('context_mode_confidence', 0):.2%})" if result.get('context_mode_confidence') is not None else ""))
+        output.append(f"Actividad: {result.get('activity') or 'N/A'}" + (f" (confianza: {result.get('activity_confidence', 0):.2%})" if result.get('activity_confidence') is not None else ""))
+
+        # Detalle de serie
+        series_info = result.get('series_info')
+        series_note = result.get('series_note')
+        if series_info:
+            output.append("\n" + "═"*60)
+            output.append(f"Serie: {series_info.get('title') or 'N/A'}")
+            if series_info.get('id'):
+                output.append(f"  · Código: {series_info['id']}")
+            if result.get('calc_mode') == 'yoy':
+                output.append("═"*60)
+                output.append("Variación respecto al año anterior")
+            elif result.get('calc_mode') == 'prev_period':
+                output.append("═"*60)
+                output.append("Variación respecto al periodo anterior")
+        if series_note:
+            output.append("\n" + "═"*60)
+            output.append(series_note)
         
-        for word, slot in zip(result['words'], result['slots']):
-            if slot != 'O':
-                output.append(f"{word:<20} {slot:<20}")
-        
-        if all(s == 'O' for s in result['slots']):
-            output.append("  (ningún slot detectado)")
-        
+        output.append("\n" + "═"*60)
+        req_form = result.get('req_form')
+        if req_form == 'latest':
+            output.append("Fecha: última cifra disponible")
+        elif req_form == 'point':
+            date_str = result.get('point_period') or 'N/A'
+            output.append(f"Fecha: {date_str}")
+        elif req_form == 'range':
+            rng = result.get('range_period')
+            range_str = f"{rng['start']} a {rng['end']}" if rng else "N/A"
+            output.append(f"Fecha: {range_str}")
         output.append(f"{'='*60}\n")
         return '\n'.join(output)
 

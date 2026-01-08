@@ -74,7 +74,7 @@ def process_excel_pandas(input_file, sheet_name=None):
     return rows
 
 
-def process_file(dataset, input_file, sheet_name=None):
+def process_file(dataset, input_file, sheet_name=None, skip_header=True):
     """Procesa el archivo Excel y genera los archivos de datos."""
     
     base_path = Path('data') / dataset
@@ -109,11 +109,13 @@ def process_file(dataset, input_file, sheet_name=None):
 
     # Procesar cada fila del Excel
     for row_idx, row in enumerate(rows):
-        # Skip header row si es necesario (opcionalmente detectar si la primera fila es encabezado)
-        if row_idx == 0:
-            # Intentar detectar si es encabezado por contenido
-            # Normalmente la primera fila tiene texto descriptivo, aquí asumimos que es data
-            pass
+        # Omitir fila de encabezado si corresponde
+        if skip_header and row_idx == 0:
+            # Heurística: si la primera celda contiene 'text' o la segunda 'intent', asumimos encabezado
+            first_cell = str(row[0]).strip().lower() if len(row) > 0 and row[0] else ""
+            second_cell = str(row[1]).strip().lower() if len(row) > 1 and row[1] else ""
+            if first_cell == 'text' or second_cell == 'intent':
+                continue
         
         # Asegurar que tenemos suficientes columnas
         if len(row) < len(head_names):
@@ -195,9 +197,10 @@ def main():
     parser.add_argument('--dataset', type=str, required=True, help='Nombre del dataset (carpeta en data/)')
     parser.add_argument('--input_file', type=str, required=True, help='Ruta al archivo Excel')
     parser.add_argument('--sheet_name', type=str, default=None, help='Nombre de la hoja del Excel (por defecto: primera hoja)')
+    parser.add_argument('--no_skip_header', action='store_true', help='No saltar la primera fila aunque sea encabezado')
     args = parser.parse_args()
 
-    process_file(args.dataset, args.input_file, sheet_name=args.sheet_name)
+    process_file(args.dataset, args.input_file, sheet_name=args.sheet_name, skip_header=not args.no_skip_header)
 
 
 if __name__ == '__main__':

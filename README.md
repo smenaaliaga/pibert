@@ -87,12 +87,12 @@ python main.py --task {task_name} \
 ```
 Ejemplo básico:
 ```bash
-python main.py --task pibimacecv2 --model_type beto --model_out pibot_model_beto_v2 --do_train --do_eval
+python main.py 
 ```
 
 Configuración optimizada para dataset pibimacec (816 ejemplos):
 ```bash
-python main.py --task pibimacec --model_type beto --model_out pibot_model_beto_largo --do_train --do_eval --num_train_epochs 20 --learning_rate 3e-5 --train_batch_size 16 --eval_batch_size 32 --max_seq_len 64 --save_steps 20 --logging_steps 10 --ignore_index -100
+python main.py --task pibimacecv2 --model_type beto --model_out pibot_model_beto_v2 --do_train --do_eval --max_seq_len 64 --train_batch_size 16 --eval_batch_size 64 --learning_rate 2e-5 --num_train_epochs 10 --weight_decay 0.01 --warmup_steps 100 --dropout_rate 0.1
 ```
 
 Parámetros justificados:

@@ -6,7 +6,17 @@ import logging
 import torch
 from torch.utils.data import TensorDataset
 
-from utils import get_intent_labels, get_indicator_labels, get_metric_type_labels, get_calc_mode_labels, get_seasonal_labels, get_req_form_labels, get_context_mode_labels, get_slot_labels
+from utils import (
+    get_intent_labels,
+    get_indicator_labels,
+    get_metric_type_labels,
+    get_calc_mode_labels,
+    get_seasonal_labels,
+    get_req_form_labels,
+    get_context_mode_labels,
+    get_activity_labels,
+    get_slot_labels,
+)
 
 logger = logging.getLogger(__name__)
 

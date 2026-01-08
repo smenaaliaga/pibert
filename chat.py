@@ -2,21 +2,82 @@
 Chat interactivo con PIBot Joint BERT.
 
 Uso:
-    python chat.py --model_dir model_out/pibot_model_beto
+    python chat.py --model_dir model_out/pibot_model_beto_v2
 """
 
 import argparse
 import os
 import logging
 import torch
+import json
 from datetime import date
+from pathlib import Path
 from transformers import BertTokenizer
 from colorama import init, Fore, Style
 
-from utils import get_intent_labels, get_slot_labels, MODEL_CLASSES, init_logger
-from util.period_normalizer import standardize_imacec_time_ref
-from util.indicator_normalizer import detect_indicator
-from util.component_normalizer import ComponentNormalizer
+from utils import (
+    get_intent_labels,
+    get_indicator_labels,
+    get_metric_type_labels,
+    get_calc_mode_labels,
+    get_seasonal_labels,
+    get_req_form_labels,
+    get_context_mode_labels,
+    get_activity_labels,
+    get_slot_labels,
+    MODEL_CLASSES,
+    init_logger,
+)
+from util.normalizer_date import extract_month_period, extract_month_range
+
+_SERIES_PATH = Path(__file__).resolve().parent / "series_catalog.json"
+
+
+def _load_series_catalog():
+    if not hasattr(_load_series_catalog, "_cache"):
+        try:
+            with open(_SERIES_PATH, "r", encoding="utf-8") as f:
+                _load_series_catalog._cache = json.load(f)
+        except Exception:
+            _load_series_catalog._cache = {}
+    return _load_series_catalog._cache
+
+
+def _find_series(indicator: str, activity: str, seasonal: str, metric_type: str):
+    catalog = _load_series_catalog()
+    indicator_l = indicator.lower() if indicator else None
+    activity_l = activity.lower() if activity else None
+    seasonal_l = seasonal.lower() if seasonal else None
+    metric_type_l = metric_type.lower() if metric_type else None
+
+    best = None
+    for sid, entry in catalog.items():
+        if not isinstance(entry, dict):
+            continue
+        sn = entry.get("standard_names", {}) or {}
+        ind = (sn.get("indicator") or "").lower()
+        act = (sn.get("activity") or "").lower()
+        seas = (sn.get("seasonal") or sn.get("seasonality") or "").lower()
+        mt = (sn.get("metric_type") or "").lower()
+
+        if indicator_l and ind != indicator_l:
+            continue
+        if activity_l and act and act != activity_l:
+            continue
+        if seasonal_l and seas and seas != seasonal_l:
+            continue
+        if metric_type_l:
+            if not mt or mt != metric_type_l:
+                continue
+
+        best = {
+            "id": sid,
+            "title": entry.get("title"),
+            "source_url": entry.get("source_url"),
+        }
+        break
+
+    return best
 
 # Inicializar colorama para Windows
 init(autoreset=True)
@@ -40,8 +101,15 @@ class ChatBot:
         # Cargar args del entrenamiento
         self.args = torch.load(os.path.join(model_dir, 'training_args.bin'), weights_only=False)
         
-        # Cargar labels
+        # Cargar labels (todos los heads)
         self.intent_label_lst = get_intent_labels(self.args)
+        self.indicator_label_lst = get_indicator_labels(self.args)
+        self.metric_type_label_lst = get_metric_type_labels(self.args)
+        self.calc_mode_label_lst = get_calc_mode_labels(self.args)
+        self.seasonal_label_lst = get_seasonal_labels(self.args)
+        self.req_form_label_lst = get_req_form_labels(self.args)
+        self.context_mode_label_lst = get_context_mode_labels(self.args)
+        self.activity_label_lst = get_activity_labels(self.args)
         self.slot_label_lst = get_slot_labels(self.args)
         
         # Cargar tokenizer
@@ -54,17 +122,28 @@ class ChatBot:
             config=config_class.from_pretrained(model_dir),
             args=self.args,
             intent_label_lst=self.intent_label_lst,
-            slot_label_lst=self.slot_label_lst
+            indicator_label_lst=self.indicator_label_lst,
+            metric_type_label_lst=self.metric_type_label_lst,
+            calc_mode_label_lst=self.calc_mode_label_lst,
+            seasonal_label_lst=self.seasonal_label_lst,
+            req_form_label_lst=self.req_form_label_lst,
+            context_mode_label_lst=self.context_mode_label_lst,
+            activity_label_lst=self.activity_label_lst,
+            slot_label_lst=self.slot_label_lst,
         )
         self.model.to(self.device)
         self.model.eval()
         
-        # Inicializar normalizadores
-        self.component_normalizer = ComponentNormalizer()
-        
         print(f"{Fore.GREEN}✓ Modelo cargado correctamente{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}  Dispositivo: {self.device.upper()}{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}  Intenciones: {len(self.intent_label_lst)}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}  Indicadores: {len(self.indicator_label_lst)}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}  Métrica: {len(self.metric_type_label_lst)}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}  Calc mode: {len(self.calc_mode_label_lst)}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}  Temporalidad: {len(self.seasonal_label_lst)}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}  Req form: {len(self.req_form_label_lst)}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}  Contexto: {len(self.context_mode_label_lst)}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}  Actividad: {len(self.activity_label_lst)}{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}  Slots: {len(self.slot_label_lst)}{Style.RESET_ALL}\n")
     
     def predict(self, text):
@@ -114,178 +193,187 @@ class ChatBot:
                 'attention_mask': attention_mask,
                 'token_type_ids': token_type_ids,
                 'intent_label_ids': None,
-                'slot_labels_ids': None
+                'indicator_label_ids': None,
+                'metric_type_label_ids': None,
+                'calc_mode_label_ids': None,
+                'seasonal_label_ids': None,
+                'req_form_label_ids': None,
+                'context_mode_label_ids': None,
+                'activity_label_ids': None,
+                'slot_labels_ids': None,
             }
             outputs = self.model(**inputs)
-            _, (intent_logits, slot_logits) = outputs[:2]
-            
+            logits = outputs[1]
+            (
+                intent_logits,
+                indicator_logits,
+                metric_type_logits,
+                calc_mode_logits,
+                seasonal_logits,
+                req_form_logits,
+                context_mode_logits,
+                activity_logits,
+                slot_logits,
+            ) = logits
+
             # Intent
             intent_pred = intent_logits.argmax(dim=-1).item()
             intent_label = self.intent_label_lst[intent_pred]
             intent_confidence = torch.softmax(intent_logits, dim=-1)[0][intent_pred].item()
-            
-            # Slots
-            if self.args.use_crf:
-                slot_preds = self.model.crf.decode(slot_logits)[0]
-            else:
-                slot_preds = slot_logits.argmax(dim=-1)[0].cpu().numpy()
-            
-            # Mapear slots a palabras originales
-            slot_labels = []
-            for i, word in enumerate(words):
-                # Encontrar el primer subtoken de esta palabra
-                subtoken_idx = word_ids.index(i) if i in word_ids else -1
-                if subtoken_idx >= 0 and subtoken_idx < len(slot_preds):
-                    slot_labels.append(self.slot_label_lst[slot_preds[subtoken_idx]])
+
+            def predict_head(logit_tensor, label_list):
+                if logit_tensor is None or logit_tensor.numel() == 0:
+                    return None, None
+                pred_idx = logit_tensor.argmax(dim=-1).item()
+                label = label_list[pred_idx] if label_list else None
+                confidence = torch.softmax(logit_tensor, dim=-1)[0][pred_idx].item()
+                return label, confidence
+
+            indicator_label, indicator_confidence = predict_head(indicator_logits, self.indicator_label_lst)
+            metric_type_label, metric_type_confidence = predict_head(metric_type_logits, self.metric_type_label_lst)
+            calc_mode_label, calc_mode_confidence = predict_head(calc_mode_logits, self.calc_mode_label_lst)
+            seasonal_label, seasonal_confidence = predict_head(seasonal_logits, self.seasonal_label_lst)
+            req_form_label, req_form_confidence = predict_head(req_form_logits, self.req_form_label_lst)
+            context_mode_label, context_mode_confidence = predict_head(context_mode_logits, self.context_mode_label_lst)
+            activity_label, activity_confidence = predict_head(activity_logits, self.activity_label_lst)
+
+            # Fechas según req_form
+            point_period = None
+            point_period_meta = None
+            range_period = None
+            range_period_meta = None
+            if req_form_label == 'point':
+                parsed = extract_month_period(text)
+                if parsed:
+                    point_period = parsed.get('period')
+                    point_period_meta = parsed
+            elif req_form_label == 'range':
+                parsed_range = extract_month_range(text)
+                if parsed_range:
+                    range_period = {
+                        'start': parsed_range['start']['period'],
+                        'end': parsed_range['end']['period'],
+                    }
+                    range_period_meta = parsed_range
+            series_info = None
+            series_note = None
+            if metric_type_label == 'contribution' and (not activity_label or activity_label == 'none'):
+                if calc_mode_label == 'yoy':
+                    series_note = "Buscar actividad mas relevante en imacec contrib. a/a"
+                elif calc_mode_label == 'prev_period':
+                    series_note = "Buscar actividad mas relevante en imacec contrib. mes/mes"
                 else:
-                    slot_labels.append("O")
-        
+                    series_note = "Buscar actividad mas relevante en imacec contribución"
+            else:
+                series_info = _find_series(indicator_label, activity_label, seasonal_label, metric_type_label)
+
+            # Slots deshabilitados
+            slot_labels = []
+
         return {
             'text': text,
             'words': words,
             'intent': intent_label,
             'intent_confidence': intent_confidence,
-            'slots': slot_labels
+            'indicator': indicator_label,
+            'indicator_confidence': indicator_confidence,
+            'metric_type': metric_type_label,
+            'metric_type_confidence': metric_type_confidence,
+            'calc_mode': calc_mode_label,
+            'calc_mode_confidence': calc_mode_confidence,
+            'seasonal': seasonal_label,
+            'seasonal_confidence': seasonal_confidence,
+            'req_form': req_form_label,
+            'req_form_confidence': req_form_confidence,
+            'context_mode': context_mode_label,
+            'context_mode_confidence': context_mode_confidence,
+            'activity': activity_label,
+            'activity_confidence': activity_confidence,
+            'point_period': point_period,
+            'point_period_meta': point_period_meta,
+            'range_period': range_period,
+            'range_period_meta': range_period_meta,
+            'series_info': series_info,
+            'series_note': series_note,
+            'slots': slot_labels,
         }
     
     def format_response(self, result):
-        """Formatea la respuesta de manera amigable."""
-        intent = result['intent']
-        confidence = result['intent_confidence']
-        words = result['words']
-        slots = result['slots']
-        
-        # Extraer entidades
-        entities = {}
-        current_entity = None
-        current_value = []
-        
-        for word, slot in zip(words, slots):
-            if slot.startswith('B-'):
-                if current_entity:
-                    entities[current_entity] = ' '.join(current_value)
-                current_entity = slot[2:]
-                current_value = [word]
-            elif slot.startswith('I-') and current_entity:
-                current_value.append(word)
-            else:
-                if current_entity:
-                    entities[current_entity] = ' '.join(current_value)
-                    current_entity = None
-                    current_value = []
-        
-        if current_entity:
-            entities[current_entity] = ' '.join(current_value)
+        """Formatea la respuesta de manera amigable (slots deshabilitados)."""
+        print(f"\n{Fore.CYAN}╔{'═'*70}╗")
+        print(f"{Fore.CYAN}║ {Fore.WHITE}RESPUESTA{' '*60}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}╠{'═'*70}╣")
 
-        # Cambiar visualización de 'component' a 'region'
-        if 'component' in entities:
-            entities['region'] = entities.pop('component')
+        def line(label, value, conf):
+            text = f"{label}: {value or 'N/A'}"
+            conf_text = f" ({conf:.1%})" if conf is not None else ""
+            full = text + conf_text
+            padding = 68 - len(full)
+            padding = padding if padding > 0 else 1
+            print(f"{Fore.CYAN}║ {Fore.YELLOW}{full}{' '*padding}{Fore.CYAN}║")
+
+        line("Intención", result['intent'], result['intent_confidence'])
+        line("Indicador", result.get('indicator'), result.get('indicator_confidence'))
+        line("Tipo métrica", result.get('metric_type'), result.get('metric_type_confidence'))
+        line("Calc mode", result.get('calc_mode'), result.get('calc_mode_confidence'))
+        line("Temporalidad", result.get('seasonal'), result.get('seasonal_confidence'))
+        line("Req form", result.get('req_form'), result.get('req_form_confidence'))
+        line("Contexto", result.get('context_mode'), result.get('context_mode_confidence'))
+        line("Actividad", result.get('activity'), result.get('activity_confidence'))
+
+        series_info = result.get('series_info')
+        series_note = result.get('series_note')
+        if series_info:
+            print(f"{Fore.CYAN}╠{'═'*70}╣")
+            title = series_info.get('title') or 'N/A'
+            sid = series_info.get('id') or 'N/A'
+            padding_t = 68 - len(title) - len("Serie: ")
+            padding_t = padding_t if padding_t > 0 else 1
+            print(f"{Fore.CYAN}║ {Fore.GREEN}Serie: {title}{' '*padding_t}{Fore.CYAN}║")
+            padding_id = 68 - len(sid) - len("Código: ")
+            padding_id = padding_id if padding_id > 0 else 1
+            print(f"{Fore.CYAN}║ {Fore.GREEN}Código: {sid}{' '*padding_id}{Fore.CYAN}║")
+            if result.get('calc_mode') == 'yoy':
+                print(f"{Fore.CYAN}╠{'═'*70}╣")
+                text = "Variación respecto al año anterior"
+                padding = 68 - len(text)
+                padding = padding if padding > 0 else 1
+                print(f"{Fore.CYAN}║ {Fore.GREEN}{text}{' '*padding}{Fore.CYAN}║")
+            elif result.get('calc_mode') == 'prev_period':
+                print(f"{Fore.CYAN}╠{'═'*70}╣")
+                text = "Variación respecto al periodo anterior"
+                padding = 68 - len(text)
+                padding = padding if padding > 0 else 1
+                print(f"{Fore.CYAN}║ {Fore.GREEN}{text}{' '*padding}{Fore.CYAN}║")
+        if series_note:
+            print(f"{Fore.CYAN}╠{'═'*70}╣")
+            padding = 68 - len(series_note)
+            padding = padding if padding > 0 else 1
+            print(f"{Fore.CYAN}║ {Fore.GREEN}{series_note}{' '*padding}{Fore.CYAN}║")
         
-        # Construir respuesta
-        print(f"\n{Fore.CYAN}╔{'═'*58}╗")
-        print(f"{Fore.CYAN}║ {Fore.WHITE}RESPUESTA{' '*48}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}╠{'═'*58}╣")
-        
-        # Intención
-        confidence_bar = self._get_confidence_bar(confidence)
-        # Ancho total: 57 - "Intención: " (11) = 46 para intent + espacio final
-        intent_padding = 46 - len(intent)
-        print(f"{Fore.CYAN}║ {Fore.YELLOW}Intención:{Style.RESET_ALL} {Fore.GREEN}{intent}{Style.RESET_ALL}{' '*intent_padding}{Fore.CYAN}║")
-        
-        # Ancho total: 57 - "Confianza: " (11) - barra (20) - " " (1) = 25 para porcentaje + espacio final
-        conf_text = f"{confidence:.1%}"
-        conf_padding = 25 - len(conf_text)
-        print(f"{Fore.CYAN}║ {Fore.YELLOW}Confianza:{Style.RESET_ALL} {confidence_bar} {conf_text}{' '*conf_padding}{Fore.CYAN}║")
-        
-        # Entidades
-        if entities:
-            print(f"{Fore.CYAN}╠{'═'*58}╣")
-            print(f"{Fore.CYAN}║ {Fore.YELLOW}Entidades detectadas:{' '*36}{Fore.CYAN}║")
-            for entity_type, entity_value in entities.items():
-                # Ancho total: 57 - "  • " (4) - ": " (2) = 51 para entity_type + display_value + espacio final
-                max_value_len = 51 - len(entity_type) - 2
-                display_value = entity_value if len(entity_value) <= max_value_len else entity_value[:max_value_len-3] + "..."
-                entity_padding = 51 - len(entity_type) - len(display_value)
-                print(f"{Fore.CYAN}║   {Fore.MAGENTA}• {entity_type}:{Style.RESET_ALL} {display_value}{' '*entity_padding}{Fore.CYAN}║")
-        
-        # Normalización de período si se detectó
-        if 'period' in entities:
-            period_text = entities['period']
-            normalized = standardize_imacec_time_ref(period_text, date.today())
-            if normalized:
-                print(f"{Fore.CYAN}╠{'═'*58}╣")
-                print(f"{Fore.CYAN}║ {Fore.YELLOW}Período normalizado:{' '*37}{Fore.CYAN}║")
-                
-                # Formato de fecha según granularidad
-                granularity = normalized['granularity']
-                period_key = normalized['period_key']
-                norm_confidence = normalized['confidence']
-                
-                # Icono según confianza
-                conf_icon = '✓' if norm_confidence == 'high' else '~' if norm_confidence == 'medium' else '?'
-                
-                if granularity == 'month':
-                    date_str = normalized['start_date'].strftime('%B %Y').capitalize()
-                elif granularity == 'quarter':
-                    date_str = f"Trimestre {period_key.split('-Q')[1]} de {period_key.split('-')[0]}"
-                elif granularity == 'year':
-                    date_str = f"Año {period_key}"
-                else:
-                    date_str = period_key
-                
-                display_str = f"{conf_icon} {date_str}"
-                # Ancho total: 60 - 1 (║) - 3 (espacios) - 2 (espacios finales) - 1 (║) = 53 para display_str + padding
-                padding = 53 - len(display_str)
-                print(f"{Fore.CYAN}║   {Fore.CYAN}{display_str}{' '*padding}  {Fore.CYAN}║")
-        
-        # Normalización de indicador si se detectó
-        if 'indicator' in entities:
-            indicator_text = entities['indicator']
-            normalized_indicator = detect_indicator(indicator_text, use_fuzzy=True)
-            if normalized_indicator:
-                print(f"{Fore.CYAN}╠{'═'*58}╣")
-                print(f"{Fore.CYAN}║ {Fore.YELLOW}Indicador normalizado:{' '*35}{Fore.CYAN}║")
-                
-                if normalized_indicator == 'imacec':
-                    display_str = "✓ IMACEC - Indicador Mensual de Actividad Económica"
-                elif normalized_indicator == 'pib':
-                    display_str = "✓ PIB - Producto Interno Bruto"
-                else:
-                    display_str = f"✓ {normalized_indicator.upper()}"
-                
-                # Ancho total: 60 - 1 (║ izq) - 3 (espacios antes) - 1 (║ der) = 55 para display_str + padding
-                padding = 55 - len(display_str)
-                print(f"{Fore.CYAN}║   {Fore.GREEN}{display_str}{' '*padding}{Fore.CYAN}║")
-        
-        # Normalización de componente si se detectó
-        if 'component' in entities:
-            component_text = entities['component']
-            normalized_component = self.component_normalizer.normalize(component_text)
-            
-            print(f"{Fore.CYAN}╠{'═'*58}╣")
-            print(f"{Fore.CYAN}║ {Fore.YELLOW}Componente normalizado:{' '*34}{Fore.CYAN}║")
-            
-            display_str = f"✓ {normalized_component.title()}"
-            
-            # Ancho total: 60 - 1 (║ izq) - 3 (espacios antes) - 1 (║ der) = 55 para display_str + padding
-            padding = 55 - len(display_str)
-            print(f"{Fore.CYAN}║   {Fore.GREEN}{display_str}{' '*padding}{Fore.CYAN}║")
-        
-        print(f"{Fore.CYAN}╚{'═'*58}╝{Style.RESET_ALL}\n")
-    
-    def _get_confidence_bar(self, confidence, width=20):
-        """Genera barra de confianza visual."""
-        filled = int(confidence * width)
-        bar = '█' * filled + '░' * (width - filled)
-        
-        if confidence >= 0.8:
-            color = Fore.GREEN
-        elif confidence >= 0.5:
-            color = Fore.YELLOW
+        # Fecha al final
+        print(f"{Fore.CYAN}╠{'═'*70}╣")
+        req_form = result.get('req_form')
+        if req_form == 'latest':
+            text = "última cifra disponible"
+            label = "Fecha: "
+        elif req_form == 'point':
+            text = result.get('point_period') or 'N/A'
+            label = "Fecha: "
+        elif req_form == 'range':
+            rng = result.get('range_period')
+            text = f"{rng['start']} a {rng['end']}" if rng else "N/A"
+            label = "Fecha: "
         else:
-            color = Fore.RED
+            text = None
+            label = None
         
-        return f"{color}{bar}{Style.RESET_ALL}"
+        if text is not None:
+            padding = 68 - len(text) - len(label)
+            padding = padding if padding > 0 else 1
+            print(f"{Fore.CYAN}║ {Fore.GREEN}{label}{text}{' '*padding}{Fore.CYAN}║")
+        
+        print(f"{Fore.CYAN}╚{'═'*70}╝{Style.RESET_ALL}\n")
     
     def run(self):
         """Inicia el chat interactivo."""
@@ -332,30 +420,30 @@ class ChatBot:
     
     def _show_help(self):
         """Muestra ayuda."""
-        print(f"\n{Fore.CYAN}╔{'═'*58}╗")
-        print(f"{Fore.CYAN}║ {Fore.WHITE}AYUDA{' '*52}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}╠{'═'*58}╣")
-        print(f"{Fore.CYAN}║ {Fore.YELLOW}Este chatbot puede ayudarte con consultas sobre:{' '*10}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}║   {Fore.GREEN}• Indicadores económicos (PIB, IMACEC, etc.){' '*11}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}║   {Fore.GREEN}• Fechas y períodos específicos{' '*25}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}║   {Fore.GREEN}• Variaciones y comparaciones{' '*27}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}║{' '*58}║")
-        print(f"{Fore.CYAN}║ {Fore.YELLOW}El modelo detecta:{' '*39}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}║   {Fore.MAGENTA}• Intención de tu consulta{' '*30}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}║   {Fore.MAGENTA}• Entidades relevantes (fechas, indicadores){' '*12}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}╚{'═'*58}╝{Style.RESET_ALL}\n")
+        print(f"\n{Fore.CYAN}╔{'═'*70}╗")
+        print(f"{Fore.CYAN}║ {Fore.WHITE}AYUDA{' '*64}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}╠{'═'*70}╣")
+        print(f"{Fore.CYAN}║ {Fore.YELLOW}Este chatbot puede ayudarte con consultas sobre:{' '*22}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}║   {Fore.GREEN}• Indicadores económicos (PIB, IMACEC, etc.){' '*23}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}║   {Fore.GREEN}• Fechas y períodos específicos{' '*37}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}║   {Fore.GREEN}• Variaciones y comparaciones{' '*39}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}║{' '*70}║")
+        print(f"{Fore.CYAN}║ {Fore.YELLOW}El modelo detecta:{' '*51}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}║   {Fore.MAGENTA}• Intención de tu consulta{' '*42}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}║   {Fore.MAGENTA}• Entidades relevantes (fechas, indicadores){' '*24}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}╚{'═'*70}╝{Style.RESET_ALL}\n")
     
     def _show_examples(self):
         """Muestra ejemplos de consultas."""
-        print(f"\n{Fore.CYAN}╔{'═'*58}╗")
-        print(f"{Fore.CYAN}║ {Fore.WHITE}EJEMPLOS DE CONSULTAS{' '*36}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}╠{'═'*58}╣")
-        print(f"{Fore.CYAN}║ {Fore.GREEN}• cual fue el imacec de enero 2023{' '*21}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}║ {Fore.GREEN}• dame el ultimo pib{' '*36}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}║ {Fore.GREEN}• como estuvo el imacec el mes pasado{' '*19}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}║ {Fore.GREEN}• pib del segundo trimestre{' '*29}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}║ {Fore.GREEN}• variacion del imacec de diciembre{' '*20}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}╚{'═'*58}╝{Style.RESET_ALL}\n")
+        print(f"\n{Fore.CYAN}╔{'═'*70}╗")
+        print(f"{Fore.CYAN}║ {Fore.WHITE}EJEMPLOS DE CONSULTAS{' '*48}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}╠{'═'*70}╣")
+        print(f"{Fore.CYAN}║ {Fore.GREEN}• cual fue el imacec de enero 2023{' '*33}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}║ {Fore.GREEN}• dame el ultimo pib{' '*48}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}║ {Fore.GREEN}• como estuvo el imacec el mes pasado{' '*31}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}║ {Fore.GREEN}• pib del segundo trimestre{' '*41}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}║ {Fore.GREEN}• variacion del imacec de diciembre{' '*32}{Fore.CYAN}║")
+        print(f"{Fore.CYAN}╚{'═'*70}╝{Style.RESET_ALL}\n")
 
 
 def main():

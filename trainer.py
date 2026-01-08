@@ -34,7 +34,6 @@ class Trainer(object):
 
         self.config_class, self.model_class, _ = MODEL_CLASSES[args.model_type]
         self.config = self.config_class.from_pretrained(args.model_name_or_path, finetuning_task=args.task)
-        # -> DEBO AGREGAR LAS PERDIDAS DE LAS HEADS CLS
         self.model = self.model_class.from_pretrained(args.model_name_or_path,
                                                       config=self.config,
                                                       args=args,
@@ -111,8 +110,9 @@ class Trainer(object):
                     'req_form_label_ids': batch[8],
                     'context_mode_label_ids': batch[9],
                     'activity_label_ids': batch[10],
-                    'slot_labels_ids': batch[11],
                 }
+                if self.args.slot_loss_coef != 0:
+                    inputs['slot_labels_ids'] = batch[11]
                 if self.args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2]
                 outputs = self.model(**inputs)
@@ -199,8 +199,9 @@ class Trainer(object):
                           'req_form_label_ids': batch[8],
                           'context_mode_label_ids': batch[9],
                           'activity_label_ids': batch[10],
-                          'slot_labels_ids': batch[11],
                           }
+                if self.args.slot_loss_coef != 0:
+                    inputs['slot_labels_ids'] = batch[11]
                 if self.args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2]
                 outputs = self.model(**inputs)
@@ -282,22 +283,22 @@ class Trainer(object):
                 out_activity_label_ids = np.append(
                     out_activity_label_ids, inputs['activity_label_ids'].detach().cpu().numpy(), axis=0)
                 
-            # Slot prediction
-            if slot_preds is None:
-                if self.args.use_crf:
-                    # decode() in `torchcrf` returns list with best index directly
-                    slot_preds = np.array(self.model.crf.decode(slot_logits, mask=inputs['attention_mask'].bool()))
-                else:
-                    slot_preds = slot_logits.detach().cpu().numpy()
+            # Slot prediction (optional)
+            if self.args.slot_loss_coef != 0:
+                if slot_preds is None:
+                    if self.args.use_crf:
+                        slot_preds = np.array(self.model.crf.decode(slot_logits, mask=inputs['attention_mask'].bool()))
+                    else:
+                        slot_preds = slot_logits.detach().cpu().numpy()
 
-                out_slot_labels_ids = inputs["slot_labels_ids"].detach().cpu().numpy()
-            else:
-                if self.args.use_crf:
-                    slot_preds = np.append(slot_preds, np.array(self.model.crf.decode(slot_logits, mask=inputs['attention_mask'].bool())), axis=0)
+                    out_slot_labels_ids = inputs["slot_labels_ids"].detach().cpu().numpy()
                 else:
-                    slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
+                    if self.args.use_crf:
+                        slot_preds = np.append(slot_preds, np.array(self.model.crf.decode(slot_logits, mask=inputs['attention_mask'].bool())), axis=0)
+                    else:
+                        slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
 
-                out_slot_labels_ids = np.append(out_slot_labels_ids, inputs["slot_labels_ids"].detach().cpu().numpy(), axis=0)
+                    out_slot_labels_ids = np.append(out_slot_labels_ids, inputs["slot_labels_ids"].detach().cpu().numpy(), axis=0)
 
         eval_loss = eval_loss / nb_eval_steps
         results = {
@@ -314,18 +315,24 @@ class Trainer(object):
         context_mode_preds = np.argmax(context_mode_preds, axis=1)
         activity_preds = np.argmax(activity_preds, axis=1)
 
-        # Slot result
-        if not self.args.use_crf:
-            slot_preds = np.argmax(slot_preds, axis=2)
-        slot_label_map = {i: label for i, label in enumerate(self.slot_label_lst)}
-        out_slot_label_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
-        slot_preds_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
+        # Slot result (optional)
+        if self.args.slot_loss_coef != 0:
+            if not self.args.use_crf:
+                slot_preds = np.argmax(slot_preds, axis=2)
+            slot_label_map = {i: label for i, label in enumerate(self.slot_label_lst)}
+            out_slot_label_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
+            slot_preds_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
 
-        for i in range(out_slot_labels_ids.shape[0]):
-            for j in range(out_slot_labels_ids.shape[1]):
-                if out_slot_labels_ids[i, j] != self.pad_token_label_id:
-                    out_slot_label_list[i].append(slot_label_map[out_slot_labels_ids[i][j]])
-                    slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
+            for i in range(out_slot_labels_ids.shape[0]):
+                for j in range(out_slot_labels_ids.shape[1]):
+                    if out_slot_labels_ids[i, j] != self.pad_token_label_id:
+                        out_slot_label_list[i].append(slot_label_map[out_slot_labels_ids[i][j]])
+                        slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
+        else:
+            # If slot loss is disabled, return empty lists per sample
+            n_samples = out_intent_label_ids.shape[0]
+            out_slot_label_list = [[] for _ in range(n_samples)]
+            slot_preds_list = [[] for _ in range(n_samples)]
 
         total_result = compute_metrics(intent_preds, out_intent_label_ids, 
                                        indicator_preds, out_indicator_label_ids, 

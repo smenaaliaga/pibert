@@ -5,7 +5,7 @@ Uso:
     python util/split_data.py --dataset atis --test_size 0.2 --dev_size 0.1 --seed 42
     python util/split_data.py --dataset pibimacec --test_size 0.15 --dev_size 0.1
     
-    python util/split_data.py --dataset pibimacecv2 --test_size 0.3 --dev_size 0.1
+    python util/split_data.py --dataset pibimacecv2 --test_size 0.2 --dev_size 0.1
 """
 
 import argparse
@@ -14,7 +14,7 @@ import random
 from pathlib import Path
 
 
-def split_dataset(dataset_name, test_size=0.2, dev_size=0.1, seed=42):
+def split_dataset(dataset_name, test_size=0.2, dev_size=0.1, seed=42, skip_label_files=False):
     """
     Divide los datos de la carpeta raw en train, dev y test.
     
@@ -113,36 +113,41 @@ def split_dataset(dataset_name, test_size=0.2, dev_size=0.1, seed=42):
         print(f"✓ {filename}: {len(train_lines)} train, {len(dev_lines)} dev, {len(test_lines)} test")
     
     # Generar archivos de etiquetas únicas (intent_label.txt y slot_label.txt)
-    print("\nGenerando archivos de etiquetas...")
-    
-    # Extraer intents únicos del archivo label
-    unique_intents = sorted(set(data['label']))
-    intent_label_file = base_path / "intent_label.txt"
-    with open(intent_label_file, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(unique_intents))
-        if unique_intents:
-            f.write('\n')
-    print(f"✓ intent_label.txt: {len(unique_intents)} intents únicos")
-    
-    # Extraer slots únicos del archivo seq.out
-    unique_slots = set()
-    for line in data['seq.out']:
-        slots = line.split()
-        unique_slots.update(slots)
-    unique_slots = sorted(unique_slots)
-    
-    slot_label_file = base_path / "slot_label.txt"
-    with open(slot_label_file, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(unique_slots))
-        if unique_slots:
-            f.write('\n')
-    print(f"✓ slot_label.txt: {len(unique_slots)} slots únicos")
+    multi_head_labels = any(
+        ("," in lbl) for lbl in data['label']
+    )
+    if skip_label_files or multi_head_labels:
+        print("\nOmitiendo generación de intent_label.txt y slot_label.txt "
+              + ("(detectado formato multi-head con comas)" if multi_head_labels else "(flag skip)"))
+    else:
+        print("\nGenerando archivos de etiquetas...")
+        unique_intents = sorted(set(data['label']))
+        intent_label_file = base_path / "intent_label.txt"
+        with open(intent_label_file, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(unique_intents))
+            if unique_intents:
+                f.write('\n')
+        print(f"✓ intent_label.txt: {len(unique_intents)} intents únicos")
+        
+        unique_slots = set()
+        for line in data['seq.out']:
+            slots = line.split()
+            unique_slots.update(slots)
+        unique_slots = sorted(unique_slots)
+        
+        slot_label_file = base_path / "slot_label.txt"
+        with open(slot_label_file, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(unique_slots))
+            if unique_slots:
+                f.write('\n')
+        print(f"✓ slot_label.txt: {len(unique_slots)} slots únicos")
     
     print(f"\n✓ Archivos generados exitosamente en:")
     print(f"  - {train_path}")
     print(f"  - {dev_path}")
     print(f"  - {test_path}")
-    print(f"  - {base_path} (intent_label.txt, slot_label.txt)")
+    if not (skip_label_files or multi_head_labels):
+        print(f"  - {base_path} (intent_label.txt, slot_label.txt)")
 
 
 def main():
@@ -173,6 +178,11 @@ def main():
         default=42,
         help="Semilla aleatoria para reproducibilidad (default: 42)"
     )
+    parser.add_argument(
+        "--skip_label_files",
+        action="store_true",
+        help="No generar intent_label.txt ni slot_label.txt (útil en datasets multi-head)",
+    )
     
     args = parser.parse_args()
     
@@ -184,7 +194,7 @@ def main():
     if args.test_size + args.dev_size >= 1:
         raise ValueError("La suma de test_size y dev_size debe ser menor a 1")
     
-    split_dataset(args.dataset, args.test_size, args.dev_size, args.seed)
+    split_dataset(args.dataset, args.test_size, args.dev_size, args.seed, args.skip_label_files)
 
 
 if __name__ == "__main__":

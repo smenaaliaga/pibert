@@ -36,8 +36,8 @@ class JointBERT(BertPreTrainedModel):
         if args.use_crf:
             self.crf = CRF(num_tags=self.num_slot_labels, batch_first=True)
 
-    def forward(self, input_ids, attention_mask, token_type_ids, intent_label_ids, indicator_label_ids, metric_type_label_ids, 
-                calc_mode_label_ids, seasonal_label_ids, req_form_label_ids, context_mode_label_ids, activity_label_ids, slot_labels_ids):
+    def forward(self, input_ids, attention_mask, token_type_ids=None, intent_label_ids=None, indicator_label_ids=None, metric_type_label_ids=None, 
+                calc_mode_label_ids=None, seasonal_label_ids=None, req_form_label_ids=None, context_mode_label_ids=None, activity_label_ids=None, slot_labels_ids=None):
         outputs = self.bert(input_ids, attention_mask=attention_mask,
                             token_type_ids=token_type_ids)  # sequence_output, pooled_output, (hidden_states), (attentions)
         sequence_output = outputs[0]
@@ -103,7 +103,7 @@ class JointBERT(BertPreTrainedModel):
             total_loss += activity_loss
 
         # 9. Slot Softmax
-        if slot_labels_ids is not None:
+        if slot_labels_ids is not None and self.args.slot_loss_coef != 0:
             if self.args.use_crf:
                 # CRF doesn't handle ignore_index (-100), so we replace it with PAD (0)
                 slot_labels_ids_crf = slot_labels_ids.clone()
