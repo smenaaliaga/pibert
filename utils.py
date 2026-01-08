@@ -29,6 +29,26 @@ MODEL_PATH_MAP = {
 def get_intent_labels(args):
     return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.intent_label_file), 'r', encoding='utf-8')]
 
+def get_indicator_labels(args):
+    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.indicator_label_file), 'r', encoding='utf-8')]
+
+def get_metric_type_labels(args):
+    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.metric_type_label_file), 'r', encoding='utf-8')]
+
+def get_calc_mode_labels(args):
+    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.calc_mode_label_file), 'r', encoding='utf-8')]
+
+def get_seasonal_labels(args):
+    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.seasonal_label_file), 'r', encoding='utf-8')]
+
+def get_req_form_labels(args):
+    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.req_form_label_file), 'r', encoding='utf-8')]
+
+def get_context_mode_labels(args):
+    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.context_mode_label_file), 'r', encoding='utf-8')]
+
+def get_activity_labels(args):
+    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.activity_label_file), 'r', encoding='utf-8')]
 
 def get_slot_labels(args):
     return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.slot_label_file), 'r', encoding='utf-8')]
@@ -54,16 +74,42 @@ def set_seed(args):
         torch.mps.manual_seed(args.seed)
 
 
-def compute_metrics(intent_preds, intent_labels, slot_preds, slot_labels):
-    assert len(intent_preds) == len(intent_labels) == len(slot_preds) == len(slot_labels)
-    results = {}
-    intent_result = get_intent_acc(intent_preds, intent_labels)
-    slot_result = get_slot_metrics(slot_preds, slot_labels)
-    sementic_result = get_sentence_frame_acc(intent_preds, intent_labels, slot_preds, slot_labels)
+def compute_metrics(intent_preds, intent_labels,
+                    indicator_preds, indicator_labels,
+                    metric_type_preds, metric_type_labels,
+                    calc_mode_preds, calc_mode_labels,
+                    seasonal_preds, seasonal_labels,
+                    req_form_preds, req_form_labels,
+                    context_mode_preds, context_mode_labels,
+                    activity_preds, activity_labels,
+                    slot_preds, slot_labels):
+    assert len(intent_preds) == len(intent_labels) == len(indicator_preds) == len(indicator_labels)
+    assert len(metric_type_preds) == len(metric_type_labels) == len(calc_mode_preds) == len(calc_mode_labels)
+    assert len(seasonal_preds) == len(seasonal_labels) == len(req_form_preds) == len(req_form_labels)
+    assert len(context_mode_preds) == len(context_mode_labels) == len(activity_preds) == len(activity_labels)
+    assert len(slot_preds) == len(slot_labels)
 
-    results.update(intent_result)
-    results.update(slot_result)
-    results.update(sementic_result)
+    results = {}
+    results.update(get_intent_acc(intent_preds, intent_labels))
+    results.update(get_indicator_acc(indicator_preds, indicator_labels))
+    results.update(get_metric_type_acc(metric_type_preds, metric_type_labels))
+    results.update(get_calc_mode_acc(calc_mode_preds, calc_mode_labels))
+    results.update(get_seasonal_acc(seasonal_preds, seasonal_labels))
+    results.update(get_req_form_acc(req_form_preds, req_form_labels))
+    results.update(get_context_mode_acc(context_mode_preds, context_mode_labels))
+    results.update(get_activity_acc(activity_preds, activity_labels))
+    results.update(get_slot_metrics(slot_preds, slot_labels))
+
+    semantic_result = get_sentence_frame_acc(intent_preds, intent_labels,
+                                             indicator_preds, indicator_labels,
+                                             metric_type_preds, metric_type_labels,
+                                             calc_mode_preds, calc_mode_labels,
+                                             seasonal_preds, seasonal_labels,
+                                             req_form_preds, req_form_labels,
+                                             context_mode_preds, context_mode_labels,
+                                             activity_preds, activity_labels,
+                                             slot_preds, slot_labels)
+    results.update(semantic_result)
 
     return results
 
@@ -84,28 +130,87 @@ def get_intent_acc(preds, labels):
     }
 
 
+def get_indicator_acc(preds, labels):
+    acc = (preds == labels).mean()
+    return {
+        "indicator_acc": acc
+    }
+
+
+def get_metric_type_acc(preds, labels):
+    acc = (preds == labels).mean()
+    return {
+        "metric_type_acc": acc
+    }
+
+
+def get_calc_mode_acc(preds, labels):
+    acc = (preds == labels).mean()
+    return {
+        "calc_mode_acc": acc
+    }
+
+
+def get_seasonal_acc(preds, labels):
+    acc = (preds == labels).mean()
+    return {
+        "seasonal_acc": acc
+    }
+
+
+def get_req_form_acc(preds, labels):
+    acc = (preds == labels).mean()
+    return {
+        "req_form_acc": acc
+    }
+
+
+def get_context_mode_acc(preds, labels):
+    acc = (preds == labels).mean()
+    return {
+        "context_mode_acc": acc
+    }
+
+
+def get_activity_acc(preds, labels):
+    acc = (preds == labels).mean()
+    return {
+        "activity_acc": acc
+    }
+
+
 def read_prediction_text(args):
     return [text.strip() for text in open(os.path.join(args.pred_dir, args.pred_input_file), 'r', encoding='utf-8')]
 
 
-def get_sentence_frame_acc(intent_preds, intent_labels, slot_preds, slot_labels):
-    """For the cases that intent and all the slots are correct (in one sentence)"""
-    # Get the intent comparison result
+def get_sentence_frame_acc(intent_preds, intent_labels,
+                           indicator_preds, indicator_labels,
+                           metric_type_preds, metric_type_labels,
+                           calc_mode_preds, calc_mode_labels,
+                           seasonal_preds, seasonal_labels,
+                           req_form_preds, req_form_labels,
+                           context_mode_preds, context_mode_labels,
+                           activity_preds, activity_labels,
+                           slot_preds, slot_labels):
+    """Semantic frame accuracy: todas las cabezas y todos los slots correctos en la oración."""
     intent_result = (intent_preds == intent_labels)
+    indicator_result = (indicator_preds == indicator_labels)
+    metric_type_result = (metric_type_preds == metric_type_labels)
+    calc_mode_result = (calc_mode_preds == calc_mode_labels)
+    seasonal_result = (seasonal_preds == seasonal_labels)
+    req_form_result = (req_form_preds == req_form_labels)
+    context_mode_result = (context_mode_preds == context_mode_labels)
+    activity_result = (activity_preds == activity_labels)
 
-    # Get the slot comparision result
     slot_result = []
     for preds, labels in zip(slot_preds, slot_labels):
         assert len(preds) == len(labels)
-        one_sent_result = True
-        for p, l in zip(preds, labels):
-            if p != l:
-                one_sent_result = False
-                break
+        one_sent_result = all(p == l for p, l in zip(preds, labels))
         slot_result.append(one_sent_result)
     slot_result = np.array(slot_result)
 
-    sementic_acc = np.multiply(intent_result, slot_result).mean()
+    semantic_acc = (intent_result & indicator_result & metric_type_result & calc_mode_result &
+                    seasonal_result & req_form_result & context_mode_result & activity_result & slot_result).mean()
     return {
-        "sementic_frame_acc": sementic_acc
+        "semantic_frame_acc": semantic_acc
     }

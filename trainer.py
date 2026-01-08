@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.optim import AdamW
 from transformers import get_linear_schedule_with_warmup
 
-from utils import MODEL_CLASSES, compute_metrics, get_intent_labels, get_slot_labels
+from utils import MODEL_CLASSES, compute_metrics, get_intent_labels, get_indicator_labels, get_metric_type_labels, get_calc_mode_labels, get_seasonal_labels, get_req_form_labels, get_context_mode_labels, get_activity_labels, get_slot_labels
 
 logger = logging.getLogger(__name__)
 
@@ -21,16 +21,32 @@ class Trainer(object):
         self.test_dataset = test_dataset
 
         self.intent_label_lst = get_intent_labels(args)
+        self.indicator_label_lst = get_indicator_labels(args)
+        self.metric_type_label_lst = get_metric_type_labels(args)
+        self.calc_mode_label_lst = get_calc_mode_labels(args)
+        self.seasonal_label_lst = get_seasonal_labels(args)
+        self.req_form_label_lst = get_req_form_labels(args)
+        self.context_mode_label_lst = get_context_mode_labels(args)
+        self.activity_label_lst = get_activity_labels(args)
         self.slot_label_lst = get_slot_labels(args)
         # Use cross entropy ignore index as padding label id so that only real label ids contribute to the loss later
         self.pad_token_label_id = args.ignore_index
 
         self.config_class, self.model_class, _ = MODEL_CLASSES[args.model_type]
         self.config = self.config_class.from_pretrained(args.model_name_or_path, finetuning_task=args.task)
+        # -> DEBO AGREGAR LAS PERDIDAS DE LAS HEADS CLS
         self.model = self.model_class.from_pretrained(args.model_name_or_path,
                                                       config=self.config,
                                                       args=args,
+                                                      # heads
                                                       intent_label_lst=self.intent_label_lst,
+                                                      indicator_label_lst=self.indicator_label_lst,
+                                                      metric_type_label_lst=self.metric_type_label_lst,
+                                                      calc_mode_label_lst=self.calc_mode_label_lst,
+                                                      seasonal_label_lst=self.seasonal_label_lst,
+                                                      req_form_label_lst=self.req_form_label_lst,
+                                                      context_mode_label_lst=self.context_mode_label_lst,
+                                                      activity_label_lst=self.activity_label_lst,
                                                       slot_label_lst=self.slot_label_lst)
 
         # GPU or CPU or MPS (Apple Silicon)
@@ -84,10 +100,19 @@ class Trainer(object):
                 self.model.train()
                 batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
 
-                inputs = {'input_ids': batch[0],
-                          'attention_mask': batch[1],
-                          'intent_label_ids': batch[3],
-                          'slot_labels_ids': batch[4]}
+                inputs = {
+                    'input_ids': batch[0],
+                    'attention_mask': batch[1],
+                    'intent_label_ids': batch[3],
+                    'indicator_label_ids': batch[4],
+                    'metric_type_label_ids': batch[5],
+                    'calc_mode_label_ids': batch[6],
+                    'seasonal_label_ids': batch[7],
+                    'req_form_label_ids': batch[8],
+                    'context_mode_label_ids': batch[9],
+                    'activity_label_ids': batch[10],
+                    'slot_labels_ids': batch[11],
+                }
                 if self.args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2]
                 outputs = self.model(**inputs)
@@ -141,8 +166,22 @@ class Trainer(object):
         eval_loss = 0.0
         nb_eval_steps = 0
         intent_preds = None
+        indicator_preds = None
+        metric_type_preds = None
+        calc_mode_preds = None
+        seasonal_preds = None
+        req_form_preds = None
+        context_mode_preds = None
+        activity_preds = None
         slot_preds = None
         out_intent_label_ids = None
+        out_indicator_label_ids = None
+        out_metric_type_label_ids = None
+        out_calc_mode_label_ids = None
+        out_seasonal_label_ids = None
+        out_req_form_label_ids = None
+        out_context_mode_label_ids = None
+        out_activity_label_ids = None
         out_slot_labels_ids = None
 
         self.model.eval()
@@ -153,11 +192,20 @@ class Trainer(object):
                 inputs = {'input_ids': batch[0],
                           'attention_mask': batch[1],
                           'intent_label_ids': batch[3],
-                          'slot_labels_ids': batch[4]}
+                          'indicator_label_ids': batch[4],
+                          'metric_type_label_ids': batch[5],
+                          'calc_mode_label_ids': batch[6],
+                          'seasonal_label_ids': batch[7],
+                          'req_form_label_ids': batch[8],
+                          'context_mode_label_ids': batch[9],
+                          'activity_label_ids': batch[10],
+                          'slot_labels_ids': batch[11],
+                          }
                 if self.args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2]
                 outputs = self.model(**inputs)
-                tmp_eval_loss, (intent_logits, slot_logits) = outputs[:2]
+                tmp_eval_loss, (intent_logits, indicator_logits, metric_type_logits, calc_mode_logits, 
+                                seasonal_logits, req_form_logits, context_mode_logits, activity_logits, slot_logits) = outputs[:2]
 
                 eval_loss += tmp_eval_loss.mean().item()
             nb_eval_steps += 1
@@ -170,7 +218,70 @@ class Trainer(object):
                 intent_preds = np.append(intent_preds, intent_logits.detach().cpu().numpy(), axis=0)
                 out_intent_label_ids = np.append(
                     out_intent_label_ids, inputs['intent_label_ids'].detach().cpu().numpy(), axis=0)
-
+                
+            # Indicator prediction
+            if indicator_preds is None:
+                indicator_preds = indicator_logits.detach().cpu().numpy()
+                out_indicator_label_ids = inputs['indicator_label_ids'].detach().cpu().numpy()
+            else:
+                indicator_preds = np.append(indicator_preds, indicator_logits.detach().cpu().numpy(), axis=0)
+                out_indicator_label_ids = np.append(
+                    out_indicator_label_ids, inputs['indicator_label_ids'].detach().cpu().numpy(), axis=0)
+                
+            # Metric Type prediction
+            if metric_type_preds is None:
+                metric_type_preds = metric_type_logits.detach().cpu().numpy()
+                out_metric_type_label_ids = inputs['metric_type_label_ids'].detach().cpu().numpy()
+            else:
+                metric_type_preds = np.append(metric_type_preds, metric_type_logits.detach().cpu().numpy(), axis=0)
+                out_metric_type_label_ids = np.append(
+                    out_metric_type_label_ids, inputs['metric_type_label_ids'].detach().cpu().numpy(), axis=0)
+                
+            # Calc Mode prediction
+            if calc_mode_preds is None:
+                calc_mode_preds = calc_mode_logits.detach().cpu().numpy()
+                out_calc_mode_label_ids = inputs['calc_mode_label_ids'].detach().cpu().numpy()
+            else:
+                calc_mode_preds = np.append(calc_mode_preds, calc_mode_logits.detach().cpu().numpy(), axis=0)
+                out_calc_mode_label_ids = np.append(
+                    out_calc_mode_label_ids, inputs['calc_mode_label_ids'].detach().cpu().numpy(), axis=0)
+                
+            # Seasonal prediction
+            if seasonal_preds is None:
+                seasonal_preds = seasonal_logits.detach().cpu().numpy()
+                out_seasonal_label_ids = inputs['seasonal_label_ids'].detach().cpu().numpy()
+            else:
+                seasonal_preds = np.append(seasonal_preds, seasonal_logits.detach().cpu().numpy(), axis=0)
+                out_seasonal_label_ids = np.append(
+                    out_seasonal_label_ids, inputs['seasonal_label_ids'].detach().cpu().numpy(), axis=0)
+                
+            # Req Form prediction
+            if req_form_preds is None:
+                req_form_preds = req_form_logits.detach().cpu().numpy()
+                out_req_form_label_ids = inputs['req_form_label_ids'].detach().cpu().numpy()
+            else:
+                req_form_preds = np.append(req_form_preds, req_form_logits.detach().cpu().numpy(), axis=0)
+                out_req_form_label_ids = np.append(
+                    out_req_form_label_ids, inputs['req_form_label_ids'].detach().cpu().numpy(), axis=0)
+                
+            # Req Form prediction
+            if context_mode_preds is None:
+                context_mode_preds = context_mode_logits.detach().cpu().numpy()
+                out_context_mode_label_ids = inputs['context_mode_label_ids'].detach().cpu().numpy()
+            else:
+                context_mode_preds = np.append(context_mode_preds, context_mode_logits.detach().cpu().numpy(), axis=0)
+                out_context_mode_label_ids = np.append(
+                    out_context_mode_label_ids, inputs['context_mode_label_ids'].detach().cpu().numpy(), axis=0)
+                
+            # Activity prediction
+            if activity_preds is None:
+                activity_preds = activity_logits.detach().cpu().numpy()
+                out_activity_label_ids = inputs['activity_label_ids'].detach().cpu().numpy()
+            else:
+                activity_preds = np.append(activity_preds, activity_logits.detach().cpu().numpy(), axis=0)
+                out_activity_label_ids = np.append(
+                    out_activity_label_ids, inputs['activity_label_ids'].detach().cpu().numpy(), axis=0)
+                
             # Slot prediction
             if slot_preds is None:
                 if self.args.use_crf:
@@ -193,8 +304,15 @@ class Trainer(object):
             "loss": eval_loss
         }
 
-        # Intent result
+        # HEADS CLS result
         intent_preds = np.argmax(intent_preds, axis=1)
+        indicator_preds = np.argmax(indicator_preds, axis=1)
+        metric_type_preds = np.argmax(metric_type_preds, axis=1)
+        calc_mode_preds = np.argmax(calc_mode_preds, axis=1)
+        seasonal_preds = np.argmax(seasonal_preds, axis=1)
+        req_form_preds = np.argmax(req_form_preds, axis=1)
+        context_mode_preds = np.argmax(context_mode_preds, axis=1)
+        activity_preds = np.argmax(activity_preds, axis=1)
 
         # Slot result
         if not self.args.use_crf:
@@ -209,7 +327,15 @@ class Trainer(object):
                     out_slot_label_list[i].append(slot_label_map[out_slot_labels_ids[i][j]])
                     slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
 
-        total_result = compute_metrics(intent_preds, out_intent_label_ids, slot_preds_list, out_slot_label_list)
+        total_result = compute_metrics(intent_preds, out_intent_label_ids, 
+                                       indicator_preds, out_indicator_label_ids, 
+                                       metric_type_preds, out_metric_type_label_ids, 
+                                       calc_mode_preds, out_calc_mode_label_ids, 
+                                       seasonal_preds, out_seasonal_label_ids, 
+                                       req_form_preds, out_req_form_label_ids, 
+                                       context_mode_preds, out_context_mode_label_ids, 
+                                       activity_preds, out_activity_label_ids, 
+                                       slot_preds_list, out_slot_label_list)
         results.update(total_result)
 
         logger.info("***** Eval results *****")
@@ -238,6 +364,13 @@ class Trainer(object):
             self.model = self.model_class.from_pretrained(self.args.model_out,
                                                           args=self.args,
                                                           intent_label_lst=self.intent_label_lst,
+                                                          indicator_label_lst=self.indicator_label_lst,
+                                                          metric_type_label_lst=self.metric_type_label_lst,
+                                                          calc_mode_label_lst=self.calc_mode_label_lst,
+                                                          seasonal_label_lst=self.seasonal_label_lst,
+                                                          req_form_label_lst=self.req_form_label_lst,
+                                                          context_mode_label_lst=self.context_mode_label_lst,
+                                                          activity_label_lst=self.activity_label_lst,
                                                           slot_label_lst=self.slot_label_lst)
             self.model.to(self.device)
             logger.info("***** Model Loaded *****")

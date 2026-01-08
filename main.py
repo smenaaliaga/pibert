@@ -30,7 +30,15 @@ if __name__ == '__main__':
     parser.add_argument("--task", default=None, required=True, type=str, help="The name of the task to train")
     parser.add_argument("--model_out", default=None, required=True, type=str, help="Model name to save/load (will be saved in model_out/)")
     parser.add_argument("--data_dir", default="./data", type=str, help="The input data dir")
+    # heads
     parser.add_argument("--intent_label_file", default="intent_label.txt", type=str, help="Intent Label file")
+    parser.add_argument("--indicator_label_file", default="indicator_label.txt", type=str, help="Indicator Label file")
+    parser.add_argument("--metric_type_label_file", default="metric_type_label.txt", type=str, help="Metric Type Label file")
+    parser.add_argument("--calc_mode_label_file", default="calc_mode_label.txt", type=str, help="Calc Mode Label file")
+    parser.add_argument("--seasonal_label_file", default="seasonal_label.txt", type=str, help="Seasonal Label file")
+    parser.add_argument("--req_form_label_file", default="req_form_label.txt", type=str, help="Req Form Label file")
+    parser.add_argument("--context_mode_label_file", default="context_mode_label.txt", type=str, help="Context Mode Label file")
+    parser.add_argument("--activity_label_file", default="activity_label.txt", type=str, help="Activity Label file")
     parser.add_argument("--slot_label_file", default="slot_label.txt", type=str, help="Slot Label file")
 
     parser.add_argument("--model_type", default="bert", type=str, help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()))

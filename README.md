@@ -87,7 +87,7 @@ python main.py --task {task_name} \
 ```
 Ejemplo básico:
 ```bash
-python main.py --task pibimacec --model_type beto --model_out pibot_model_beto --do_train --do_eval
+python main.py --task pibimacecv2 --model_type beto --model_out pibot_model_beto_v2 --do_train --do_eval
 ```
 
 Configuración optimizada para dataset pibimacec (816 ejemplos):

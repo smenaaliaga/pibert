@@ -6,7 +6,7 @@ import logging
 import torch
 from torch.utils.data import TensorDataset
 
-from utils import get_intent_labels, get_slot_labels
+from utils import get_intent_labels, get_indicator_labels, get_metric_type_labels, get_calc_mode_labels, get_seasonal_labels, get_req_form_labels, get_context_mode_labels, get_slot_labels
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +22,18 @@ class InputExample(object):
         slot_labels: (Optional) list. The slot labels of the example.
     """
 
-    def __init__(self, guid, words, intent_label=None, slot_labels=None):
+    def __init__(self, guid, words, intent_label=None, indicator_label=None, metric_type_label=None, calc_mode_label=None, 
+                 seasonal_label=None, req_form_label=None, context_mode_label=None, activity_label=None, slot_labels=None):
         self.guid = guid
         self.words = words
         self.intent_label = intent_label
+        self.indicator_label = indicator_label
+        self.metric_type_label = metric_type_label
+        self.calc_mode_label = calc_mode_label
+        self.seasonal_label = seasonal_label
+        self.req_form_label = req_form_label
+        self.context_mode_label = context_mode_label
+        self.activity_label = activity_label
         self.slot_labels = slot_labels
 
     def __repr__(self):
@@ -44,11 +52,20 @@ class InputExample(object):
 class InputFeatures(object):
     """A single set of features of data."""
 
-    def __init__(self, input_ids, attention_mask, token_type_ids, intent_label_id, slot_labels_ids):
+    def __init__(self, input_ids, attention_mask, token_type_ids, intent_label_id, indicator_label_id, metric_type_label_id, 
+                 calc_mode_label_id, seasonal_label_id, req_form_label_id, context_mode_label_id, activity_label_id, slot_labels_ids):
         self.input_ids = input_ids
         self.attention_mask = attention_mask
         self.token_type_ids = token_type_ids
         self.intent_label_id = intent_label_id
+        self.indicator_label_id = indicator_label_id
+        self.metric_type_label_id = metric_type_label_id
+        self.calc_mode_label_id = calc_mode_label_id
+        self.seasonal_label_id = seasonal_label_id
+        self.req_form_label_id = req_form_label_id
+        self.context_mode_label_id = context_mode_label_id
+        self.activity_label_id = activity_label_id
+        
         self.slot_labels_ids = slot_labels_ids
 
     def __repr__(self):
@@ -69,8 +86,40 @@ class JointProcessor(object):
 
     def __init__(self, args):
         self.args = args
+        # Base heads available in current dataset
         self.intent_labels = get_intent_labels(args)
         self.slot_labels = get_slot_labels(args)
+
+        # Optional heads (labels may be provided by separate files). We keep them
+        # here for potential future use without enforcing file presence.
+        try:
+            self.indicator_labels = get_indicator_labels(args)
+        except Exception:
+            self.indicator_labels = []
+        try:
+            self.metric_type_labels = get_metric_type_labels(args)
+        except Exception:
+            self.metric_type_labels = []
+        try:
+            self.calc_mode_labels = get_calc_mode_labels(args)
+        except Exception:
+            self.calc_mode_labels = []
+        try:
+            self.seasonal_labels = get_seasonal_labels(args)
+        except Exception:
+            self.seasonal_labels = []
+        try:
+            self.req_form_labels = get_req_form_labels(args)
+        except Exception:
+            self.req_form_labels = []
+        try:
+            self.context_mode_labels = get_context_mode_labels(args)
+        except Exception:
+            self.context_mode_labels = []
+        try:
+            self.activity_labels = get_activity_labels(args)
+        except Exception:
+            self.activity_labels = []
 
         self.input_text_file = 'seq.in'
         self.intent_label_file = 'label'
@@ -92,15 +141,72 @@ class JointProcessor(object):
             guid = "%s-%s" % (set_type, i)
             # 1. input_text
             words = text.split()  # Some are spaced twice
-            # 2. intent
-            intent_label = self.intent_labels.index(intent) if intent in self.intent_labels else self.intent_labels.index("UNK")
-            # 3. slot
+            # 2. heads from label line
+            # Support: either a single intent label or comma-separated labels for multiple heads
+            indicator_label = 0
+            metric_type_label = 0
+            calc_mode_label = 0
+            seasonal_label = 0
+            req_form_label = 0
+            context_mode_label = 0
+            activity_label = 0
+
+            def map_or_default(name, label_list, default_idx=0):
+                if not isinstance(name, str):
+                    return default_idx
+                name = name.strip()
+                if not label_list:
+                    return default_idx
+                return label_list.index(name) if name in label_list else default_idx
+
+            if "," in intent:
+                parts = [p.strip() for p in intent.split(",")]
+                # Pad to 8 fields: intent, indicator, metric_type, calc_mode, seasonal, req_form, context_mode, activity
+                while len(parts) < 8:
+                    parts.append("")
+                intent_name, indicator_name, metric_type_name, calc_mode_name, seasonal_name, req_form_name, context_mode_name, activity_name = parts[:8]
+                # intent mapping with safe fallback (0) if label not found
+                if self.intent_labels and intent_name in self.intent_labels:
+                    intent_label = self.intent_labels.index(intent_name)
+                else:
+                    intent_label = 0
+                indicator_label = map_or_default(indicator_name, getattr(self, 'indicator_labels', []), 0)
+                metric_type_label = map_or_default(metric_type_name, getattr(self, 'metric_type_labels', []), 0)
+                calc_mode_label = map_or_default(calc_mode_name, getattr(self, 'calc_mode_labels', []), 0)
+                seasonal_label = map_or_default(seasonal_name, getattr(self, 'seasonal_labels', []), 0)
+                req_form_label = map_or_default(req_form_name, getattr(self, 'req_form_labels', []), 0)
+                context_mode_label = map_or_default(context_mode_name, getattr(self, 'context_mode_labels', []), 0)
+                activity_label = map_or_default(activity_name, getattr(self, 'activity_labels', []), 0)
+            else:
+                # Backward compatible: only intent label provided
+                if self.intent_labels and intent in self.intent_labels:
+                    intent_label = self.intent_labels.index(intent)
+                else:
+                    intent_label = 0
+            # 3. slot (optional)
             slot_labels = []
-            for s in slot.split():
-                slot_labels.append(self.slot_labels.index(s) if s in self.slot_labels else self.slot_labels.index("UNK"))
+            if slot and slot.strip():  # Only process if slot is not empty
+                for s in slot.split():
+                    slot_labels.append(self.slot_labels.index(s) if s in self.slot_labels else self.slot_labels.index("UNK"))
+            
+            # If no slots provided, create dummy slots matching word count (will be ignored during loss)
+            if not slot_labels:
+                slot_labels = [0] * len(words)
 
             assert len(words) == len(slot_labels)
-            examples.append(InputExample(guid=guid, words=words, intent_label=intent_label, slot_labels=slot_labels))
+            examples.append(InputExample(
+                guid=guid,
+                words=words,
+                intent_label=intent_label,
+                indicator_label=indicator_label,
+                metric_type_label=metric_type_label,
+                calc_mode_label=calc_mode_label,
+                seasonal_label=seasonal_label,
+                req_form_label=req_form_label,
+                context_mode_label=context_mode_label,
+                activity_label=activity_label,
+                slot_labels=slot_labels
+            ))
         return examples
 
     def get_examples(self, mode):
@@ -110,16 +216,28 @@ class JointProcessor(object):
         """
         data_path = os.path.join(self.args.data_dir, self.args.task, mode)
         logger.info("LOOKING AT {}".format(data_path))
+        
+        # Load slots if available, otherwise use empty list
+        slot_labels_path = os.path.join(data_path, self.slot_labels_file)
+        if os.path.exists(slot_labels_path):
+            slots = self._read_file(slot_labels_path)
+        else:
+            logger.warning("Slot labels file not found at %s. Using empty slots.", slot_labels_path)
+            # Read texts to get count for empty slots
+            texts = self._read_file(os.path.join(data_path, self.input_text_file))
+            slots = [""] * len(texts)
+        
         return self._create_examples(texts=self._read_file(os.path.join(data_path, self.input_text_file)),
                                      intents=self._read_file(os.path.join(data_path, self.intent_label_file)),
-                                     slots=self._read_file(os.path.join(data_path, self.slot_labels_file)),
+                                     slots=slots,
                                      set_type=mode)
 
 
 processors = {
     "atis": JointProcessor,
     "snips": JointProcessor,
-    "pibimacec": JointProcessor
+    "pibimacec": JointProcessor,
+    "pibimacecv2": JointProcessor
 }
 
 
@@ -186,6 +304,14 @@ def convert_examples_to_features(examples, max_seq_len, tokenizer,
         assert len(slot_labels_ids) == max_seq_len, "Error with slot labels length {} vs {}".format(len(slot_labels_ids), max_seq_len)
 
         intent_label_id = int(example.intent_label)
+        # New heads: use provided example labels or default to 0
+        indicator_label_id = int(example.indicator_label) if example.indicator_label is not None else 0
+        metric_type_label_id = int(example.metric_type_label) if example.metric_type_label is not None else 0
+        calc_mode_label_id = int(example.calc_mode_label) if example.calc_mode_label is not None else 0
+        seasonal_label_id = int(example.seasonal_label) if example.seasonal_label is not None else 0
+        req_form_label_id = int(example.req_form_label) if example.req_form_label is not None else 0
+        context_mode_label_id = int(example.context_mode_label) if example.context_mode_label is not None else 0
+        activity_label_id = int(example.activity_label) if example.activity_label is not None else 0
 
         if ex_index < 5:
             logger.info("*** Example ***")
@@ -195,15 +321,30 @@ def convert_examples_to_features(examples, max_seq_len, tokenizer,
             logger.info("attention_mask: %s" % " ".join([str(x) for x in attention_mask]))
             logger.info("token_type_ids: %s" % " ".join([str(x) for x in token_type_ids]))
             logger.info("intent_label: %s (id = %d)" % (example.intent_label, intent_label_id))
+            logger.info("indicator_label_id: %d" % indicator_label_id)
+            logger.info("metric_type_label_id: %d" % metric_type_label_id)
+            logger.info("calc_mode_label_id: %d" % calc_mode_label_id)
+            logger.info("seasonal_label_id: %d" % seasonal_label_id)
+            logger.info("req_form_label_id: %d" % req_form_label_id)
+            logger.info("context_mode_label_id: %d" % context_mode_label_id)
+            logger.info("activity_label_id: %d" % activity_label_id)
             logger.info("slot_labels: %s" % " ".join([str(x) for x in slot_labels_ids]))
 
         features.append(
-            InputFeatures(input_ids=input_ids,
-                          attention_mask=attention_mask,
-                          token_type_ids=token_type_ids,
-                          intent_label_id=intent_label_id,
-                          slot_labels_ids=slot_labels_ids
-                          ))
+            InputFeatures(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                token_type_ids=token_type_ids,
+                intent_label_id=intent_label_id,
+                indicator_label_id=indicator_label_id,
+                metric_type_label_id=metric_type_label_id,
+                calc_mode_label_id=calc_mode_label_id,
+                seasonal_label_id=seasonal_label_id,
+                req_form_label_id=req_form_label_id,
+                context_mode_label_id=context_mode_label_id,
+                activity_label_id=activity_label_id,
+                slot_labels_ids=slot_labels_ids
+            ))
 
     return features
 
@@ -248,9 +389,28 @@ def load_and_cache_examples(args, tokenizer, mode):
     all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
     all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
     all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
-    all_intent_label_ids = torch.tensor([f.intent_label_id for f in features], dtype=torch.long)
+    all_intent_label_ids = torch.tensor([getattr(f, 'intent_label_id', 0) for f in features], dtype=torch.long)
+    all_indicator_label_ids = torch.tensor([getattr(f, 'indicator_label_id', 0) for f in features], dtype=torch.long)
+    all_metric_type_label_ids = torch.tensor([getattr(f, 'metric_type_label_id', 0) for f in features], dtype=torch.long)
+    all_calc_mode_label_ids = torch.tensor([getattr(f, 'calc_mode_label_id', 0) for f in features], dtype=torch.long)
+    all_seasonal_label_ids = torch.tensor([getattr(f, 'seasonal_label_id', 0) for f in features], dtype=torch.long)
+    all_req_form_label_ids = torch.tensor([getattr(f, 'req_form_label_id', 0) for f in features], dtype=torch.long)
+    all_context_mode_label_ids = torch.tensor([getattr(f, 'context_mode_label_id', 0) for f in features], dtype=torch.long)
+    all_activity_label_ids = torch.tensor([getattr(f, 'activity_label_id', 0) for f in features], dtype=torch.long)
     all_slot_labels_ids = torch.tensor([f.slot_labels_ids for f in features], dtype=torch.long)
 
-    dataset = TensorDataset(all_input_ids, all_attention_mask,
-                            all_token_type_ids, all_intent_label_ids, all_slot_labels_ids)
+    dataset = TensorDataset(
+        all_input_ids,
+        all_attention_mask,
+        all_token_type_ids,
+        all_intent_label_ids,
+        all_indicator_label_ids,
+        all_metric_type_label_ids,
+        all_calc_mode_label_ids,
+        all_seasonal_label_ids,
+        all_req_form_label_ids,
+        all_context_mode_label_ids,
+        all_activity_label_ids,
+        all_slot_labels_ids,
+    )
     return dataset
