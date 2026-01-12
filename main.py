@@ -56,6 +56,8 @@ if __name__ == '__main__':
     parser.add_argument("--max_steps", default=-1, type=int, help="If > 0: set total number of training steps to perform. Override num_train_epochs.")
     parser.add_argument("--warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps.")
     parser.add_argument("--dropout_rate", default=0.1, type=float, help="Dropout for fully-connected layers")
+    parser.add_argument("--early_stopping", action="store_true", help="Enable early stopping based on dev loss")
+    parser.add_argument("--early_stopping_patience", default=3, type=int, help="Number of epochs without improvement before stopping")
 
     parser.add_argument('--logging_steps', type=int, default=200, help="Log every X updates steps.")
     parser.add_argument('--save_steps', type=int, default=200, help="Save checkpoint every X updates steps.")

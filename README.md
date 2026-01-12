@@ -138,7 +138,7 @@ python main.py --task pibimacecv3 --model_type beto --model_out pibot_model_v3 -
 #### Recomendación actual
 
 ```bash
-python main.py --task pibimacecv3 --model_type beto --model_out pibot_model_v3 --do_train --do_eval --max_seq_len 64 --train_batch_size 8 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 15 --warmup_steps 150 --weight_decay 0.01 --dropout_rate 0.2 --logging_steps 50 --save_steps 100 --seed 42
+python main.py --task pibimacecv3 --model_type beto --model_out pibot_model_v3 --do_train --do_eval --max_seq_len 64 --train_batch_size 8 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 15 --warmup_steps 150 --weight_decay 0.01 --dropout_rate 0.2 --logging_steps 50 --save_steps 100 --early_stopping --early_stopping_patience 3 --seed 42
 ```
 
 **Parámetros principales:**
@@ -158,6 +158,8 @@ python main.py --task pibimacecv3 --model_type beto --model_out pibot_model_v3 -
 | `--dropout_rate` | Tasa de dropout | `0.2` | Mayor regularización para dataset pequeño |
 | `--logging_steps` | Frecuencia de logs | `50` | Monitoreo frecuente |
 | `--save_steps` | Frecuencia de checkpoints | `100` | Guardar modelos intermedios |
+| `--early_stopping` | Detener cuando no mejore la pérdida de dev | `True` | Activa parada temprana por `val_loss` |
+| `--early_stopping_patience` | Épocas sin mejora antes de parar | `3` | Guarda el mejor modelo al mejorar |
 
 #### Comando recomendado para dataset pequeño:
 

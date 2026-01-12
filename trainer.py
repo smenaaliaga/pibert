@@ -87,11 +87,13 @@ class Trainer(object):
 
         global_step = 0
         tr_loss = 0.0
+        best_val_loss = float("inf")
+        epochs_no_improve = 0
         self.model.zero_grad()
 
         train_iterator = trange(int(self.args.num_train_epochs), desc="Epoch")
 
-        for _ in train_iterator:
+        for epoch_idx, _ in enumerate(train_iterator):
             epoch_iterator = tqdm(train_dataloader, desc="Iteration")
             for step, batch in enumerate(epoch_iterator):
                 self.model.train()
@@ -143,7 +145,24 @@ class Trainer(object):
                 train_iterator.close()
                 break
 
-        return global_step, tr_loss / global_step
+            if self.args.early_stopping:
+                val_results = self.evaluate("dev")
+                val_loss = val_results.get("loss", float("inf"))
+
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    epochs_no_improve = 0
+                    self.save_model()
+                    logger.info("Early stopping: improved val loss to %.4f at epoch %d", best_val_loss, epoch_idx + 1)
+                else:
+                    epochs_no_improve += 1
+                    logger.info("Early stopping: no improvement for %d epoch(s)", epochs_no_improve)
+
+                if epochs_no_improve >= self.args.early_stopping_patience:
+                    logger.info("Early stopping triggered after %d epochs without improvement", epochs_no_improve)
+                    break
+
+        return global_step, tr_loss / max(global_step, 1)
 
     def evaluate(self, mode):
         if mode == 'test':
