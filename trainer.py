@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.optim import AdamW
 from transformers import get_linear_schedule_with_warmup
 
-from utils import MODEL_CLASSES, compute_metrics, get_intent_labels, get_indicator_labels, get_metric_type_labels, get_calc_mode_labels, get_seasonal_labels, get_req_form_labels, get_context_mode_labels, get_activity_labels, get_slot_labels
+from utils import MODEL_CLASSES, compute_metrics, get_indicator_labels, get_metric_type_labels, get_calc_mode_labels, get_seasonal_labels, get_req_form_labels, get_frequency_labels, get_activity_labels  #, get_slot_labels
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +20,14 @@ class Trainer(object):
         self.dev_dataset = dev_dataset
         self.test_dataset = test_dataset
 
-        self.intent_label_lst = get_intent_labels(args)
         self.indicator_label_lst = get_indicator_labels(args)
         self.metric_type_label_lst = get_metric_type_labels(args)
         self.calc_mode_label_lst = get_calc_mode_labels(args)
         self.seasonal_label_lst = get_seasonal_labels(args)
         self.req_form_label_lst = get_req_form_labels(args)
-        self.context_mode_label_lst = get_context_mode_labels(args)
+        self.frequency_label_lst = get_frequency_labels(args)
         self.activity_label_lst = get_activity_labels(args)
-        self.slot_label_lst = get_slot_labels(args)
+        # self.slot_label_lst = get_slot_labels(args)
         # Use cross entropy ignore index as padding label id so that only real label ids contribute to the loss later
         self.pad_token_label_id = args.ignore_index
 
@@ -38,15 +37,14 @@ class Trainer(object):
                                                       config=self.config,
                                                       args=args,
                                                       # heads
-                                                      intent_label_lst=self.intent_label_lst,
                                                       indicator_label_lst=self.indicator_label_lst,
                                                       metric_type_label_lst=self.metric_type_label_lst,
                                                       calc_mode_label_lst=self.calc_mode_label_lst,
                                                       seasonal_label_lst=self.seasonal_label_lst,
                                                       req_form_label_lst=self.req_form_label_lst,
-                                                      context_mode_label_lst=self.context_mode_label_lst,
-                                                      activity_label_lst=self.activity_label_lst,
-                                                      slot_label_lst=self.slot_label_lst)
+                                                      frequency_label_lst=self.frequency_label_lst,
+                                                      activity_label_lst=self.activity_label_lst)
+                                                      # slot_label_lst=self.slot_label_lst)
 
         # GPU or CPU or MPS (Apple Silicon)
         if torch.cuda.is_available() and not args.no_cuda:
@@ -102,17 +100,16 @@ class Trainer(object):
                 inputs = {
                     'input_ids': batch[0],
                     'attention_mask': batch[1],
-                    'intent_label_ids': batch[3],
-                    'indicator_label_ids': batch[4],
-                    'metric_type_label_ids': batch[5],
-                    'calc_mode_label_ids': batch[6],
-                    'seasonal_label_ids': batch[7],
-                    'req_form_label_ids': batch[8],
-                    'context_mode_label_ids': batch[9],
-                    'activity_label_ids': batch[10],
+                    'indicator_label_ids': batch[3],
+                    'metric_type_label_ids': batch[4],
+                    'calc_mode_label_ids': batch[5],
+                    'seasonal_label_ids': batch[6],
+                    'req_form_label_ids': batch[7],
+                    'frequency_label_ids': batch[8],
+                    'activity_label_ids': batch[9],
                 }
-                if self.args.slot_loss_coef != 0:
-                    inputs['slot_labels_ids'] = batch[11]
+                # if self.args.slot_loss_coef != 0:
+                #     inputs['slot_labels_ids'] = batch[10]
                 if self.args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2]
                 outputs = self.model(**inputs)
@@ -165,24 +162,22 @@ class Trainer(object):
         logger.info("  Batch size = %d", self.args.eval_batch_size)
         eval_loss = 0.0
         nb_eval_steps = 0
-        intent_preds = None
         indicator_preds = None
         metric_type_preds = None
         calc_mode_preds = None
         seasonal_preds = None
         req_form_preds = None
-        context_mode_preds = None
+        frequency_preds = None
         activity_preds = None
-        slot_preds = None
-        out_intent_label_ids = None
+        # slot_preds = None
         out_indicator_label_ids = None
         out_metric_type_label_ids = None
         out_calc_mode_label_ids = None
         out_seasonal_label_ids = None
         out_req_form_label_ids = None
-        out_context_mode_label_ids = None
+        out_frequency_label_ids = None
         out_activity_label_ids = None
-        out_slot_labels_ids = None
+        # out_slot_labels_ids = None
 
         self.model.eval()
 
@@ -191,35 +186,25 @@ class Trainer(object):
             with torch.no_grad():
                 inputs = {'input_ids': batch[0],
                           'attention_mask': batch[1],
-                          'intent_label_ids': batch[3],
-                          'indicator_label_ids': batch[4],
-                          'metric_type_label_ids': batch[5],
-                          'calc_mode_label_ids': batch[6],
-                          'seasonal_label_ids': batch[7],
-                          'req_form_label_ids': batch[8],
-                          'context_mode_label_ids': batch[9],
-                          'activity_label_ids': batch[10],
+                          'indicator_label_ids': batch[3],
+                          'metric_type_label_ids': batch[4],
+                          'calc_mode_label_ids': batch[5],
+                          'seasonal_label_ids': batch[6],
+                          'req_form_label_ids': batch[7],
+                          'frequency_label_ids': batch[8],
+                          'activity_label_ids': batch[9],
                           }
-                if self.args.slot_loss_coef != 0:
-                    inputs['slot_labels_ids'] = batch[11]
+                # if self.args.slot_loss_coef != 0:
+                #     inputs['slot_labels_ids'] = batch[10]
                 if self.args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2]
                 outputs = self.model(**inputs)
-                tmp_eval_loss, (intent_logits, indicator_logits, metric_type_logits, calc_mode_logits, 
-                                seasonal_logits, req_form_logits, context_mode_logits, activity_logits, slot_logits) = outputs[:2]
+                tmp_eval_loss, (indicator_logits, metric_type_logits, calc_mode_logits, 
+                                seasonal_logits, req_form_logits, frequency_logits, activity_logits) = outputs[:2]  #, slot_logits
 
                 eval_loss += tmp_eval_loss.mean().item()
             nb_eval_steps += 1
 
-            # Intent prediction
-            if intent_preds is None:
-                intent_preds = intent_logits.detach().cpu().numpy()
-                out_intent_label_ids = inputs['intent_label_ids'].detach().cpu().numpy()
-            else:
-                intent_preds = np.append(intent_preds, intent_logits.detach().cpu().numpy(), axis=0)
-                out_intent_label_ids = np.append(
-                    out_intent_label_ids, inputs['intent_label_ids'].detach().cpu().numpy(), axis=0)
-                
             # Indicator prediction
             if indicator_preds is None:
                 indicator_preds = indicator_logits.detach().cpu().numpy()
@@ -265,14 +250,14 @@ class Trainer(object):
                 out_req_form_label_ids = np.append(
                     out_req_form_label_ids, inputs['req_form_label_ids'].detach().cpu().numpy(), axis=0)
                 
-            # Req Form prediction
-            if context_mode_preds is None:
-                context_mode_preds = context_mode_logits.detach().cpu().numpy()
-                out_context_mode_label_ids = inputs['context_mode_label_ids'].detach().cpu().numpy()
+            # Frequency prediction
+            if frequency_preds is None:
+                frequency_preds = frequency_logits.detach().cpu().numpy()
+                out_frequency_label_ids = inputs['frequency_label_ids'].detach().cpu().numpy()
             else:
-                context_mode_preds = np.append(context_mode_preds, context_mode_logits.detach().cpu().numpy(), axis=0)
-                out_context_mode_label_ids = np.append(
-                    out_context_mode_label_ids, inputs['context_mode_label_ids'].detach().cpu().numpy(), axis=0)
+                frequency_preds = np.append(frequency_preds, frequency_logits.detach().cpu().numpy(), axis=0)
+                out_frequency_label_ids = np.append(
+                    out_frequency_label_ids, inputs['frequency_label_ids'].detach().cpu().numpy(), axis=0)
                 
             # Activity prediction
             if activity_preds is None:
@@ -283,22 +268,22 @@ class Trainer(object):
                 out_activity_label_ids = np.append(
                     out_activity_label_ids, inputs['activity_label_ids'].detach().cpu().numpy(), axis=0)
                 
-            # Slot prediction (optional)
-            if self.args.slot_loss_coef != 0:
-                if slot_preds is None:
-                    if self.args.use_crf:
-                        slot_preds = np.array(self.model.crf.decode(slot_logits, mask=inputs['attention_mask'].bool()))
-                    else:
-                        slot_preds = slot_logits.detach().cpu().numpy()
+            # # Slot prediction (optional)
+            # if self.args.slot_loss_coef != 0:
+            #     if slot_preds is None:
+            #         if self.args.use_crf:
+            #             slot_preds = np.array(self.model.crf.decode(slot_logits, mask=inputs['attention_mask'].bool()))
+            #         else:
+            #             slot_preds = slot_logits.detach().cpu().numpy()
 
-                    out_slot_labels_ids = inputs["slot_labels_ids"].detach().cpu().numpy()
-                else:
-                    if self.args.use_crf:
-                        slot_preds = np.append(slot_preds, np.array(self.model.crf.decode(slot_logits, mask=inputs['attention_mask'].bool())), axis=0)
-                    else:
-                        slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
+            #         out_slot_labels_ids = inputs["slot_labels_ids"].detach().cpu().numpy()
+            #     else:
+            #         if self.args.use_crf:
+            #             slot_preds = np.append(slot_preds, np.array(self.model.crf.decode(slot_logits, mask=inputs['attention_mask'].bool())), axis=0)
+            #         else:
+            #             slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
 
-                    out_slot_labels_ids = np.append(out_slot_labels_ids, inputs["slot_labels_ids"].detach().cpu().numpy(), axis=0)
+            #         out_slot_labels_ids = np.append(out_slot_labels_ids, inputs["slot_labels_ids"].detach().cpu().numpy(), axis=0)
 
         eval_loss = eval_loss / nb_eval_steps
         results = {
@@ -306,41 +291,44 @@ class Trainer(object):
         }
 
         # HEADS CLS result
-        intent_preds = np.argmax(intent_preds, axis=1)
         indicator_preds = np.argmax(indicator_preds, axis=1)
         metric_type_preds = np.argmax(metric_type_preds, axis=1)
         calc_mode_preds = np.argmax(calc_mode_preds, axis=1)
         seasonal_preds = np.argmax(seasonal_preds, axis=1)
         req_form_preds = np.argmax(req_form_preds, axis=1)
-        context_mode_preds = np.argmax(context_mode_preds, axis=1)
+        frequency_preds = np.argmax(frequency_preds, axis=1)
         activity_preds = np.argmax(activity_preds, axis=1)
 
-        # Slot result (optional)
-        if self.args.slot_loss_coef != 0:
-            if not self.args.use_crf:
-                slot_preds = np.argmax(slot_preds, axis=2)
-            slot_label_map = {i: label for i, label in enumerate(self.slot_label_lst)}
-            out_slot_label_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
-            slot_preds_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
+        # # Slot result (optional)
+        # if self.args.slot_loss_coef != 0:
+        #     if not self.args.use_crf:
+        #         slot_preds = np.argmax(slot_preds, axis=2)
+        #     slot_label_map = {i: label for i, label in enumerate(self.slot_label_lst)}
+        #     out_slot_label_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
+        #     slot_preds_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
 
-            for i in range(out_slot_labels_ids.shape[0]):
-                for j in range(out_slot_labels_ids.shape[1]):
-                    if out_slot_labels_ids[i, j] != self.pad_token_label_id:
-                        out_slot_label_list[i].append(slot_label_map[out_slot_labels_ids[i][j]])
-                        slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
-        else:
-            # If slot loss is disabled, return empty lists per sample
-            n_samples = out_intent_label_ids.shape[0]
-            out_slot_label_list = [[] for _ in range(n_samples)]
-            slot_preds_list = [[] for _ in range(n_samples)]
+        #     for i in range(out_slot_labels_ids.shape[0]):
+        #         for j in range(out_slot_labels_ids.shape[1]):
+        #             if out_slot_labels_ids[i, j] != self.pad_token_label_id:
+        #                 out_slot_label_list[i].append(slot_label_map[out_slot_labels_ids[i][j]])
+        #                 slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
+        # else:
+        #     # If slot loss is disabled, return empty lists per sample
+        #     n_samples = out_indicator_label_ids.shape[0]
+        #     out_slot_label_list = [[] for _ in range(n_samples)]
+        #     slot_preds_list = [[] for _ in range(n_samples)]
 
-        total_result = compute_metrics(intent_preds, out_intent_label_ids, 
-                                       indicator_preds, out_indicator_label_ids, 
+        # Placeholder empty slot lists
+        n_samples = out_indicator_label_ids.shape[0]
+        out_slot_label_list = [[] for _ in range(n_samples)]
+        slot_preds_list = [[] for _ in range(n_samples)]
+
+        total_result = compute_metrics(indicator_preds, out_indicator_label_ids, 
                                        metric_type_preds, out_metric_type_label_ids, 
                                        calc_mode_preds, out_calc_mode_label_ids, 
                                        seasonal_preds, out_seasonal_label_ids, 
                                        req_form_preds, out_req_form_label_ids, 
-                                       context_mode_preds, out_context_mode_label_ids, 
+                                       frequency_preds, out_frequency_label_ids, 
                                        activity_preds, out_activity_label_ids, 
                                        slot_preds_list, out_slot_label_list)
         results.update(total_result)
@@ -370,15 +358,13 @@ class Trainer(object):
         try:
             self.model = self.model_class.from_pretrained(self.args.model_out,
                                                           args=self.args,
-                                                          intent_label_lst=self.intent_label_lst,
                                                           indicator_label_lst=self.indicator_label_lst,
                                                           metric_type_label_lst=self.metric_type_label_lst,
                                                           calc_mode_label_lst=self.calc_mode_label_lst,
                                                           seasonal_label_lst=self.seasonal_label_lst,
                                                           req_form_label_lst=self.req_form_label_lst,
-                                                          context_mode_label_lst=self.context_mode_label_lst,
-                                                          activity_label_lst=self.activity_label_lst,
-                                                          slot_label_lst=self.slot_label_lst)
+                                                          frequency_label_lst=self.frequency_label_lst,
+                                                          activity_label_lst=self.activity_label_lst)
             self.model.to(self.device)
             logger.info("***** Model Loaded *****")
         except:

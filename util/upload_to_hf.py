@@ -10,6 +10,8 @@ Requisitos:
 Uso:
     python upload_to_hf.py --repo_name tu-usuario/pibot-jointbert-beto
     
+    python upload_to_hf.py --repo_name smenaaliaga/pibot-jointbert --model_dir model_out/pibot_model_beto_v3
+    
     # O con token específico
     python upload_to_hf.py --repo_name tu-usuario/pibot-jointbert-beto --token YOUR_HF_TOKEN
 """

@@ -5,7 +5,7 @@ Uso:
     python util/split_data.py --dataset atis --test_size 0.2 --dev_size 0.1 --seed 42
     python util/split_data.py --dataset pibimacec --test_size 0.15 --dev_size 0.1
     
-    python util/split_data.py --dataset pibimacecv2 --test_size 0.2 --dev_size 0.1
+    python util/split_data.py --dataset pibimacecv3 --test_size 0.2 --dev_size 0.1
 """
 
 import argparse

@@ -7,19 +7,16 @@ Procesa un archivo Excel y genera los archivos para la arquitectura multi-head d
 
 Estructura esperada del Excel:
 - Columna 1: text (entrada de texto)
-- Columna 2: intent
-- Columna 3: indicator
-- Columna 4: metric_type
-- Columna 5: calc_mode
-- Columna 6: seasonal
+- Columna 2: indicator
+- Columna 3: metric_type
+- Columna 4: seasonal
+- Columna 5: activity
+- Columna 6: frequency
 - Columna 7: req_form
-- Columna 8: context_mode
-- Columna 9: activity
+- Columna 8: calc_mode
 
 Uso:
-    python util/process_excel_multi_heads.py --dataset pibimacec --input_file data/pibimacec/raw/data.xlsx --sheet_name Sheet1
-    
-    python util/process_excel_multi_heads.py --dataset pibimacecv2 --input_file data/pibimacecv2/raw/data.xlsx --sheet_name final
+    python util/process_excel_multi_heads.py --dataset pibimacecv3 --input_file data/pibimacecv3/raw/data.xlsx --sheet_name final
 
 Notas:
 - El archivo Excel debe estar en formato .xlsx o .xls
@@ -87,8 +84,8 @@ def process_file(dataset, input_file, sheet_name=None, skip_header=True):
     except ImportError:
         rows = process_excel_openpyxl(input_file, sheet_name=sheet_name)
     
-    # Headers: text, intent, indicator, metric_type, calc_mode, seasonal, req_form, context_mode, activity
-    head_names = ['text', 'intent', 'indicator', 'metric_type', 'calc_mode', 'seasonal', 'req_form', 'context_mode', 'activity']
+    # Headers:
+    head_names = ['text', 'indicator', 'metric_type', 'seasonal', 'activity', 'frequency', 'req_form', 'calc_mode']
     
     # Almacenar datos y vocabularios
     seq_in = []
@@ -97,14 +94,13 @@ def process_file(dataset, input_file, sheet_name=None, skip_header=True):
     
     # Vocabularios por cabeza (usar dict para preservar orden de aparición)
     vocabularies = {
-        'intent': {},
         'indicator': {},
         'metric_type': {},
-        'calc_mode': {},
         'seasonal': {},
+        'activity': {},
+        'frequency': {},
         'req_form': {},
-        'context_mode': {},
-        'activity': {}
+        'calc_mode': {}
     }
 
     # Procesar cada fila del Excel
@@ -173,18 +169,18 @@ def process_file(dataset, input_file, sheet_name=None, skip_header=True):
         with open(vocab_file, 'w', encoding='utf-8') as f:
             for label, _ in sorted_labels:
                 f.write(f"{label}\n")
-        print(f"Escribí: {vocab_file} ({len(sorted_labels)} etiquetas)")
+        print(f"Salida: {vocab_file} ({len(sorted_labels)} etiquetas)")
 
     # Escribir slot_label.txt vacío (solo "O")
     with open(base_path / 'slot_label.txt', 'w', encoding='utf-8') as f:
         f.write("O\n")
-    print(f"Escribí: {base_path / 'slot_label.txt'} (solo O)")
+    print(f"Salida: {base_path / 'slot_label.txt'} (solo O)")
 
     # Resumen
     print(f"\nProcesadas {len(seq_in)} filas")
-    print(f"Escribí: {processed_path / 'seq.in'}")
-    print(f"Escribí: {processed_path / 'seq.out'}")
-    print(f"Escribí: {processed_path / 'label'}")
+    print(f"Salida: {processed_path / 'seq.in'}")
+    print(f"Salida: {processed_path / 'seq.out'}")
+    print(f"Salida: {processed_path / 'label'}")
     print("\nVocabularios generados:")
     for head_name in head_names[1:]:
         print(f"  {head_name}: {len(vocabularies[head_name])} etiquetas")
