@@ -1,8 +1,6 @@
-import torch
 import torch.nn as nn
-from transformers import BertPreTrainedModel, BertModel, BertConfig
-from torchcrf import CRF
-from .module import IndicatorClassifier, MetricTypeClassifier, CalcModeClassifier, SeasonalClassifier, ReqFormClassifier, FrequencyClassifier, ActivityClassifier  #, SlotClassifier
+from transformers import BertPreTrainedModel, BertModel
+from module import IndicatorClassifier, MetricTypeClassifier, CalcModeClassifier, SeasonalClassifier, ReqFormClassifier, FrequencyClassifier, ActivityClassifier  #, SlotClassifier
 
 
 class JointBERT(BertPreTrainedModel):

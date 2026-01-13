@@ -161,25 +161,6 @@ python main.py --task pibimacecv3 --model_type beto --model_out pibot_model_v3 -
 | `--early_stopping` | Detener cuando no mejore la pérdida de dev | `True` | Activa parada temprana por `val_loss` |
 | `--early_stopping_patience` | Épocas sin mejora antes de parar | `3` | Guarda el mejor modelo al mejorar |
 
-#### Comando recomendado para dataset pequeño:
-
-#### Alternativas según rendimiento:
-
-**Si hay overfitting (val loss ↑ después de epoch ~10):**
-```bash
---train_batch_size 16 --learning_rate 1e-5 --num_train_epochs 20 --dropout_rate 0.25
-```
-
-**Si hay underfitting (val loss no mejora después de epoch 15):**
-```bash
---train_batch_size 8 --learning_rate 2e-5 --num_train_epochs 30 --dropout_rate 0.15
-```
-
-**Para clases desbalanceadas (ej: activity con "no_minero" bajo representado):**
-```bash
---learning_rate 1e-5 --num_train_epochs 30 --dropout_rate 0.25
-```
-
 ## Prediction
 
 ### Predicción en lote (predict.py)
@@ -297,4 +278,48 @@ bc_pibot_jointbert/
 ├── chat.py                    # Chat interactivo
 ├── requirements.txt           # Dependencias
 └── README.md                  # Este archivo
+```
+
+## Publicar en Hugging Face
+
+Usa el script [util/upload_to_hf.py](util/upload_to_hf.py) para subir modelos entrenados a Hugging Face Hub.
+
+### Requisitos previos
+
+El script espera encontrar en `model_dir`:
+- **Pesos**: `model.safetensors` o `pytorch_model.bin`
+- **Config**: `config.json`
+- **Tokenizer**: `tokenizer.json`, `tokenizer_config.json`, `vocab.txt`, `special_tokens_map.json` (se generan automáticamente tras entrenar si usaste `main.py`)
+- **Código custom**: `modeling_jointbert.py`, `module.py`, `__init__.py`
+- **Labels**: Los 7 archivos `*_label.txt`
+
+El script puede **completar archivos faltantes** automáticamente:
+- Si faltan labels, los copia desde `--label_dir`
+- Si faltan archivos de código custom, los copia desde `--code_dir`
+
+### Uso básico
+
+```bash
+python util/upload_to_hf.py --repo_name <usuario>/<nombre-repo> --model_dir <directorio-modelo> --label_dir <directorio-labels>
+```
+
+### Argumentos
+
+| Argumento | Tipo | Requerido | Descripción |
+|-----------|------|-----------|-------------|
+| `--repo_name` | str | ✓ | Nombre del repo en HF (formato: `usuario/nombre-modelo`) |
+| `--model_dir` | str | ✓ | Directorio del modelo a subir |
+| `--label_dir` | str | ✓ | Directorio con los 7 `*_label.txt` (se copian si faltan en `model_dir`) |
+| `--code_dir` | str | ✗ | Directorio con código custom (`modeling_jointbert.py`, `module.py`, `__init__.py`) para copiar si faltan en `model_dir` |
+| `--token` | str | ✗ | Token de Hugging Face (si no se provee, usa el guardado o solicita login) |
+| `--private` | flag | ✗ | Crear repositorio privado |
+| `--create_model_card` | flag | ✗ | Generar README.md automático en `model_dir` antes de subir |
+| `--commit_message` | str | ✗ | Mensaje de commit (default: "Upload PIBot Joint BERT model") |
+| `--no_login` | flag | ✗ | No intentar login interactivo (usar solo token existente) |
+
+### Ejemplos
+
+**Subida básica** (asumiendo que `model_dir` ya tiene todos los archivos):
+```bash
+python util/upload_to_hf.py --repo_name smenaaliaga/pibot-jointbert --model_dir model_out/pibot_model_v3 --label_dir data/pibimacecv3 --commit_message "Upload PIBot Joint BERT 7-heads model"
 ```

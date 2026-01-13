@@ -18,6 +18,8 @@ def main(args):
 
     if args.do_train:
         trainer.train()
+        # Guarda el tokenizer junto al checkpoint para cargas reproducibles
+        tokenizer.save_pretrained(args.model_out)
 
     if args.do_eval:
         trainer.load_model()

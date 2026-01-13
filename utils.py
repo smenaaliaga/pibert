@@ -7,15 +7,15 @@ import numpy as np
 from seqeval.metrics import precision_score, recall_score, f1_score
 
 from transformers import BertConfig #, DistilBertConfig, AlbertConfig
-from transformers import BertTokenizer #, DistilBertTokenizer, AlbertTokenizer
+from transformers import AutoTokenizer  # usar tokenizer rápido para generar tokenizer.json
 
 from model_in import JointBERT #, JointDistilBERT, JointAlbert
 
 MODEL_CLASSES = {
-    'bert': (BertConfig, JointBERT, BertTokenizer),
-    'beto': (BertConfig, JointBERT, BertTokenizer),  # BETO usa la misma arquitectura que BERT
-    # 'distilbert': (DistilBertConfig, JointDistilBERT, DistilBertTokenizer),
-    # 'albert': (AlbertConfig, JointAlbert, AlbertTokenizer)
+    'bert': (BertConfig, JointBERT, AutoTokenizer),
+    'beto': (BertConfig, JointBERT, AutoTokenizer),  # BETO usa la misma arquitectura que BERT
+    # 'distilbert': (DistilBertConfig, JointDistilBERT, AutoTokenizer),
+    # 'albert': (AlbertConfig, JointAlbert, AutoTokenizer)
 }
 
 MODEL_PATH_MAP = {
@@ -52,7 +52,7 @@ def get_activity_labels(args):
 
 
 def load_tokenizer(args):
-    return MODEL_CLASSES[args.model_type][2].from_pretrained(args.model_name_or_path)
+    return MODEL_CLASSES[args.model_type][2].from_pretrained(args.model_name_or_path, use_fast=True)
 
 
 def init_logger():

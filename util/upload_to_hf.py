@@ -1,29 +1,29 @@
 """
 Script para subir el modelo PIBot a Hugging Face Hub.
 
-Este script sube el modelo entrenado a Hugging Face Hub para que pueda
-ser compartido públicamente o usado en otros proyectos.
+Sube el checkpoint entrenado y los archivos de soporte (tokenizer, código custom, labels) para que otros proyectos puedan usarlo con trust_remote_code.
 
 Requisitos:
     pip install huggingface-hub
+    
+Uso básico:
+    python util/upload_to_hf.py --repo_name <usuario>/<nombre-repo> --model_dir <directorio-modelo> --label_dir <directorio-labels> 
 
-Uso:
-    python upload_to_hf.py --repo_name tu-usuario/pibot-jointbert-beto
-    
-    python upload_to_hf.py --repo_name smenaaliaga/pibot-jointbert --model_dir model_out/pibot_model_beto_v3
-    
-    # O con token específico
-    python upload_to_hf.py --repo_name tu-usuario/pibot-jointbert-beto --token YOUR_HF_TOKEN
+Ejemplo:
+    python util/upload_to_hf.py --repo_name smenaaliaga/pibot-jointbert --model_dir model_out/pibot_model_v3 --label_dir data/pibimacecv3
 """
 
 import argparse
-import os
+import shutil
 from pathlib import Path
+from huggingface_hub import HfApi, create_repo, upload_folder
 
 
 def upload_model_to_hf(
-    model_dir: str,
     repo_name: str,
+    model_dir: str,
+    label_dir: str,
+    code_dir: str = None,
     token: str = None,
     private: bool = False,
     commit_message: str = "Upload PIBot Joint BERT model"
@@ -32,14 +32,15 @@ def upload_model_to_hf(
     Sube el modelo a Hugging Face Hub.
     
     Args:
-        model_dir: Directorio local del modelo (ej: 'model_out/pibot_model_beto')
         repo_name: Nombre del repositorio en HF (ej: 'tu-usuario/pibot-jointbert-beto')
+        model_dir: Directorio local del modelo (ej: 'model_out/pibot_model_beto')
+        label_dir: Ruta a la carpeta con los *_label.txt (ej: 'data/pibimacecv3')
+        code_dir: Carpeta con modeling_jointbert.py/module.py/__init__.py (se usa si faltan en model_dir)
         token: Token de Hugging Face (opcional, usa el guardado si no se provee)
         private: Si True, crea un repositorio privado
         commit_message: Mensaje del commit
     """
     try:
-        from huggingface_hub import HfApi, create_repo, upload_folder
         print("✓ huggingface-hub importado correctamente")
     except ImportError:
         print("❌ Error: huggingface-hub no está instalado")
@@ -51,14 +52,64 @@ def upload_model_to_hf(
     if not model_path.exists():
         print(f"❌ Error: No se encuentra el directorio del modelo: {model_dir}")
         return False
-    
-    # Verificar archivos esenciales
-    required_files = ['pytorch_model.bin', 'config.json']
-    missing_files = [f for f in required_files if not (model_path / f).exists()]
-    
-    if missing_files:
-        print(f"⚠ Advertencia: Faltan archivos: {missing_files}")
-        print("  El modelo puede no funcionar correctamente en HF")
+
+    # Verificar archivos esenciales del modelo/tokenizer/código/labels
+    core_weight_files = ['model.safetensors', 'pytorch_model.bin']
+    core_config_file = 'config.json'
+    tokenizer_files = ['tokenizer.json', 'tokenizer_config.json', 'vocab.txt', 'special_tokens_map.json']
+    code_files = ['modeling_jointbert.py', 'module.py', '__init__.py']
+    label_files = [
+        'indicator_label.txt', 'metric_type_label.txt', 'seasonal_label.txt',
+        'activity_label.txt', 'frequency_label.txt', 'req_form_label.txt', 'calc_mode_label.txt'
+    ]
+
+    has_weight = any((model_path / f).exists() for f in core_weight_files)
+    if not has_weight:
+        print(f"❌ Error: No se encontró ninguno de los archivos de pesos: {core_weight_files}")
+        return False
+
+    missing_core = [core_config_file] if not (model_path / core_config_file).exists() else []
+    missing_tokenizer = [f for f in tokenizer_files if not (model_path / f).exists()]
+    missing_code = [f for f in code_files if not (model_path / f).exists()]
+    missing_labels = [f for f in label_files if not (model_path / f).exists()]
+
+    # Completar labels faltantes copiando desde label_dir
+    if missing_labels and label_dir:
+        src_labels = Path(label_dir)
+        if not src_labels.exists():
+            print(f"⚠ Advertencia: label_dir no existe: {label_dir}")
+        else:
+            for f in missing_labels:
+                src = src_labels / f
+                dst = model_path / f
+                if src.exists():
+                    shutil.copyfile(src, dst)
+            missing_labels = [f for f in label_files if not (model_path / f).exists()]
+
+    # Completar código faltante copiando desde code_dir
+    if missing_code and code_dir:
+        src_code = Path(code_dir)
+        if not src_code.exists():
+            print(f"⚠ Advertencia: code_dir no existe: {code_dir}")
+        else:
+            for f in missing_code:
+                src = src_code / f
+                dst = model_path / f
+                if src.exists():
+                    shutil.copyfile(src, dst)
+            missing_code = [f for f in code_files if not (model_path / f).exists()]
+
+    if missing_core or missing_tokenizer or missing_code or missing_labels:
+        print("⚠ Advertencia: faltan archivos que mejor subas para compatibilidad completa en HF:")
+        if missing_core:
+            print(f"  - Core: {missing_core}")
+        if missing_tokenizer:
+            print(f"  - Tokenizer: {missing_tokenizer}")
+        if missing_code:
+            print(f"  - Código custom (trust_remote_code): {missing_code}")
+        if missing_labels:
+            print(f"  - Labels: {missing_labels}")
+        print("  El modelo puede no cargar bien sin ellos (tokenizer, mapeos o código custom).")
     
     print(f"\n{'='*70}")
     print(f"SUBIENDO MODELO A HUGGING FACE HUB")
@@ -145,8 +196,7 @@ def create_model_card(model_dir: str, output_path: str = None):
     readme_content = f'''---
 language: es
 tags:
-- intent-classification
-- slot-filling
+- multi-classification
 - joint-bert
 - spanish
 - economics
@@ -156,112 +206,64 @@ license: mit
 
 # PIBot Joint BERT - {model_type.upper()}
 
-Modelo Joint BERT entrenado para clasificación de intención y extracción de entidades (slot filling) en consultas sobre indicadores económicos del Banco Central de Chile.
+Modelo Joint BERT multi-cabeza entrenado para consultas económicas del Banco Central de Chile. Predice 7 cabezas de clasificación en paralelo: indicator, metric_type, seasonal, activity, frequency, req_form, calc_mode.
 
 ## Descripción del Modelo
 
-Este modelo está basado en la arquitectura Joint BERT que realiza simultáneamente:
-1. **Clasificación de Intención**: Determina si la consulta busca valores (`value`) o información metodológica (`methodology`)
-2. **Slot Filling**: Identifica y extrae entidades como indicadores, períodos, tipos de medida, sectores, etc.
-
-### Modelo Base
-
-- **Arquitectura**: BERT (dccuchile/bert-base-spanish-wwm-cased)
+- **Arquitectura base**: BERT (dccuchile/bert-base-spanish-wwm-cased)
 - **Idioma**: Español
-- **Task**: {task}
+- **Task/dataset**: {task}
 - **Épocas de entrenamiento**: {epochs}
+- **Heads**: 7 clasificadores independientes (sin slots/CRF en esta versión)
 
 ## Uso
 
 ### Instalación
 
 ```bash
-pip install torch transformers pytorch-crf
+pip install torch transformers
 ```
 
-### Ejemplo de Uso
+### Ejemplo de carga
 
 ```python
-from transformers import BertTokenizer
-from modeling_jointbert import JointBERT
 import torch
+from transformers import AutoTokenizer, AutoModel
 
-# Cargar modelo y tokenizer
-model_dir = "smenaaliaga/pibot-jointbert-beto"  # Cambiar por tu repo
-tokenizer = BertTokenizer.from_pretrained(model_dir)
+repo_id = "<tu-usuario>/<tu-repo>"  # e.g., smenaaliaga/pibot_model_v3
 
-# Cargar labels
-intent_labels = ["methodology", "value"]
-slot_labels = ["O", "B-indicator", "I-indicator", "B-period", "I-period", ...]
+tokenizer = AutoTokenizer.from_pretrained(repo_id)
+model = AutoModel.from_pretrained(repo_id, trust_remote_code=True)
 
-# Inicializar modelo (requiere código personalizado de JointBERT)
-model = JointBERT.from_pretrained(
-    model_dir,
-    intent_label_lst=intent_labels,
-    slot_label_lst=slot_labels
-)
+text = "cual fue el pib del ultimo trimestre"
+batch = tokenizer(text, return_tensors="pt", truncation=True, max_length=64)
+with torch.no_grad():
+    outputs = model(**batch)
+    logits = outputs[1]  # tuple: (indicator, metric_type, calc_mode, seasonal, req_form, frequency, activity)
 
-# Predecir
-text = "cual fue el imacec de agosto 2024"
-# ... (código de predicción)
+# Cada logits[i] -> argmax -> índice -> label usando los *_label.txt incluidos en el repo
 ```
 
-## Datos de Entrenamiento
+### Archivos incluidos
+- Pesos: model.safetensors (o pytorch_model.bin)
+- Config: config.json
+- Tokenizer: tokenizer.json, tokenizer_config.json, vocab.txt, special_tokens_map.json
+- Código custom: modeling_jointbert.py, module.py, __init__.py (usar trust_remote_code=True)
+- Labels: indicator_label.txt, metric_type_label.txt, seasonal_label.txt, activity_label.txt, frequency_label.txt, req_form_label.txt, calc_mode_label.txt
+- Opcional: training_args.bin, README.md (esta model card)
 
-El modelo fue entrenado en un dataset especializado de consultas sobre:
-- **IMACEC**: Indicador Mensual de Actividad Económica
-- **PIB**: Producto Interno Bruto
-- Sectores económicos (minería, comercio, industria, etc.)
-- Períodos temporales (meses, trimestres, años)
+## Datos de Entrenamiento (resumen)
+- Consultas sobre IMACEC/PIB y variaciones (YoY, periodo previo), frecuencias (m/q/a), actividades (total, sectores), formas de solicitud (latest/point/range), estacionalidad (sa/nsa).
 
-### Etiquetas
-
-**Intenciones:**
-- `value`: Consultas sobre valores/datos específicos
-- `methodology`: Consultas sobre metodología/definiciones
-
-**Slots (entidades):**
-- `indicator`: Indicador económico (IMACEC, PIB)
-- `period`: Período temporal
-- `measure_type`: Tipo de medida (variación, índice, etc.)
-- `sector`: Sector económico
-- `series_type`: Tipo de serie (original, desestacionalizada, tendencia-ciclo)
-
-## Rendimiento
-
-- **Intent Accuracy**: ~95%+
-- **Slot F1-Score**: ~90%+
-
-(Valores aproximados, ver logs de entrenamiento para métricas exactas)
-
-## Limitaciones
-
-- Entrenado específicamente para consultas sobre indicadores económicos chilenos
-- Mejor rendimiento en consultas cortas-medianas (< 50 tokens)
-- Puede tener dificultades con consultas muy ambiguas o fuera de dominio
-
-## Cita
-
-Si usas este modelo, por favor cita:
-
-```bibtex
-@misc{{pibot-jointbert,
-  author = {{Banco Central de Chile}},
-  title = {{PIBot Joint BERT - Modelo de Clasificación de Intención y Slot Filling}},
-  year = {{2025}},
-  publisher = {{Hugging Face}},
-  howpublished = {{\\url{{https://huggingface.co/smenaaliaga/pibot-jointbert-beto}}}}
-}}
-```
+## Notas
+- Se recomienda `trust_remote_code=True` para cargar el modelo custom.
+- Las labels están en texto plano para mapear argmax→string.
+- Ajustar `max_length` según el largo de consultas (64 recomendado).
 
 ## Licencia
 
 MIT License
 
-## Más Información
-
-- Paper original: [BERT for Joint Intent Classification and Slot Filling](https://arxiv.org/abs/1902.10909)
-- Implementación base: [JointBERT](https://github.com/monologg/JointBERT)
 '''
     
     Path(output_path).write_text(readme_content, encoding='utf-8')
@@ -320,17 +322,31 @@ def main():
     parser = argparse.ArgumentParser(description="Subir modelo PIBot a Hugging Face Hub")
     
     parser.add_argument(
-        '--model_dir',
-        type=str,
-        default='model_out/pibot_model_beto',
-        help='Directorio del modelo a subir'
-    )
-    
-    parser.add_argument(
         '--repo_name',
         type=str,
         required=True,
         help='Nombre del repo en HF (formato: usuario/nombre-modelo)'
+    )
+    
+    parser.add_argument(
+        '--model_dir',
+        type=str,
+        required=True,
+        help='Directorio del modelo a subir'
+    )
+
+    parser.add_argument(
+        '--label_dir',
+        type=str,
+        required=True,
+        help='Directorio donde están los *_label.txt; se copiarán si faltan en model_dir'
+    )
+
+    parser.add_argument(
+        '--code_dir',
+        type=str,
+        default=None,
+        help='Directorio con modeling_jointbert.py/module.py/__init__.py para completar si faltan'
     )
     
     parser.add_argument(
@@ -350,6 +366,13 @@ def main():
         '--create_model_card',
         action='store_true',
         help='Crear README.md antes de subir'
+    )
+
+    parser.add_argument(
+        '--commit_message',
+        type=str,
+        default='Upload PIBot Joint BERT model',
+        help='Mensaje de commit para el push a HF'
     )
     
     parser.add_argument(
@@ -376,10 +399,13 @@ def main():
     
     # Subir modelo
     success = upload_model_to_hf(
-        model_dir=args.model_dir,
         repo_name=args.repo_name,
+        label_dir=args.label_dir,
+        model_dir=args.model_dir,
+        code_dir=args.code_dir,
         token=args.token,
-        private=args.private
+        private=args.private,
+        commit_message=args.commit_message
     )
     
     if success:
