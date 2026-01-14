@@ -1,0 +1,542 @@
+intencion	req_form	calc_mode	indicator	frecuencia	desestacion	actividad	text
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el dato del ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el registro del ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el resultado del ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el reporte del ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame la publicacion del ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el imacec mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el dato del imacec mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el registro del imacec mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el resultado del imacec mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el reporte del imacec mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame la publicacion del imacec mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	como salio el imacec hoy
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	como salio el imacec actual
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	necesito el imacec mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual es el imacec mas actual
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	quiero el imacec mas reciente disponible
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual es el imacec vigente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	como cerro el imacec en su ultima publicacion
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el imacec del periodo mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual es el dato actual del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual es el ultimo imacec reportado
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el ultimo imacec publicado
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el imacec en el ultimo reporte
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	necesito saber el imacec del ultimo informe
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	como estuvo el ultimo imacec publicado
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el imacec correspondiente mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	que tal salio el imacec en el ultimo dato reportado
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	que tal salio el imacec en el ultimo dato disponible
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	puedes darme el imacec mas reciente que tengas
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	quiero el imacec de la ultima medicion
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el ultimo registro del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	como va el ultimo informado imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	la salida del ultimo comunicado del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	el resultado oficial mas reciente del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame la ultima lectura del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual es la ultima lectura del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame la ultima actualizacion del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	quiero el ultimo dato oficial del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el ultimo dato oficial del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual es el ultimo resultado oficial del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual es el ultimo boletin del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el ultimo boletin del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual es el ultimo comunicado del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el dato mas reciente informado del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame la ultima lectura del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	necesito el ultimo dato disponible del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual es la ultima actualizacion del imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cuanto aumento el ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cuanto subio el ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cuanto se expandio el ultimo imacec 
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cuanto vario el ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cuanto crecio el ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cuanto cambio el ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el crecimiento del ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue la expansion del ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el aumento del ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue la variacion del ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el cambio del ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	como vario el ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	como crecio el ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	que tanto aumento el ultimo imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual fue el valor ultimo imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual fue la cifra del ultimo imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual fue el indice del ultimo imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual fue el nivel del ultimo imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual fue el ultimo imacec de la serie original
+value	point	level	imacec	def:mensual	def:no	def:todos	dame el ultimo imacec de la serie original
+value	point	level	imacec	def:mensual	def:no	def:todos	dame indice del imacec mas reciente
+value	point	level	imacec	def:mensual	def:no	def:todos	dame la cifra del imacec mas reciente
+value	point	level	imacec	def:mensual	def:no	def:todos	dame el nivel del imacec mas reciente
+value	point	level	imacec	def:mensual	def:no	def:todos	dame el valor del imacec mas reciente
+value	point	level	imacec	def:mensual	def:no	def:todos	dame la publicacion del imacec mas reciente de la serie original
+value	point	level	imacec	def:mensual	def:no	def:todos	como salio el indice el imacec hoy
+value	point	level	imacec	def:mensual	def:no	def:todos	como salio el valor del imacec actual
+value	point	level	imacec	def:mensual	def:no	def:todos	necesito indice del imacec mas reciente
+value	point	level	imacec	def:mensual	def:no	def:todos	cual la cifra del imacec mas actual
+value	point	level	imacec	def:mensual	def:no	def:todos	como estuvo el ultimo imacec de la serie original
+value	point	level	imacec	def:mensual	def:no	def:todos	quiero el valor del imacec mas reciente disponible
+value	point	level	imacec	def:mensual	def:no	def:todos	cual es el nivel del imacec vigente
+value	point	level	imacec	def:mensual	def:no	def:todos	como cerro el imacec en su ultima publicacion de la serie original
+value	point	level	imacec	def:mensual	def:no	def:todos	cual fue el valor del imacec del periodo mas reciente
+value	point	level	imacec	def:mensual	def:no	def:todos	cual es el indice actual del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual es el nivel del ultimo imacec reportado
+value	point	level	imacec	def:mensual	def:no	def:todos	cual fue la cifra del ultimo imacec publicado
+value	point	level	imacec	def:mensual	def:no	def:todos	cual fue el imacec en el ultimo reportado en la serie original
+value	point	level	imacec	def:mensual	def:no	def:todos	necesito saber el valor del imacec del ultimo informe
+value	point	level	imacec	def:mensual	def:no	def:todos	como estuvo la cifra del ultimo imacec publicado
+value	point	level	imacec	def:mensual	def:no	def:todos	dame el nivel del imacec correspondiente mas reciente
+value	point	level	imacec	def:mensual	def:no	def:todos	que tal salio el indice del imacec en el ultimo dato reportado
+value	point	level	imacec	def:mensual	def:no	def:todos	cual es el valor del imacec en curso
+value	point	level	imacec	def:mensual	def:no	def:todos	que tal salio la cifra del imacec en el ultimo dato disponible
+value	point	level	imacec	def:mensual	def:no	def:todos	puedes darme el valor del imacec mas reciente que tengas
+value	point	level	imacec	def:mensual	def:no	def:todos	quiero el imacec de la ultima medicion en su serie original
+value	point	level	imacec	def:mensual	def:no	def:todos	dame el ultimo registro del imacec serie original
+value	point	level	imacec	def:mensual	def:no	def:todos	como va el ultimo imacec informado en su serie original
+value	point	level	imacec	def:mensual	def:no	def:todos	la salida del ultimo comunicado del indice del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	el resultado oficial de la serie original mas reciente del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	dame la ultima lectura de la serie original del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual es la ultima lectura del indice del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	dame la ultima actualizacion de la serie original del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	quiero el ultimo valor oficial del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	dame el ultimo nivel oficial del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual es la ultimo cifra oficial del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual es el ultimo indice base del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	dame el ultimo indice base del boletin del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual es el ultimo comunicado del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual fue el valor mas reciente informado del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	dame la ultima lectura de la serie original del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	necesito el ultimo indice disponible del imacec
+value	point	level	imacec	def:mensual	def:no	def:todos	cual es la ultima actualizacion del indice base del imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el imacec de este mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el imacec de este mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito el imacec de este mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	que imacec corresponde a este mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	como salio el imacec de este mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el ultimo imacec de este mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el imacec de el mes anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el imacec del mes anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito el imacec del mes anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	que imacec corresponde al mes anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	como salio el imacec del mes anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el ultimo imacec del mes anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el ultimo imacec mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el dato del ultimo imacec con frecuencia mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el registro del ultimo mes del imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el resultado del ultimo imacec mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el reporte del ultimo mes imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame la publicacion del ultimo mes imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el imacec mas reciente mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el dato del imacec mensual mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el registro del imacec mensual mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el resultado mensual del imacec mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el reporte del imacec del mes mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame la publicacion del imacec mensual mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	como salio el imacec mensual de hoy
+value	point	prev_year	imacec	mensual	def:no	def:todos	como salio el imacec del mes actual
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito el imacec del mes mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual es el imacec mas actual del ultimo mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	como estuvo el imacec el ultimo mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	quiero el imacec mensual mas reciente disponible
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual es el imacec del mes vigente
+value	point	prev_year	imacec	mensual	def:no	def:todos	como cerro el mes el imacec en su ultima publicacion
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el imacec del mes mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual es el dato actual del imacec mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual es el ultimo imacec mensual reportado
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el imacec publicado el ultimo mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el imacec en el ultimo reporte del mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto aumento el imacec del ultimo mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto subio el ultimo imacec mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto se expandio el imacec ultimo el ultimo mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto vario el ultimo imacec mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto crecio el ultimo imacec mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto cambio el imacec del ultimo mes disponible
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el crecimiento del ultimo imacec mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue la expansion imacec el ultimo mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el aumento mensual del ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue la variacion del ultimo imacec mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el cambio del imacec ultimo el ultimo mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	como vario el ultimo imacec mensual
+value	point	prev_year	imacec	mensual	def:no	def:todos	como crecio el ultimo mes del imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	que tanto aumento el ultimo mes del imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito saber en cuanto crecio el imacec del ultimo mes
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito saber cuanto vario el ultimo mes del imacec
+value	point	level	imacec	mensual	def:no	def:todos	como estuvo la cifra mensual del ultimo imacec publicado
+value	point	level	imacec	mensual	def:no	def:todos	dame el nivel del imacec correspondiente al mes mas reciente
+value	point	level	imacec	mensual	def:no	def:todos	que tal salio el indice mensual del imacec en el ultimo dato reportado
+value	point	level	imacec	mensual	def:no	def:todos	cual es el valor del imacec del mes en curso
+value	point	level	imacec	mensual	def:no	def:todos	que tal salio la cifra del imacec en el ultimo dato disponible del mes
+value	point	level	imacec	mensual	def:no	def:todos	puedes darme el valor del imacec del mes mas reciente que tengas
+value	point	level	imacec	mensual	def:no	def:todos	quiero el imacec mensual de la ultima medicion en su serie original
+value	point	level	imacec	mensual	def:no	def:todos	dame el ultimo registro mensual del imacec serie original
+value	point	level	imacec	mensual	def:no	def:todos	como va el imacec en el ultimo mes informado en su serie original
+value	point	level	imacec	mensual	def:no	def:todos	la salida del ultimo mes del comunicado del indice del imacec
+value	point	level	imacec	mensual	def:no	def:todos	el resultado oficial de la serie original mas reciente del imacec mensual
+value	point	level	imacec	mensual	def:no	def:todos	dame la lectura del ultimo mes de la serie original del imacec
+value	point	level	imacec	mensual	def:no	def:todos	cual es la ultima lectura del indice del imacec mensual
+value	point	level	imacec	mensual	def:no	def:todos	dame la ultima actualizacion de la serie original mensual del imacec
+value	point	level	imacec	mensual	def:no	def:todos	quiero el ultimo valor oficial del imacec mensual
+value	point	level	imacec	mensual	def:no	def:todos	dame el ultimo nivel oficial del imacec mensual
+value	point	level	imacec	mensual	def:no	def:todos	cual es la ultimo cifra oficial del imacec mensual
+value	point	level	imacec	mensual	def:no	def:todos	cual es el ultimo indice base mensual del imacec
+value	point	level	imacec	mensual	def:no	def:todos	dame el ultimo indice base del boletin del imacec mensual
+value	point	level	imacec	mensual	def:no	def:todos	cual es el comunicado del ultimo mes del imacec
+value	point	level	imacec	mensual	def:no	def:todos	cual fue el valor mas reciente informado del imacec mensual
+value	point	level	imacec	mensual	def:no	def:todos	dame la ultima lectura de la serie original del imacec mensual
+value	point	level	imacec	mensual	def:no	def:todos	necesito el ultimo indice mensual disponible del imacec
+value	point	level	imacec	mensual	def:no	def:todos	cual es la ultima actualizacion del mes del indice base del imacec
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el imacec de este trimestre
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame el imacec de este trimestre
+value	point	prev_year	imacec	trimestral	def:no	def:todos	necesito el imacec de este trimestre
+value	point	prev_year	imacec	trimestral	def:no	def:todos	que imacec corresponde a este trimestre
+value	point	prev_year	imacec	trimestral	def:no	def:todos	como salio el imacec de este trimestre
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el ultimo imacec de este trimestre
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el imacec de el trimestre anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame el imacec del trimestre anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	necesito el imacec del trimestre anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	que imacec corresponde al trimestre anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	como salio el imacec del trimestre anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el ultimo imacec del trimestre anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el ultimo imacec trimestral
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el dato del ultimo imacec con frecuencia trimestral
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el registro del ultimo trimestre del imacec
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el resultado del ultimo imacec trimestral
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame el reporte del ultimo trimestre imacec
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame la publicacion del ultimo trimestre imacec
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame el imacec mas reciente trimestral
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame el dato del imacec trimestral mas reciente
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame el registro del imacec trimestral mas reciente
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame el resultado trimestral del imacec mas reciente
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame el reporte del imacec del trimestre mas reciente
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame la publicacion del imacec trimestral mas reciente
+value	point	prev_year	imacec	trimestral	def:no	def:todos	como salio el imacec trimestral de hoy
+value	point	prev_year	imacec	trimestral	def:no	def:todos	como salio el imacec del trimestre actual
+value	point	prev_year	imacec	trimestral	def:no	def:todos	necesito el imacec del trimestre mas reciente
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual es el imacec mas actual del ultimo trimestre
+value	point	prev_year	imacec	trimestral	def:no	def:todos	como estuvo el imacec el ultimo trimestre
+value	point	prev_year	imacec	trimestral	def:no	def:todos	quiero el imacec trimestral mas reciente disponible
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual es el imacec del trimestre vigente
+value	point	prev_year	imacec	trimestral	def:no	def:todos	como cerro el trimestre el imacec en su ultima publicacion
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el imacec del trimestre mas reciente
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual es el dato actual del imacec trimestral
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual es el ultimo imacec trimestral reportado
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el imacec publicado el ultimo trimestre
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el imacec en el ultimo reporte del trimestre
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto aumento el imacec del ultimo trimestre
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto subio el ultimo imacec trimestral
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto se expandio el imacec ultimo el ultimo trimestre
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto vario el ultimo imacec trimestral
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto crecio el ultimo imacec trimestral
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto cambio el imacec del ultimo trimestre disponible
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el crecimiento del ultimo imacec trimestral
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue la expansion imacec el ultimo trimestre
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el aumento trimestral del ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue la variacion del ultimo imacec trimestral
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el cambio del imacec ultimo el ultimo trimestre
+value	point	prev_year	imacec	mensual	def:no	def:todos	como vario el ultimo imacec trimestral
+value	point	prev_year	imacec	mensual	def:no	def:todos	como crecio el ultimo trimestre del imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	que tanto aumento el ultimo trimestre del imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito saber en cuanto crecio el imacec del ultimo trimestre
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito saber cuanto vario el ultimo trimestre del imacec
+value	point	level	imacec	trimestral	def:no	def:todos	como estuvo la cifra trimestral del ultimo imacec publicado
+value	point	level	imacec	trimestral	def:no	def:todos	dame el nivel del imacec correspondiente al trimestre mas reciente
+value	point	level	imacec	trimestral	def:no	def:todos	que tal salio el indice trimestral del imacec en el ultimo dato reportado
+value	point	level	imacec	trimestral	def:no	def:todos	cual es el valor del imacec del trimestre en curso
+value	point	level	imacec	trimestral	def:no	def:todos	que tal salio la cifra del imacec en el ultimo dato disponible del trimestre
+value	point	level	imacec	trimestral	def:no	def:todos	puedes darme el valor del imacec del trimestre mas reciente que tengas
+value	point	level	imacec	trimestral	def:no	def:todos	quiero el imacec trimestral de la ultima medicion en su serie original
+value	point	level	imacec	trimestral	def:no	def:todos	dame el ultimo registro trimestral del imacec serie original
+value	point	level	imacec	trimestral	def:no	def:todos	como va el imacec en el ultimo trimestre informado en su serie original
+value	point	level	imacec	trimestral	def:no	def:todos	la salida del ultimo trimestre del comunicado del indice del imacec
+value	point	level	imacec	trimestral	def:no	def:todos	el resultado oficial de la serie original mas reciente del imacec trimestral
+value	point	level	imacec	trimestral	def:no	def:todos	dame la lectura del ultimo trimestre de la serie original del imacec
+value	point	level	imacec	trimestral	def:no	def:todos	cual es la ultima lectura del indice del imacec trimestral
+value	point	level	imacec	trimestral	def:no	def:todos	dame la ultima actualizacion de la serie original trimestral del imacec
+value	point	level	imacec	trimestral	def:no	def:todos	quiero el ultimo valor oficial del imacec trimestral
+value	point	level	imacec	trimestral	def:no	def:todos	dame el ultimo nivel oficial del imacec trimestral
+value	point	level	imacec	trimestral	def:no	def:todos	cual es la ultimo cifra oficial del imacec trimestral
+value	point	level	imacec	trimestral	def:no	def:todos	cual es el ultimo indice base trimestral del imacec
+value	point	level	imacec	trimestral	def:no	def:todos	dame el ultimo indice base del boletin del imacec trimestral
+value	point	level	imacec	trimestral	def:no	def:todos	cual es el comunicado del ultimo trimestre del imacec
+value	point	level	imacec	trimestral	def:no	def:todos	cual fue el valor mas reciente informado del imacec trimestral
+value	point	level	imacec	trimestral	def:no	def:todos	dame la ultima lectura de la serie original del imacec trimestral
+value	point	level	imacec	trimestral	def:no	def:todos	necesito el ultimo indice trimestral disponible del imacec
+value	point	level	imacec	trimestral	def:no	def:todos	cual es la ultima actualizacion del trimestre del indice base del imacec
+value	point	prev_year	imacec	anual	def:no	def:todos	cual fue el imacec de este annio
+value	point	prev_year	imacec	anual	def:no	def:todos	dame el imacec de este annio
+value	point	prev_year	imacec	anual	def:no	def:todos	necesito el imacec de este annio
+value	point	prev_year	imacec	anual	def:no	def:todos	que imacec corresponde a este annio
+value	point	prev_year	imacec	anual	def:no	def:todos	como salio el imacec de este annio
+value	point	prev_year	imacec	anual	def:no	def:todos	cual fue el ultimo imacec de este annio
+value	point	prev_year	imacec	anual	def:no	def:todos	cual fue el imacec de el annio anterior
+value	point	prev_year	imacec	anual	def:no	def:todos	dame el imacec del annio anterior
+value	point	prev_year	imacec	anual	def:no	def:todos	necesito el imacec del annio anterior
+value	point	prev_year	imacec	anual	def:no	def:todos	que imacec corresponde al annio anterior
+value	point	prev_year	imacec	anual	def:no	def:todos	como salio el imacec del annio anterior
+value	point	prev_year	imacec	anual	def:no	def:todos	cual fue el ultimo imacec del annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el ultimo imacec anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el dato del ultimo imacec con frecuencia anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el registro del ultimo annio del imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el resultado del ultimo imacec anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el reporte del ultimo annio imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame la publicacion del ultimo annio imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el imacec mas reciente anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el dato del imacec anual mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el registro del imacec anual mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el resultado anual del imacec mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el reporte del imacec del annio mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame la publicacion del imacec anual mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	como salio el imacec anual de hoy
+value	point	prev_year	imacec	mensual	def:no	def:todos	como salio el imacec del annio actual
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito el imacec del annio mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual es el imacec mas actual del ultimo annio
+value	point	prev_year	imacec	mensual	def:no	def:todos	como estuvo el imacec el ultimo annio
+value	point	prev_year	imacec	mensual	def:no	def:todos	quiero el imacec anual mas reciente disponible
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual es el imacec del annio vigente
+value	point	prev_year	imacec	mensual	def:no	def:todos	como cerro el annio el imacec en su ultima publicacion
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el imacec del annio mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual es el dato actual del imacec anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual es el ultimo imacec anual reportado
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el imacec publicado el ultimo annio
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el imacec en el ultimo reporte del annio
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto aumento el imacec del ultimo annio
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto subio el ultimo imacec anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto se expandio el imacec ultimo el ultimo annio
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto vario el ultimo imacec anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto crecio el ultimo imacec anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto cambio el imacec del ultimo annio disponible
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el crecimiento del ultimo imacec anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue la expansion imacec el ultimo annio
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el aumento anual del ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue la variacion del ultimo imacec anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el cambio del imacec ultimo el ultimo annio
+value	point	prev_year	imacec	mensual	def:no	def:todos	como vario el ultimo imacec anual
+value	point	prev_year	imacec	mensual	def:no	def:todos	como crecio el ultimo annio del imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	que tanto aumento el ultimo annio del imacec
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito saber en cuanto crecio el imacec del ultimo annio
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito saber cuanto vario el ultimo annio del imacec
+value	point	level	imacec	mensual	def:no	def:todos	como estuvo la cifra anual del ultimo imacec publicado
+value	point	level	imacec	mensual	def:no	def:todos	dame el nivel del imacec correspondiente al annio mas reciente
+value	point	level	imacec	mensual	def:no	def:todos	que tal salio el indice anual del imacec en el ultimo dato reportado
+value	point	level	imacec	mensual	def:no	def:todos	cual es el valor del imacec del annio en curso
+value	point	level	imacec	mensual	def:no	def:todos	que tal salio la cifra del imacec en el ultimo dato disponible del annio
+value	point	level	imacec	mensual	def:no	def:todos	puedes darme el valor del imacec del annio mas reciente que tengas
+value	point	level	imacec	mensual	def:no	def:todos	quiero el imacec anual de la ultima medicion en su serie original
+value	point	level	imacec	mensual	def:no	def:todos	dame el ultimo registro anual del imacec serie original
+value	point	level	imacec	mensual	def:no	def:todos	como va el imacec en el ultimo annio informado en su serie original
+value	point	level	imacec	mensual	def:no	def:todos	la salida del ultimo annio del comunicado del indice del imacec
+value	point	level	imacec	mensual	def:no	def:todos	el resultado oficial de la serie original mas reciente del imacec anual
+value	point	level	imacec	mensual	def:no	def:todos	dame la lectura del ultimo annio de la serie original del imacec
+value	point	level	imacec	mensual	def:no	def:todos	cual es la ultima lectura del indice del imacec anual
+value	point	level	imacec	mensual	def:no	def:todos	dame la ultima actualizacion de la serie original anual del imacec
+value	point	level	imacec	mensual	def:no	def:todos	quiero el ultimo valor oficial del imacec anual
+value	point	level	imacec	mensual	def:no	def:todos	dame el ultimo nivel oficial del imacec anual
+value	point	level	imacec	mensual	def:no	def:todos	cual es la ultimo cifra oficial del imacec anual
+value	point	level	imacec	mensual	def:no	def:todos	cual es el ultimo indice base anual del imacec
+value	point	level	imacec	mensual	def:no	def:todos	dame el ultimo indice base del boletin del imacec anual
+value	point	level	imacec	mensual	def:no	def:todos	cual es el comunicado del ultimo annio del imacec
+value	point	level	imacec	mensual	def:no	def:todos	cual fue el valor mas reciente informado del imacec anual
+value	point	level	imacec	mensual	def:no	def:todos	dame la ultima lectura de la serie original del imacec anual
+value	point	level	imacec	mensual	def:no	def:todos	necesito el ultimo indice anual disponible del imacec
+value	point	level	imacec	mensual	def:no	def:todos	cual es la ultima actualizacion del annio del indice base del imacec
+value	point	prev_year	imacec	def:mensual	def:no	bienes	cuanto fue el imacec en produccion de bienes
+value	point	prev_year	imacec	def:mensual	def:no	minero	cuanto fue el imacec minero
+value	point	prev_year	imacec	def:mensual	def:no	industria	cuanto fue el imacec de la industria manufacturera
+value	point	prev_year	imacec	def:mensual	def:no	res.bienes	cuanto fue el imacec del resto de bienes
+value	point	prev_year	imacec	def:mensual	def:no	comercio	cuanto fue el imacec en el comercio
+value	point	prev_year	imacec	def:mensual	def:no	servicios	cuanto fue el imacec en servicios
+value	point	prev_year	imacec	def:mensual	def:no	cost.fact	cuanto fue el imacec a costo de factores
+value	point	prev_year	imacec	def:mensual	def:no	impuestos	cuanto fue el imacec impuestos sobre los productos
+value	point	prev_year	imacec	def:mensual	def:no	no.minero	cuanto fue el imacec no minero
+value	point	level	imacec	def:mensual	def:no	bienes	cual es el valor de la produccion de bienes el ultimo imacec
+value	point	level	imacec	mensual	def:no	bienes	que indice registro produccion de bienes el ultimo mes
+value	point	prev_year	imacec	def:mensual	def:no	bienes	cuanto vario la produccion de bienes en el ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	bienes	como cambio la produccion de bienes frente del mes anterior
+value	point	level	imacec	mensual	def:no	minero	cual es el valor del imacec minero en el ultimo mes
+value	point	level	imacec	def:mensual	def:no	minero	que indice tuvo la mineria en el imacec mas reciente
+value	point	prev_year	imacec	mensual	def:no	minero	cuanto vario la mineria en comparacion con el mismo mes del annio anterior
+value	point	prev_year	imacec	mensual	def:no	minero	cual fue la variacion mensual de la mineria
+value	point	level	imacec	def:mensual	def:no	industria	cual es el valor del componente industria del imacec
+value	point	level	imacec	def:mensual	def:no	industria	que indice presento la industria en el ultimo imacec
+value	point	prev_year	imacec	def:mensual	def:no	industria	cuanto crecio la industria interanualmente
+value	point	prev_year	imacec	mensual	def:no	industria	como vario la industria respecto al mes anterior
+value	point	level	imacec	def:mensual	def:no	res.bienes	cual es el valor del resto de bienes en los ultimos datos
+value	point	level	imacec	mensual	def:no	res.bienes	que indice tuvo el resto de bienes el ultimo mes
+value	point	prev_year	imacec	mensual	def:no	res.bienes	cual fue la variacion mensual del resto de bienes
+value	point	prev_year	imacec	def:mensual	def:no	res.bienes	cuanto vario el resto de bienes interanualmente
+value	point	level	imacec	def:mensual	def:no	comercio	cual es el valor del comercio en el ultimo imacec
+value	point	level	imacec	mensual	def:no	comercio	dame el ultimo indice de comercio del mes
+value	point	prev_year	imacec	def:mensual	def:no	comercio	cuanto vario el comercio respecto al annio anterior
+value	point	prev_year	imacec	def:mensual	def:no	comercio	como cambio ultimo valor del comercio
+value	point	level	imacec	mensual	def:no	servicios	cual es el valor de servicios en el ultimo mes informado
+value	point	level	imacec	def:mensual	def:no	servicios	que indice tuvieron los servicios mas reciente
+value	point	prev_year	imacec	mensual	def:no	servicios	cuanto crecieron los servicios el ultimo mes reportado
+value	point	prev_year	imacec	mensual	def:no	servicios	cual fue la variacion mensual de servicios
+value	point	level	imacec	def:mensual	def:no	cost.fact	cual es el valor del imacec a costo de factores del ultimo mes
+value	point	level	imacec	def:mensual	def:no	cost.fact	dame el ultimo indice del imacec a costo de factores 
+value	point	prev_year	imacec	def:mensual	def:no	cost.fact	cuanto vario el imacec a costo de factores respecto al annio anterior
+value	point	prev_year	imacec	def:mensual	def:no	cost.fact	como se movio el imacec a costo de factores frente al annio pasado
+value	point	level	imacec	def:mensual	def:no	impuestos	cual es el valor del componente impuestos sobre los productos
+value	point	level	imacec	mensual	def:no	impuestos	que indice restraron los impuestos sobre los productos el ultimo mes
+value	point	prev_year	imacec	def:mensual	def:no	impuestos	cuanto variaron los impuesto sobre los productos interanual
+value	point	prev_year	imacec	mensual	def:no	impuestos	cual fue la variacion mensual del componente de impuestos sobre los productos
+value	point	level	imacec	mensual	def:no	no.minero	cual es el valor del imacec no minero del ultimo mes
+value	point	level	imacec	def:mensual	def:no	no.minero	que indice tuvo el ultimo imacec no minero
+value	point	prev_year	imacec	def:mensual	def:no	no.minero	cuanto crecio el imacec no minero respecto al annio anterior
+value	point	prev_year	imacec	mensual	def:no	no.minero	cual fue la variacion mensual del imacec no minero
+value	point	level	imacec	def:mensual	def:no	bienes	cual fue el valor mas reciente informado del imacec de produccion de bienes
+value	point	prev_year	imacec	anual	def:no	minero	como salio el imacec minero de este annio
+value	point	prev_year	imacec	mensual	def:no	industria	dame el imacec mas reciente mensual para el componente de industria
+value	point	prev_year	imacec	def:mensual	def:no	res.bienes	el resultado oficial mas reciente del imacec del resto de bienes
+value	point	level	imacec	def:mensual	def:no	comercio	cual es el valor de comercio en el imacec en curso
+value	point	level	imacec	mensual	def:no	servicios	cual es la ultima lectura del indice de servicio para el imacec mensual
+value	point	prev_year	imacec	mensual	def:no	cost.fact	dame el imacec a costo de factores del mes anterior
+value	point	level	imacec	def:mensual	def:no	impuestos	necesito saber el valor de los impuestos sobre los productos del imacec del ultimo informe
+value	point	prev_year	imacec	def:mensual	def:no	no.minero	dame el dato del imacec no minero mas reciente
+value	point	level	imacec	def:mensual	def:no	bienes	cual es la ultima lectura del indice del imacec en produccion de bienes
+value	point	prev_year	imacec	def:mensual	def:no	minero	cual fue el cambio del ultimo imacec minero
+value	point	prev_year	imacec	mensual	def:no	industria	que tanto aumento la industria el ultimo trimestre del imacec
+value	point	prev_year	imacec	trimestral	def:no	res.bienes	cual es el dato actual del imacec trimestral del resto de los bienes
+value	point	level	imacec	def:mensual	def:no	comercio	como estuvo la actividad comercial el ultimo imacec de la serie original
+value	point	prev_year	imacec	mensual	def:no	servicios	cual fue la variacion de los servicios en el ultimo imacec mensual
+value	point	prev_year	imacec	mensual	def:no	cost.fact	dame la publicacion del ultimo mes imacec a costo de factores
+value	point	prev_year	imacec	trimestral	def:no	impuestos	como salio el imacec del trimestre actual de los impuestos sobre los productos
+value	point	prev_year	imacec	def:mensual	def:no	no.minero	cual es el ultimo comunicado del imacec que no es minero
+value	point	prev_year	imacec	mensual	def:no	bienes	cuanto crecieron los bienes en el ultimo imacec anual
+value	point	prev_year	imacec	mensual	def:no	minero	cual fue el aumento mensual de la mineria del ultimo imacec
+value	point	level	imacec	trimestral	def:no	industria	que tal salio la cifra del imacec en el ultimo dato disponible del trimestre
+value	point	prev_year	imacec	mensual	def:no	res.bienes	como salio el imacec del mes actual para el resto de los bienes
+value	point	level	imacec	mensual	def:no	comercio	el resultado oficial de la serie original mas reciente del imacec mensual para la actividad comerical
+value	point	level	imacec	def:mensual	def:no	servicios	puedes darme el valor del imacec mas reciente que tengas de los servicios
+value	point	prev_year	imacec	def:mensual	def:no	cost.fact	cual es la ultima lectura a costo de factores del imacec
+value	point	prev_year	imacec	def:mensual	def:no	impuestos	cual es el dato actual del imacec respecto a los impuestos sobre los productos
+value	point	prev_year	imacec	trimestral	def:no	no.minero	como cerro el trimestre el imacec en su ultima publicacion para la actividad que no pertenece a la mineria
+value	point	prev_year	imacec	mensual	def:no	bienes	necesito saber en cuanto crecio el imacec de bienes del ultimo trimestre
+value	point	prev_year	imacec	def:mensual	def:no	minero	para la mineria dame la publicacion del imacec mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	industria	de la industria necesito el ultimo dato disponible del imacec
+value	point	prev_year	imacec	def:mensual	def:no	res.bienes	del resto de bienes cual fue el resultado del ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	comercio	dame el dato del imacec anual mas reciente para la actividad comercial
+value	point	level	imacec	def:mensual	def:no	servicios	cual es el indice actual para los servicios en el imacec
+value	point	level	imacec	trimestral	def:no	cost.fact	dame la lectura del ultimo trimestre de la serie original del imacec a costo de factores
+value	point	level	imacec	def:mensual	def:no	impuestos	dame el ultimo indice base del boletin del imacec impuesto sobre los productos
+value	point	prev_year	imacec	def:mensual	def:no	no.minero	cuanto subio el ultimo imacec anual para la actividad que no es mineria
+value	point	prev_year	imacec	def:mensual	def:no	bienes	cual fue el ultimo imacec para la produccion de bienes
+value	point	level	imacec	def:mensual	def:no	minero	cual fue el valor de la mineria para el imacec del periodo mas reciente
+value	point	prev_year	imacec	anual	def:no	industria	como estuvo el imacec relacionado a la industria el ultimo annio
+value	point	level	imacec	def:mensual	def:no	res.bienes	como cerro el imacec en su ultima publicacion de la serie original para el resto de los bienes
+value	point	level	imacec	def:mensual	def:no	comercio	quiero el ultimo valor oficial del imacec en comercio
+value	point	prev_year	imacec	mensual	def:no	servicios	como salio el imacec del mes anterior para servicios
+value	point	prev_year	imacec	mensual	def:no	cost.fact	cual es el imacec mas actual del ultimo annio a costo de factores
+value	point	level	imacec	def:mensual	def:no	impuestos	como va el ultimo imacec impuestos sobre los productos informado en su serie original
+value	point	prev_year	imacec	def:mensual	def:no	no.minero	como salio el imacec que no se relaciona con la mineria hoy
+value	point	level	imacec	mensual	def:no	bienes	cual es la ultima actualizacion del annio del indice base de los bienes del imacec
+value	point	prev_year	imacec	def:mensual	def:no	minero	quiero el ultimo dato oficial de la mineria en el imacec
+value	point	level	imacec	def:mensual	def:no	industria	quiero el valor del imacec mas reciente disponible para la industria
+value	point	level	imacec	mensual	def:no	res.bienes	respecto al resto de los bienes dame el nivel del imacec correspondiente al mes mas reciente
+value	point	prev_year	imacec	mensual	def:no	comercio	necesito saber cuanto vario el comerio en el imacec el mes mas reciente
+value	point	prev_year	imacec	mensual	def:no	servicios	dame la publicacion del imacec anual mas reciente para los servicios
+value	point	prev_year	imacec	mensual	def:no	cost.fact	necesito saber en cuanto crecio el imacec a costo de factores del ultimo annio
+value	point	prev_year	imacec	trimestral	def:no	impuestos	quiero el imacec trimestral mas reciente disponible para los impuestos sobre los productos
+value	point	prev_year	imacec	mensual	def:no	no.minero	cuanto aumento el imacec no minero del ultimo mes
+value	point	level	imacec	def:mensual	def:no	bienes	cual fue el valor del imacec de produccion de bienes en el ultimo dato disponible
+value	point	level	imacec	def:mensual	def:no	bienes	cual es la cifra mas reciente del indice de produccion de bienes del imacec
+value	point	prev_year	imacec	def:mensual	def:no	bienes	cuanto vario interanualmente la produccion de bienes en el ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	bienes	cual fue la variacion de la produccion de bienes respecto al mes anterior en el dato mas reciente
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto crecio en doce meses en el ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	comercio	cuanto aumento el comercio en doce meses en el ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	industria	cual fue el crecimiento de la industria en doce meses para el ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	minero	cuanto se expandio la mineria en doce meses para el imacec mas reciente
+value	point	prev_year	imacec	mensual	def:no	servicios	para los servicios en el imacec cuanto vario en doce meses respecto al ultimo periodo
+value	point	prev_year	imacec	mensual	def:no	bienes	cuanto aumento la produccion de bienes en doce meses para el ultimo imacec disponible
+value	point	prev_year	imacec	mensual	def:no	no.minero	dame la variacion a doce meses del ultimo imacec no minero
+value	point	prev_year	imacec	mensual	def:no	bienes	cuanto cambio a doce meses el ultimo el imace en produccion de bienes
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cuanto crecio en doce meses el ultimo imacec del ultimo trimestre
+value	point	prev_year	imacec	trimestral	def:no	servicios	cuanto aumento los servicios en doce meses en el ultimo imacec trimestral
+value	point	prev_year	imacec	trimestral	def:no	minero	cual fue el crecimiento de la mineria en doce meses del ultimo trimestre del imacec
+value	point	prev_year	imacec	trimestral	def:no	no.minero	cuanto se expandio en doce meses para el imacec trimestral no minero mas reciente
+value	point	prev_year	imacec	anual	def:no	bienes	para la produccion de bienes en el imacec cuanto vario en doce meses respecto al ultimo annio
+value	point	prev_year	imacec	anual	def:no	industria	cuanto aumento la industria en doce meses para el ultimo annio disponible del imacec
+value	point	prev_year	imacec	anual	def:no	minero	dame la variacion a doce meses del ultimo imacec para la mineria del annio mas reciente
+value	point	prev_year	imacec	anual	def:no	res.bienes	cuanto cambio a doce meses el ultimo annio el imace para el resto bienes
+value	point	level	imacec	mensual	def:no	comercio	cual fue el valor del imacec de comercio en el ultimo mes informado
+value	point	level	imacec	def:mensual	def:no	comercio	dame la cifra mas reciente de la serie original del imacec en comercio
+value	point	prev_year	imacec	mensual	def:no	comercio	cual fue la variacion mensual del comercio en el dato mas reciente del imacec
+value	point	level	imacec	def:mensual	def:no	cost.fact	cual fue el valor del imacec a costo de factores del ultimo periodo disponible
+value	point	level	imacec	def:mensual	def:no	cost.fact	dame el indice mas reciente del imacec a costo de factores
+value	point	level	imacec	def:mensual	def:no	cost.fact	cuanto vario el imacec a costo de factores respecto al annio anterior en el ultimo dato
+value	point	level	imacec	def:mensual	def:no	cost.fact	cual fue la variacion del imacec a costo de factores frente al periodo anterior en el ultimo mes informado
+value	point	level	imacec	def:mensual	def:no	impuestos	cual fue el valor del componente impuesto sobre los productos en el ultimo imacec
+value	point	level	imacec	def:mensual	def:no	impuestos	cual es la cifra mas reciente del indice del imacec de impuestos sobre los productos
+value	point	prev_year	imacec	def:mensual	def:no	impuestos	cuanto crecieron interanualmente los impuestos sobre los productos en el ultimo dato
+value	point	prev_year	imacec	mensual	def:no	impuestos	cual fue la variacion mensual del componente de impuestos sobre los productos en el imacec mas reciente
+value	point	level	imacec	def:mensual	def:no	industria	cual fue el valor mas reciente del imacec para la industria manufacturera
+value	point	level	imacec	def:mensual	def:no	industria	dame la cifra del indice de industria en el ultimo imacec disponible
+value	point	prev_year	imacec	mensual	def:no	industria	cuanto vario la industria en doce meses en el ultimo dato del imacec
+value	point	prev_year	imacec	mensual	def:no	industria	cual fue el cambio de la industria respecto al mes anterior en el imacec mas reciente
+value	point	level	imacec	mensual	def:no	minero	cual fue el valor del imacec minero en el ultimo mes informado
+value	point	level	imacec	def:mensual	def:no	minero	cual es la cifra mas reciente de la serie original del imacec minero
+value	point	prev_year	imacec	def:mensual	def:no	minero	cuanto crecio la mineria interanualmente en el ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	minero	cual fue la variacion mensual del imacec minero en el dato mas reciente
+value	point	level	imacec	def:mensual	def:no	no.minero	cual fue el valor del imacec no minero del ultimo periodo disponible
+value	point	level	imacec	def:mensual	def:no	no.minero	dame el indice mas reciente del imacec no minero en serie original
+value	point	prev_year	imacec	def:mensual	def:no	no.minero	cuanto vario el imacec no minero respecto al annio anterior 
+value	point	prev_year	imacec	mensual	def:no	no.minero	cual fue la variacion mensual del imacec no minero en el mes mas reciente
+value	point	level	imacec	def:mensual	def:no	res.bienes	cual fue el valor del imacec del resto de bienes en el ultimo dato disponible
+value	point	level	imacec	def:mensual	def:no	res.bienes	cual es la cifra mas reciente del indice del resto de bienes del imacec
+value	point	prev_year	imacec	def:mensual	def:no	res.bienes	cuanto crecio interanualmente el resto de bienes en el ultimo imacec
+value	point	prev_year	imacec	mensual	def:no	res.bienes	cual fue la variacion mensual del resto de bienes en el dato mas reciente
+value	point	prev_year	imacec	mensual	def:no	servicios	cual fue el valor del imacec de servicios en el ultimo mes informado
+value	point	prev_year	imacec	def:mensual	def:no	servicios	dame la cifra mas reciente del indice de servicios en el imacec
+value	point	level	imacec	def:mensual	def:no	servicios	cuanto vario interanualmente servicios en el ultimo dato del imacec
+value	point	level	imacec	mensual	def:no	servicios	cual fue la variacion respecto al mes anterior de servicios en el imacec mas reciente
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	que tanto aumento el ultimo annio del imacec con igual periodo al annio anterior
+value	point	prev_year	imacec	anual	def:no	def:todos	necesito el imacec del annio anterior con variacion respecto al annio anterior
+value	point	prev_year	imacec	anual	def:no	industria	como estuvo el imacec relacionado a la industria el ultimo annio respecto al annio anterior
+value	point	prev_year	imacec	def:mensual	def:no	bienes	cuanto vario la produccion de bienes en el ultimo imacec en comparacion al annio anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el resultado del ultimo imacec trimestral versus el trimestre del annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto cambio el imacec del ultimo annio disponible respecto al annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el resultado del ultimo imacec mensual en comparacion al annio anterior
+value	point	prev_year	imacec	def:mensual	def:no	no.minero	cuanto vario el imacec no minero respecto al annio anterior 
+value	point	prev_year	imacec	mensual	def:no	bienes	cuanto aumento la produccion de bienes en doce meses para el ultimo imacec disponible respecto al annio anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame el reporte del ultimo trimestre imacec en comparacion con igual periodo annio anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el imacec publicado el ultimo trimestre vs el imacec del annio anterior
+value	point	prev_year	imacec	mensual	def:no	servicios	cual fue la variacion de los servicios en el ultimo imacec mensual vs el mismo mes del annio anterior
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	necesito saber el imacec del ultimo informe en comparacion con igual periodo al annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el dato del ultimo imacec con frecuencia anual respecto al annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el ultimo imacec anual en comparacion al annio anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	dame el resultado trimestral del imacec mas reciente en comparacion al annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el crecimiento del ultimo imacec trimestral respecto al trimestre del annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el imacec mas reciente mensual respecto al mes del annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	como crecio el ultimo trimestre del imacec con el mismo periodo al annio anterior
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	como va el ultimo informado imacec comparado con el mismo periodo del annio pasado
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	como crecio el ultimo imacec respecto a igual periodo al annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue la expansion imacec el ultimo trimestre comparado al trimestre del annio previo
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito el imacec de este mes versus el mismo mes del annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito saber en cuanto crecio el imacec del ultimo trimestre en relacion con igual trimestre al annio anterior
+value	point	prev_year	imacec	mensual	def:no	res.bienes	cual fue la variacion mensual del resto de bienes respecto al annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el cambio del imacec ultimo el ultimo mes frente al mes del annio anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	quiero el imacec trimestral mas reciente disponible en comparacion con el annio anterior
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame el resultado del imacec mas reciente en relacion con el annio pasado
+value	point	prev_year	imacec	mensual	def:no	impuestos	cual fue la variacion mensual respecto al mes anterior del componente de impuestos sobre los productos
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual es el dato actual del imacec trimestral contra el trimestre del annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el dato del ultimo imacec con frecuencia mensual frente al mes del annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	necesito saber cuanto vario el ultimo mes comparado al annio anterior del imacec
+value	point	prev_year	imacec	anual	def:no	def:todos	dame el imacec del annio anterior respecto al annio anterior
+value	point	prev_year	imacec	anual	def:no	def:todos	que imacec corresponde a este annio comparado con el annio anterior
+value	point	prev_year	imacec	def:mensual	def:no	servicios	cuanto fue el imacec en servicios respecto al mismo periodo del annio anterior
+value	point	prev_year	imacec	anual	def:no	def:todos	como salio el imacec del annio anterior versus el annio anterior
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el imacec de el trimestre anterior comparado con el trimestre del annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto aumento el imacec del ultimo trimestre frente al trimestre del annio anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame la publicacion del ultimo annio imacec en relacion con el annio anterior
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	dame la publicacion del imacec mas reciente en comparacion al mes anterior
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el cambio del imacec del ultimo trimestre frente a igual periodo del annio anterior
+value	point	prev_year	imacec	anual	def:no	def:todos	como salio el imacec de este annio frente al annio pasado
+value	point	prev_year	imacec	def:mensual	def:no	no.minero	dame el dato del imacec no minero mas reciente vs el periodo del annio pasado
+value	point	prev_year	imacec	mensual	def:no	def:todos	dame el imacec anual mas reciente comparado al annio paso
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	que tal salio el imacec en el ultimo dato disponible versus al mismo periodo del annio pasado
+value	point	prev_year	imacec	mensual	def:no	def:todos	cual fue el imacec publicado el ultimo mes en relacion con igual mes annio pasado
+value	point	prev_year	imacec	mensual	def:no	def:todos	cuanto cambio el imacec del ultimo trimestre disponible frente al mismo trimestre del annio pasado
+value	point	prev_year	imacec	def:mensual	def:no	def:todos	cual fue el dato mas reciente informado del imacec en comparacion al mismo periodo del annio pasado
+value	point	prev_year	imacec	trimestral	def:no	def:todos	cual fue el imacec del trimestre mas reciente en relacion al mismo trimestre del annio pasado

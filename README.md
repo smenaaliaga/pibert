@@ -1,107 +1,165 @@
-# Clasificador de intención y palabras claves para PIBot usando Joint BERT
+# Clasificador Joint BERT para PIBot 
 
 Paper DOI: [BERT for Joint Intent Classification and Slot Filling](https://arxiv.org/abs/1810.04805v2) \
 Resumen paper: [docs/BERT_for_Joint_Intent_Classification_and_Slot_Filling.md](docs/BERT_for_Joint_Intent_Classification_and_Slot_Filling.md) \
-Implementación adaptada de:  https://github.com/monologg/JointBERT
+Implementación adaptada de: https://github.com/monologg/JointBERT
 
 ## Objetivo
 
-El objetivo es entrenar un modelo de clasificación conjunta de intención y palabras claves para ser utilizado por el chatbot del Banco Central de Chile (PIBot). 
+Entrenar un modelo de clasificación multi-cabeza basado en BERT para el chatbot del Banco Central de Chile (PIBot). El modelo procesa consultas en lenguaje natural y clasifica simultáneamente 7 aspectos diferentes de la consulta económica.
 
-La clasificación está separada en dos partes, entender la intención de la consulta, ¿se pregunta por valores o metodología? e, identificar las palabras claves de la consulta: la métrica (PIB o IMACEC), el periodo, tipo de agregación, entre otros.
+## Arquitectura Multi-Cabeza
 
-## Dataset
+El modelo utiliza **7 cabezas clasificadoras independientes** que procesan en paralelo diferentes aspectos de la consulta:
 
-El principal objetivo de este proyecto es entrenar el modelo Joint BERT con un dataset especializado para detectar la intención y las palabras claves para consultas sobre PIB e IMACEC.
+| Cabeza | Valores posibles | Descripción |
+|--------|------------------|-------------|
+| `indicator` | `imacec`, `pib` | Indicador económico |
+| `metric_type` | `index`, `contribution` | Tipo de metrica |
+| `seasonality` | `sa`, `nsa` | Ajuste estacional |
+| `activity` | `total`, `imc_*`, `pib_*` | Sector/actividad |
+| `frequency` | `m`, `q`, `a` | Frecuencia temporal |
+| `req_form` | `latest`, `point`, `range` | Forma de la solicitud |
+| `calc_mode` | `none`, `yoy`, `prev_period` | Tipo de variación |
 
-### label
+Cada cabeza opera de forma independiente sobre la representación contextual del texto generada por BERT, permitiendo clasificación multi-etiqueta eficiente.
 
-TODO
+## Flujo de Trabajo Completo
 
-### Definición de BIO
+### 1. Preparación de Datos Crudos
 
-La definición de la BIO propuesta es la siguiente:
+#### 1.1 Formato del Excel de Entrada
 
-#### 1. Indicador Económico (el "qué")
+El archivo Excel debe contener las siguientes columnas en orden:
 
-Para preguntas como “cuál fue el IMACEC”, “cómo evolucionó el PIB trimestral”, etc.
-- B-indicator
-- I-indicator
+Coloca el Excel de datos crudos dentro de la carpeta `data/{dataset}/raw/` (ejemplo: `data/pibimacecv3/raw/data.xlsx`).
 
-Ejemplos de spans:
-- IMACEC
-- PIB
-- crecimiento económico
-- actividad económica
+| Columna | Nombre | Descripción | Ejemplo |
+|---------|--------|-------------|---------|
+| 1 | text | Texto de la consulta | "cual fue el pib del ultimo trimestre" |
+| 2 | indicator | Indicador económico | "pib" |
+| 3 | metric_type | Tipo de métrica | "index" |
+| 4 | seasonal | Ajuste estacional | "sa" |
+| 5 | activity | Tipo de actividad | "total" |
+| 6 | frequency | Frecuencia | "q" |
+| 7 | req_form | Forma de solicitud | "latest" |
+| 8 | calc_mode | Modo de cálculo | "yoy" |
 
-...
+#### 1.2 Procesamiento de Datos Crudos
 
-### Anotación con Label Studio
-
-Para anotar datos de entrenamiento, el proyecto utiliza Label Studio. A continuación se detallan los pasos para ejecutarlo:
-
-#### Iniciar Label Studio
-
-```bash
-label-studio start
-```
-
-Esto abrirá Label Studio en tu navegador (por defecto en `http://localhost:8080`).
-
-#### Configuración del proyecto
-
-1. Crea un nuevo proyecto en Label Studio
-2. Importa tus datos (archivos de texto con consultas)
-3. Configura la interfaz de anotación para:
-   - **Clasificación de intención**: prev_year, calc_mode, etc.
-   - **Etiquetado de entidades (NER)**: indicator, period, measure_type, sector, etc.
-
-#### Exportación de datos
-
-Una vez anotados los datos:
-1. Exporta en formato CSV desde Label Studio
-2. Utiliza el script de procesamiento:
+Utiliza `process_raw_data.py` para convertir el Excel a los archivos de entrenamiento:
 
 ```bash
-python util/process_raw_labels.py data/pibimacec/raw/annotations.csv data/pibimacec/processed
+python util/process_raw_data.py --dataset pibimacecv3 --input_file data/pibimacecv3/raw/data.xlsx --sheet_name final
 ```
 
-Este script convierte las anotaciones de Label Studio al formato BIO requerido por Joint BERT.
+**Parámetros:**
+- `--dataset`: Nombre del dataset (crea carpeta en `data/`)
+- `--input_file`: Ruta al archivo Excel (.xlsx o .xls)
+- `--sheet_name`: (Opcional) Nombre de la hoja del Excel
+- `--no_skip_header`: (Opcional) No saltar primera fila si no es encabezado
 
-### División de datos
+**Archivos generados en `data/{dataset}/processed/`:**
+- `seq.in`: Textos de entrada (uno por línea)
+- `label`: Etiquetas por cabeza separadas por comas
+- `seq.out`: Etiquetas de slot (solo "O" por token, no usado en esta versión)
 
-Para crear los conjuntos de entrenamiento, desarrollo y prueba:
+**Archivos generados en `data/{dataset}/`:**
+- `indicator_label.txt`: Vocabulario de indicadores
+- `metric_type_label.txt`: Vocabulario de tipos de métrica
+- `calc_mode_label.txt`: Vocabulario de modos de cálculo
+- `seasonal_label.txt`: Vocabulario de ajustes estacionales
+- `req_form_label.txt`: Vocabulario de formas de solicitud
+- `frequency_label.txt`: Vocabulario de frecuencias
+- `activity_label.txt`: Vocabulario de actividades
+- `slot_label.txt`: Vocabulario de slots (solo contiene "O")
+
+**Ejemplo de salida:**
+
+`data/pibimacecv3/processed/seq.in`:
+```
+cual fue el pib del ultimo trimestre
+cuanto acelero el imacec minero en agosto
+```
+
+`data/pibimacecv3/processed/label`:
+```
+pib,index,sa,total,q,latest,yoy
+imacec,variation,sa,minero,m,point,prev_period
+```
+
+### 2. División de Datos en Train/Dev/Test
+
+Una vez procesados los datos, divídelos en conjuntos de entrenamiento, desarrollo y prueba:
 
 ```bash
-python util/split_data.py data/pibimacec/processed data/pibimacec --test_size 0.2 --dev_size 0.1
+python util/split_data.py --dataset pibimacecv3 --test_size 0.2 --dev_size 0.1 --seed 42
 ```
 
-## Training & Evaluation
+**Parámetros:**
+- `--dataset`: Nombre del dataset
+- `--test_size`: Proporción para test (default: 0.2 = 20%)
+- `--dev_size`: Proporción para dev (default: 0.1 = 10%)
+- `--seed`: Semilla aleatoria para reproducibilidad (default: 42)
 
+**Estructura generada:**
 ```
-python main.py --task {task_name} \
-                  --model_type {model_type} \
-                  --model_out {model_out_name} \
-                  --do_train --do_eval \
-                  --use_crf
+data/{dataset}/
+├── train/
+│   ├── label
+│   ├── seq.in
+│   └── seq.out
+├── dev/
+│   ├── label
+│   ├── seq.in
+│   └── seq.out
+├── test/
+│   ├── label
+│   ├── seq.in
+│   └── seq.out
+├── processed/    # Datos originales procesados
+├── raw/          # Datos crudos originales
+├── *_label.txt
 ```
-Ejemplo básico:
+
+**Distribución típica:**
+- Train: 70% (560 ejemplos de 800 totales)
+- Dev: 10% (80 ejemplos)
+- Test: 20% (160 ejemplos)
+
+### 3. Entrenamiento del Modelo
+
+#### Configuración Básica
+
 ```bash
-python main.py --task pibimacec --model_type beto --model_out pibot_model_beto --do_train --do_eval
+python main.py --task pibimacecv3 --model_type beto --model_out pibot_model_v3 --do_train --do_eval
 ```
 
-Configuración optimizada para dataset pibimacec (816 ejemplos):
+#### Recomendación actual
+
 ```bash
-python main.py --task pibimacec --model_type beto --model_out pibot_model_beto_largo --do_train --do_eval --num_train_epochs 20 --learning_rate 3e-5 --train_batch_size 16 --eval_batch_size 32 --max_seq_len 64 --save_steps 20 --logging_steps 10 --ignore_index -100
+python main.py --task pibimacecv3 --model_type beto --model_out pibot_model_v3 --do_train --do_eval --max_seq_len 64 --train_batch_size 8 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 15 --warmup_steps 150 --weight_decay 0.01 --dropout_rate 0.2 --logging_steps 50 --save_steps 100 --early_stopping --early_stopping_patience 3 --seed 42
 ```
 
-Parámetros justificados:
-- `--num_train_epochs 20`: Mayor número de épocas para dataset pequeño
-- `--learning_rate 3e-5`: Tasa reducida para evitar overfitting
-- `--train_batch_size 16`: Batch pequeño para más actualizaciones con pocos datos
-- `--max_seq_len 32`: Secuencias cortas (promedio 10 palabras, máx 20)
-- `--save_steps 20`: Checkpoints cada ~0.5 épocas
+**Parámetros principales:**
 
+| Parámetro | Descripción | Recomendado | Nota |
+|-----------|-------------|-------------|------|
+| `--task` | Nombre del dataset | `pibimacecv3` | |
+| `--model_type` | Modelo BERT base | `beto` (español) o `bert` (inglés) | BETO recomendado para español |
+| `--model_out` | Nombre del modelo guardado | `pibot_model_v3` | |
+| `--max_seq_len` | Longitud máxima de secuencia | `64` | Consultas cortas en español |
+| `--train_batch_size` | Tamaño de batch para entrenamiento | `8` | Más actualizaciones por época (375 pasos) |
+| `--eval_batch_size` | Tamaño de batch para evaluación | `32` | |
+| `--learning_rate` | Tasa de aprendizaje | `1.5e-5` | Conservador para evitar overfitting |
+| `--num_train_epochs` | Número de épocas | `15` | Más épocas con dataset pequeño |
+| `--weight_decay` | Regularización L2 | `0.01` | Regularización moderada |
+| `--warmup_steps` | Pasos de warmup | `100` | ~10% del total de pasos |
+| `--dropout_rate` | Tasa de dropout | `0.2` | Mayor regularización para dataset pequeño |
+| `--logging_steps` | Frecuencia de logs | `50` | Monitoreo frecuente |
+| `--save_steps` | Frecuencia de checkpoints | `100` | Guardar modelos intermedios |
+| `--early_stopping` | Detener cuando no mejore la pérdida de dev | `True` | Activa parada temprana por `val_loss` |
+| `--early_stopping_patience` | Épocas sin mejora antes de parar | `3` | Guarda el mejor modelo al mejorar |
 
 ## Prediction
 
@@ -109,13 +167,10 @@ Parámetros justificados:
 
 Para procesar múltiples consultas desde un archivo:
 
-```
+```bash
 python predict.py --input_file {INPUT_FILE_PATH} --output_file {OUTPUT_FILE_PATH} --model_dir {SAVED_CKPT_PATH}
-```
 
-Ejemplo:
-
-```
+# Ejemplo:
 python predict.py --input_file data/atis/test/seq.in --output_file output/atis.txt --model_dir model_out/atis_model
 ```
 
@@ -125,64 +180,146 @@ python predict.py --input_file data/atis/test/seq.in --output_file output/atis.t
 Permite hacer consultas en tiempo real desde la terminal:
 
 ```bash
-python predict_cli.py --model_dir model_out/pibot_model_beto
+python predict_cli.py --model_dir {SAVED_CKPT_PATH}
+
+# Ejemplo:
+python predict_cli.py --model_dir model_out/pibot_model_v3
 ```
 
-#### Consulta única
-Para predecir un texto específico:
+## Instalación y Dependencias
+
+### Requisitos básicos
+
+- Python >= 3.12 y pip
+
+### Instalación
+
+1. **Crear entorno virtual:**
 
 ```bash
-python predict_cli.py --model_dir model_out/pibot_model_beto --text "cual fue el ultimo imacec"
+python -m venv .venv
 ```
 
-#### Modo batch
-Para procesar múltiples consultas desde un archivo:
+2. **Activar el entorno virtual:**
 
 ```bash
-python predict_cli.py --model_dir model_out/pibot_model_beto --input_file consultas.txt --output_file resultados.txt
+# Windows
+.venv\Scripts\Activate.ps1
+# Linux
+source .venv/bin/activate
 ```
 
-### Chat interactivo (chat.py)
-
-Para una experiencia de chat más amigable con colores y formato mejorado:
+3. **Instalar dependencias:**
 
 ```bash
-python chat.py --model_dir model_out/pibot_model_beto
+pip install -r requirements.txt
 ```
 
-El chat muestra:
-- Intención detectada con nivel de confianza
-- Slots (palabras clave) identificados con sus etiquetas
-- **Normalización de período**: Convierte expresiones de fechas a formato estándar (ej: "agosto 2024" → "Agosto 2024", "ultimo trimestre" → "Trimestre 3 de 2025")
-- **Normalización de indicador**: Identifica y estandariza indicadores económicos (IMACEC, PIB) con tolerancia a errores tipográficos
-- Formato visual con colores para mejor legibilidad
+### Dependencias Principales
 
-Para salir del chat, escribe `salir`, `exit` o presiona `Ctrl+C`.
+#### Bibliotecas principales
 
-#### Normalizadores
+| Paquete | Versión | Propósito |
+|---------|---------|-----------|
+| `torch` | 2.5.1+cu121 | Framework de deep learning (GPU) |
+| `transformers` | 4.46.0 | Modelos BERT pre-entrenados |
+| `pytorch-crf` | 0.7.2 | Soporte CRF (actualmente no usado) |
+| `seqeval` | 1.2.2 | Métricas para evaluación NER |
+| `tqdm` | 4.67.1 | Barras de progreso |
+| `numpy` | 2.3.3 | Operaciones numéricas |
+| `pandas` | >=2.0.0 | Procesamiento de datos (Excel) |
+| `openpyxl` | >=3.0.0 | Lectura de archivos Excel |
+| `dateparser` | >=1.1.0 | Parsing de fechas |
+| `rapidfuzz` | >=3.0.0 | Fuzzy matching |
 
-El proyecto incluye dos módulos de normalización en `util/`:
+Para ver todas las dependencias organizadas por categoría, consulta [requirements.txt](requirements.txt).
 
-**`period_normalizer.py`**: Normaliza expresiones de tiempo/fechas
-- Soporta formatos explícitos: "agosto 2024", "08/2024", "2024-08", "trimestre 3 2023"
-- Periodos relativos: "mes pasado", "ultimo trimestre", "año actual"
-- Fuzzy matching para typos: "agousto" → agosto, "feberero" → febrero
-- Output: granularidad (month/quarter/year), fechas inicio/fin, periodo_key
+#### GPU (CUDA 12.1+)
+Soporte GPU NVIDIA RTX 4080 Super, se requiere PyTorch con CUDA:
 
-**`indicator_normalizer.py`**: Normaliza nombres de indicadores económicos
-- Detecta IMACEC con variantes: "imacec", "indicador mensual de actividad económica", "termómetro mensual"
-- Detecta PIB: "pib", "producto interno bruto"
-- Desambigua por contexto temporal (mensual → IMACEC, trimestral → PIB)
-- Fuzzy matching opcional con rapidfuzz para variantes con typos
+```bash
+pip install torch==2.5.1+cu121 torchvision==0.20.1+cu121 torchaudio==2.5.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+```
 
-## Resultados
+**Verificar compatibilidad CUDA:**
+```python
+import torch
+print(f"CUDA disponible: {torch.cuda.is_available()}")
+print(f"GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A'}")
+```
 
-## Dependencias
+## Estructura del Proyecto
 
-- python>=3.12
+```
+bc_pibot_jointbert/
+├── data/                      # Datasets
+│   └── {dataset_name}/
+│       ├── raw/              # Datos crudos (Excel)
+│       ├── processed/        # Datos procesados
+│       ├── train/            # Conjunto de entrenamiento
+│       ├── dev/              # Conjunto de desarrollo
+│       ├── test/             # Conjunto de prueba
+│       └── *_label.txt       # Vocabularios por cabeza
+├── model_in/                  # Definición del modelo
+│   ├── __init__.py
+│   ├── modeling_jointbert.py # Modelo principal
+│   └── module.py             # Cabezas clasificadoras
+├── model_out/                 # Modelos entrenados
+├── util/                      # Scripts de utilidad
+│   ├── process_raw_data.py   # Procesar Excel
+│   └── split_data.py         # Dividir datos
+├── docs/                      # Documentación
+├── main.py                    # Script principal
+├── trainer.py                 # Lógica de entrenamiento
+├── data_loader.py             # Carga de datos
+├── utils.py                   # Utilidades
+├── predict.py                 # Predicción batch
+├── predict_cli.py             # Predicción CLI
+├── chat.py                    # Chat interactivo
+├── requirements.txt           # Dependencias
+└── README.md                  # Este archivo
+```
 
-## TODO
+## Publicar en Hugging Face
 
-- Adaptar el train para modelos BERT en español como BETO
-- Crear datasets de preguntas con intención y slots
-- Entrenar el modelo y realizar las pruebas
+Usa el script [util/upload_to_hf.py](util/upload_to_hf.py) para subir modelos entrenados a Hugging Face Hub.
+
+### Requisitos previos
+
+El script espera encontrar en `model_dir`:
+- **Pesos**: `model.safetensors` o `pytorch_model.bin`
+- **Config**: `config.json`
+- **Tokenizer**: `tokenizer.json`, `tokenizer_config.json`, `vocab.txt`, `special_tokens_map.json` (se generan automáticamente tras entrenar si usaste `main.py`)
+- **Código custom**: `modeling_jointbert.py`, `module.py`, `__init__.py`
+- **Labels**: Los 7 archivos `*_label.txt`
+
+El script puede **completar archivos faltantes** automáticamente:
+- Si faltan labels, los copia desde `--label_dir`
+- Si faltan archivos de código custom, los copia desde `--code_dir`
+
+### Uso básico
+
+```bash
+python util/upload_to_hf.py --repo_name <usuario>/<nombre-repo> --model_dir <directorio-modelo> --label_dir <directorio-labels>
+```
+
+### Argumentos
+
+| Argumento | Tipo | Requerido | Descripción |
+|-----------|------|-----------|-------------|
+| `--repo_name` | str | ✓ | Nombre del repo en HF (formato: `usuario/nombre-modelo`) |
+| `--model_dir` | str | ✓ | Directorio del modelo a subir |
+| `--label_dir` | str | ✓ | Directorio con los 7 `*_label.txt` (se copian si faltan en `model_dir`) |
+| `--code_dir` | str | ✗ | Directorio con código custom (`modeling_jointbert.py`, `module.py`, `__init__.py`) para copiar si faltan en `model_dir` |
+| `--token` | str | ✗ | Token de Hugging Face (si no se provee, usa el guardado o solicita login) |
+| `--private` | flag | ✗ | Crear repositorio privado |
+| `--create_model_card` | flag | ✗ | Generar README.md automático en `model_dir` antes de subir |
+| `--commit_message` | str | ✗ | Mensaje de commit (default: "Upload PIBot Joint BERT model") |
+| `--no_login` | flag | ✗ | No intentar login interactivo (usar solo token existente) |
+
+### Ejemplos
+
+**Subida básica** (asumiendo que `model_dir` ya tiene todos los archivos):
+```bash
+python util/upload_to_hf.py --repo_name smenaaliaga/pibot-jointbert --model_dir model_out/pibot_model_v3 --label_dir data/pibimacecv3 --commit_message "Upload PIBot Joint BERT 7-heads model"
+```
