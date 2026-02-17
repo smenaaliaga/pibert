@@ -6,86 +6,101 @@ Implementación adaptada de: https://github.com/monologg/JointBERT
 
 ## Objetivo
 
-Entrenar un modelo de clasificación multi-cabeza basado en BERT para el chatbot del Banco Central de Chile (PIBot). El modelo procesa consultas en lenguaje natural y clasifica simultáneamente 7 aspectos diferentes de la consulta económica.
+Entrenar un modelo de clasificación multi-cabeza basado en arquitecturas Transformer (BERT, RoBERTa, DeBERTa) para detectar las series de la Base de Datos Estadisticos (BDE) del Banco Central de Chile (BCCh) utizado para el chatbot - PIBot. El modelo procesa consultas economicas y clasifica simultáneamente en 5 diferentes intenciones y hasta 4 entidades necesarias para identificar una serie economica.
 
 ## Arquitectura Multi-Cabeza
 
-El modelo utiliza **7 cabezas clasificadoras independientes** que procesan en paralelo diferentes aspectos de la consulta:
+El modelo se compone **cinco cabezas de clasificacion de intencion y una de reconocimiento de entidades** que procesan en paralelo diferentes aspectos de la consulta.
 
-| Cabeza | Valores posibles | Descripción |
+### Intent Classification
+
+| Cabezas | Valores posibles | Descripción |
 |--------|------------------|-------------|
-| `indicator` | `imacec`, `pib` | Indicador económico |
-| `metric_type` | `index`, `contribution` | Tipo de metrica |
-| `seasonality` | `sa`, `nsa` | Ajuste estacional |
-| `activity` | `total`, `imc_*`, `pib_*` | Sector/actividad |
-| `frequency` | `m`, `q`, `a` | Frecuencia temporal |
-| `req_form` | `latest`, `point`, `range` | Forma de la solicitud |
-| `calc_mode` | `none`, `yoy`, `prev_period` | Tipo de variación |
+| `calc_mode` | `original`, `prev_period`, `yoy`, `contribution` | Tipo de cálculo solicitado |
+| `frequency` | `m`, `q`, `a` | Frecuencia temporal de la serie |
+| `activity` | `general`, `specific`, `none` | Presencia de actividad económica en la consulta |
+| `region` | `general`, `specific`, `none` | Presencia de region en la consulta |
+| `req_form` | `latest`, `point`, `range` | Formato del periodo consultaod |
 
-Cada cabeza opera de forma independiente sobre la representación contextual del texto generada por BERT, permitiendo clasificación multi-etiqueta eficiente.
+### Slot Filling - Reconocimiento de Entidades
+
+El módulo de **Slot Filling** utiliza el esquema de etiquetado **BIO (Begin-Inside-Outside)** para identificar y clasificar entidades en la consulta a nivel de token:
+
+| Etiqueta | Descripción | Ejemplos |
+|----------|-------------|----------|
+| `B-INDICATOR`, `I-INDICATOR`  | Indicadores económicos mencionados | PIB o IMACEC |
+| `B-SEASONALITY`, `I-SEASONALITY` | Información sobre ajuste estacional | Estacional (nsa) o desestacionalizado (nsa) |
+| `B-ACTIVITY`, `I-ACTIVITY` | Sectores o actividades económicas | Minería, Industria, Servicios, etc |
+| `B-REGION`, `I-REGION` | Ubicaciones geográficas | Metropolitana, Valparaíso, Bío Bío, etc |
+| `O` (Other) | Tokens sin entidad específica | conjunciones, preposiciones, etc. |
+
+### Ejemplo practico
+
+```
+Entrada: "Cuánto vario la actividad no minera del PIB el último trimestre?"
+
+→ BERT encoder
+
+├─ calc_mode: yoy       # Var. mismo periodo respecto año anterior
+├─ frequency: q         # Frecuencia trimestral
+├─ activity: specific   # Presencia de actividad economica especifica
+├─ region: none         # Sin presencia de región en la consulta
+├─ req_form: latest     # Consulta del último periodo disponible
+└─ slots: [O, O, O, O, B-ACTIVITY, I-ACTIVITY, O, B-INDICATOR, O, O, O]
+```
+
+
+## Modelos Soportados
+
+Modelos soportados para el **re-entrenamiento** (HuggingFace). Estos *shortcuts* permiten configurar rápidamente el encoder base:
+
+| Shortcut | Modelo | Descripción |
+|----------|--------|-------------|
+| `bert` | `bert-base-uncased` | BERT base inglés |
+| `beto` | `dccuchile/bert-base-spanish-wwm-cased` | BETO - BERT español |
+| `deberta` | `microsoft/mdeberta-v3-base` | DeBERTa v3 multilingüe |
+| `roberta` | `PlanTL-GOB-ES/roberta-base-bne` | RoBERTa español |
 
 ## Flujo de Trabajo Completo
 
+### 0. Estructura de Datasets
+
+Todos los datasets se almacenan en la carpeta `/data`. Cada dataset debe seguir la siguiente estructura de subdirectorios:
+
+```
+data/
+└── {nombre_dataset}/
+    ├── raw/          # Datos procesados (seq.in, label, seq.out)
+    ├── train/        # Conjunto de entrenamiento
+    ├── dev/          # Conjunto de desarrollo/validación
+    └── test/         # Conjunto de prueba
+```
+
+**Nota:** Las carpetas `train/`, `dev/` y `test/` se generan automáticamente al ejecutar el script de división de datos (ver sección 2).
+
 ### 1. Preparación de Datos Crudos
 
-#### 1.1 Formato del Excel de Entrada
+Los datos deben prepararse en la carpeta `data/{dataset}/processed/` con los siguientes archivos en formato de texto plano:
 
-El archivo Excel debe contener las siguientes columnas en orden:
+- **`seq.in`**: Textos de entrada (una consulta por línea)
+- **`label`**: Etiquetas de intención separadas por comas (5 valores por línea: `calc_mode,frequency,activity,region,req_form`)
+- **`seq.out`**: Etiquetas de entidades en formato BIO (una secuencia por línea, tokens separados por espacios)
 
-Coloca el Excel de datos crudos dentro de la carpeta `data/{dataset}/raw/` (ejemplo: `data/pibimacecv3/raw/data.xlsx`).
+**Ejemplo:**
 
-| Columna | Nombre | Descripción | Ejemplo |
-|---------|--------|-------------|---------|
-| 1 | text | Texto de la consulta | "cual fue el pib del ultimo trimestre" |
-| 2 | indicator | Indicador económico | "pib" |
-| 3 | metric_type | Tipo de métrica | "index" |
-| 4 | seasonal | Ajuste estacional | "sa" |
-| 5 | activity | Tipo de actividad | "total" |
-| 6 | frequency | Frecuencia | "q" |
-| 7 | req_form | Forma de solicitud | "latest" |
-| 8 | calc_mode | Modo de cálculo | "yoy" |
-
-#### 1.2 Procesamiento de Datos Crudos
-
-Utiliza `process_raw_data.py` para convertir el Excel a los archivos de entrenamiento:
-
-```bash
-python util/process_raw_data.py --dataset pibimacecv3 --input_file data/pibimacecv3/raw/data.xlsx --sheet_name final
-```
-
-**Parámetros:**
-- `--dataset`: Nombre del dataset (crea carpeta en `data/`)
-- `--input_file`: Ruta al archivo Excel (.xlsx o .xls)
-- `--sheet_name`: (Opcional) Nombre de la hoja del Excel
-- `--no_skip_header`: (Opcional) No saltar primera fila si no es encabezado
-
-**Archivos generados en `data/{dataset}/processed/`:**
-- `seq.in`: Textos de entrada (uno por línea)
-- `label`: Etiquetas por cabeza separadas por comas
-- `seq.out`: Etiquetas de slot (solo "O" por token, no usado en esta versión)
-
-**Archivos generados en `data/{dataset}/`:**
-- `indicator_label.txt`: Vocabulario de indicadores
-- `metric_type_label.txt`: Vocabulario de tipos de métrica
-- `calc_mode_label.txt`: Vocabulario de modos de cálculo
-- `seasonal_label.txt`: Vocabulario de ajustes estacionales
-- `req_form_label.txt`: Vocabulario de formas de solicitud
-- `frequency_label.txt`: Vocabulario de frecuencias
-- `activity_label.txt`: Vocabulario de actividades
-- `slot_label.txt`: Vocabulario de slots (solo contiene "O")
-
-**Ejemplo de salida:**
-
-`data/pibimacecv3/processed/seq.in`:
+`seq.in`:
 ```
 cual fue el pib del ultimo trimestre
-cuanto acelero el imacec minero en agosto
 ```
 
-`data/pibimacecv3/processed/label`:
+`label`:
 ```
-pib,index,sa,total,q,latest,yoy
-imacec,variation,sa,minero,m,point,prev_period
+yoy,q,general,none,latest
+```
+
+`seq.out`:
+```
+O O O B-INDICATOR O O O O
 ```
 
 ### 2. División de Datos en Train/Dev/Test
@@ -93,7 +108,7 @@ imacec,variation,sa,minero,m,point,prev_period
 Una vez procesados los datos, divídelos en conjuntos de entrenamiento, desarrollo y prueba:
 
 ```bash
-python util/split_data.py --dataset pibimacecv3 --test_size 0.2 --dev_size 0.1 --seed 42
+python util/split_data.py --dataset pibimacecv4 --test_size 0.2 --dev_size 0.1 --seed 42
 ```
 
 **Parámetros:**
@@ -117,22 +132,26 @@ data/{dataset}/
 │   ├── label
 │   ├── seq.in
 │   └── seq.out
-├── processed/    # Datos originales procesados
 ├── raw/          # Datos crudos originales
 ├── *_label.txt
 ```
-
-**Distribución típica:**
-- Train: 70% (560 ejemplos de 800 totales)
-- Dev: 10% (80 ejemplos)
-- Test: 20% (160 ejemplos)
 
 ### 3. Entrenamiento del Modelo
 
 #### Configuración Básica
 
 ```bash
+# Usando shortcut
 python main.py --task pibimacecv3 --model_type beto --model_out pibot_model_v3 --do_train --do_eval
+
+# Usando modelo directamente (recomendado para mayor flexibilidad)
+python main.py --task pibimacecv3 --model_type beto --model_name_or_path dccuchile/bert-base-spanish-wwm-cased --model_out pibot_model_v3 --do_train --do_eval
+
+# Usando DeBERTa v3
+python main.py --task pibimacecv3 --model_type deberta --model_out pibot_model_deberta --do_train --do_eval
+
+# Usando RoBERTa español
+python main.py --task pibimacecv3 --model_type roberta --model_out pibot_model_roberta --do_train --do_eval
 ```
 
 #### Recomendación actual
@@ -146,8 +165,9 @@ python main.py --task pibimacecv3 --model_type beto --model_out pibot_model_v3 -
 | Parámetro | Descripción | Recomendado | Nota |
 |-----------|-------------|-------------|------|
 | `--task` | Nombre del dataset | `pibimacecv3` | |
-| `--model_type` | Modelo BERT base | `beto` (español) o `bert` (inglés) | BETO recomendado para español |
-| `--model_out` | Nombre del modelo guardado | `pibot_model_v3` | |
+| `--model_type` | Shortcut del modelo | `beto`, `bert`, `deberta`, `roberta` | Usa shortcuts de MODEL_PATH_MAP |
+| `--model_name_or_path` | Ruta o ID de HuggingFace del modelo | - | Opcional: sobrescribe model_type |
+| `--model_out` | Nombre del modelo guardado | `pibot_model_v3` | Se guarda en model_out/{nombre} |
 | `--max_seq_len` | Longitud máxima de secuencia | `64` | Consultas cortas en español |
 | `--train_batch_size` | Tamaño de batch para entrenamiento | `8` | Más actualizaciones por época (375 pasos) |
 | `--eval_batch_size` | Tamaño de batch para evaluación | `32` | |
@@ -184,6 +204,39 @@ python predict_cli.py --model_dir {SAVED_CKPT_PATH}
 
 # Ejemplo:
 python predict_cli.py --model_dir model_out/pibot_model_v3
+```
+
+**Salida del modelo:**
+
+El modelo retorna simultáneamente:
+
+1. **Clasificaciones de intención** (5 cabezas):
+   - `calc_mode`: Tipo de cálculo solicitado
+   - `frequency`: Frecuencia temporal
+   - `activity`: Actividad económica
+   - `region`: Región geográfica
+   - `req_form`: Período solicitado
+
+2. **Etiquetas de entidades** (Slot Filling):
+   - Token-level tagging: `INDICATOR`, `SEASONALITY`, `ACTIVITY`, `REGION`, `O`
+   - Confianza (softmax) para cada token
+
+**Ejemplo de salida:**
+
+```
+============================================================
+calc_mode     : yoy                 (confidence: 94.23%)
+frequency     : q                   (confidence: 87.15%)
+activity      : total               (confidence: 92.45%)
+region        : nacional            (confidence: 88.92%)
+req_form      : latest              (confidence: 91.67%)
+============================================================
+
+Entidades detectadas:
+  - INDICATOR: [IMACEC, PIB]
+  - SEASONALITY: [desestacionalizado]
+  - ACTIVITY: [minería, construcción]
+  - REGION: [metropolitana]
 ```
 
 ## Instalación y Dependencias
