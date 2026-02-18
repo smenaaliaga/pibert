@@ -1,4 +1,85 @@
-.venv/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+
+# PyTorch
+*.pth
+*.pt
+*.ckpt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
+
+# Models y checkpoints
+model/
+models/
+checkpoints/
+*.bin
+*.safetensors
+
+# Model outputs
+model_out/*/
+!model_out/.gitkeep
+
+# Logs
+logs/
+*.log
+tensorboard/
+runs/
+
+# Data 
+# data/
+*.csv
+*.json
+*.jsonl
+*.txt
+!requirements.txt
+!README.txt
+
+# Cache
+.cache/
+*.cache
+.pytest_cache/
+cached_*
+
+# Environment variables
+.env
+.env.local
+
+# Sistema operativo
+Thumbs.db
+Desktop.ini
+
+# Temporal
+tmp/
+temp/
+*.tmp

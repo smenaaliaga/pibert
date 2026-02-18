@@ -7,29 +7,101 @@ Este script crea un checkpoint completamente auto-contenido que puede ser:
 3. Reproducible en cualquier máquina sin dependencias externas
 
 Uso:
-    python upload_to_hf_improved.py \
-        --repo_name username/pibot-jointbert \
-        --model_dir model_out/pibot_model_v3 \
-        --private
+    python util/upload_to_hf_improved.py --repo_name smenaaliaga/pibert --model_dir model_out/pibot_model_v5_beto_crf --private
 """
 
 import argparse
-import json
 import shutil
 from pathlib import Path
-from huggingface_hub import HfApi, create_repo, upload_folder
+import torch
+from huggingface_hub import HfApi, create_repo
 
 
-def prepare_checkpoint_for_hf(model_dir: str, output_dir: str = None):
+def _infer_label_files_from_args(train_args):
+    label_arg_names = [
+        "calc_mode_label_file",
+        "activity_label_file",
+        "region_label_file",
+        "investment_label_file",
+        "req_form_label_file",
+        "slot_label_file",
+        "indicator_label_file",
+        "metric_type_label_file",
+        "seasonal_label_file",
+        "frequency_label_file",
+        "context_mode_label_file",
+        "intent_label_file",
+    ]
+
+    label_files = []
+    for attr in label_arg_names:
+        value = getattr(train_args, attr, None)
+        if isinstance(value, str) and value.endswith("_label.txt") and value not in label_files:
+            label_files.append(value)
+
+    return label_files
+
+
+def _build_model_readme(train_args, label_files):
+    task = getattr(train_args, "task", "unknown")
+    model_name = getattr(train_args, "model_name_or_path", "unknown")
+    model_type = getattr(train_args, "model_type", "unknown")
+
+    head_labels = [f for f in label_files if f != "slot_label.txt"]
+    head_bullets = "\n".join([f"- `{name.replace('_label.txt', '')}`" for name in head_labels]) or "- N/A"
+
+    return f"""# PIBot Joint BERT
+
+Modelo JointBERT multi-cabeza para consultas económicas en español.
+
+## Configuración del checkpoint
+
+- **Task**: `{task}`
+- **Base model**: `{model_name}`
+- **Model type**: `{model_type}`
+
+## Cabezas de intención incluidas
+
+{head_bullets}
+
+## Slot filling
+
+- `slot_label.txt` para etiquetado BIO por token.
+
+## Archivos importantes
+
+- `model.safetensors` o `pytorch_model.bin`
+- `config.json`
+- `training_args.bin`
+- tokenizer (`tokenizer_config.json`, `tokenizer.json` y/o vocabulario)
+- `modeling_jointbert.py`, `module.py`, `__init__.py`
+- `*_label.txt`
+
+## Carga recomendada
+
+```python
+from transformers import AutoConfig, AutoTokenizer
+from model_in import JointBERT
+
+model_dir = "<ruta_local_o_repo_hf>"
+tokenizer = AutoTokenizer.from_pretrained(model_dir)
+config = AutoConfig.from_pretrained(model_dir)
+
+# Cargar training_args.bin y labels antes de instanciar JointBERT
+```
+"""
+
+
+def prepare_checkpoint_for_hf(model_dir: str, output_dir: str = None, label_dir: str = None, code_dir: str = None):
     """
     Prepara el checkpoint para ser auto-contenido en HF.
     
     Asegura que contiene:
-    - model.safetensors (pesos)
+    - model.safetensors o pytorch_model.bin (pesos)
     - config.json (configuración)
-    - tokenizer.json + tokenizer_config.json + vocab.txt (tokenizer)
+    - tokenizer (tokenizer_config.json y tokenizer.json/vocab)
     - training_args.bin (parámetros de entrenamiento)
-    - *_label.txt (labels de cada cabeza)
+    - *_label.txt (labels de cada cabeza y slot)
     - modeling_jointbert.py + module.py + __init__.py (código custom)
     - README.md (documentación)
     """
@@ -47,118 +119,82 @@ def prepare_checkpoint_for_hf(model_dir: str, output_dir: str = None):
     
     output_dir = Path(output_dir)
     
-    # Verificar archivos requeridos
-    required_files = [
-        "model.safetensors",
-        "config.json",
-        "tokenizer.json",
-        "tokenizer_config.json",
-        "training_args.bin",
-        "vocab.txt",
-        "indicator_label.txt",
-        "metric_type_label.txt",
-        "calc_mode_label.txt",
-        "seasonal_label.txt",
-        "req_form_label.txt",
-        "frequency_label.txt",
-        "activity_label.txt",
+    weight_files = ["model.safetensors", "pytorch_model.bin"]
+    if not any((output_dir / f).exists() for f in weight_files):
+        raise FileNotFoundError(f"Falta archivo de pesos ({weight_files}) en {output_dir}")
+
+    required_files = ["config.json", "tokenizer_config.json", "training_args.bin"]
+    missing_required = [f for f in required_files if not (output_dir / f).exists()]
+    if missing_required:
+        raise FileNotFoundError(f"Archivos faltantes en checkpoint: {missing_required}")
+
+    if not (output_dir / "tokenizer.json").exists() and not (output_dir / "vocab.txt").exists():
+        raise FileNotFoundError("Falta tokenizer: se requiere tokenizer.json o vocab.txt")
+
+    train_args = torch.load(output_dir / "training_args.bin", weights_only=False)
+
+    project_root = Path(__file__).resolve().parents[1]
+    default_label_dir = project_root / "data" / getattr(train_args, "task", "")
+    source_label_dir = Path(label_dir) if label_dir else default_label_dir
+
+    inferred_label_files = _infer_label_files_from_args(train_args)
+    label_files = [
+        name for name in inferred_label_files
+        if (output_dir / name).exists() or (source_label_dir / name).exists()
     ]
-    
-    missing = [f for f in required_files if not (output_dir / f).exists()]
-    if missing:
-        raise FileNotFoundError(f"Archivos faltantes en checkpoint: {missing}")
+
+    if not label_files:
+        label_files = sorted([p.name for p in output_dir.glob("*_label.txt")])
+
+    if not label_files and source_label_dir.exists():
+        label_files = sorted([p.name for p in source_label_dir.glob("*_label.txt")])
+
+    if not label_files:
+        raise FileNotFoundError("No se pudieron inferir archivos *_label.txt desde training_args.bin, model_dir o data/{task}")
+
+    missing_labels = [f for f in label_files if not (output_dir / f).exists()]
+    if missing_labels and source_label_dir.exists():
+        for name in missing_labels:
+            src = source_label_dir / name
+            if src.exists():
+                shutil.copyfile(src, output_dir / name)
+
+    missing_labels = [f for f in label_files if not (output_dir / f).exists()]
+    if missing_labels:
+        raise FileNotFoundError(
+            f"Archivos de labels faltantes: {missing_labels}. "
+            f"Fuente intentada: {source_label_dir}"
+        )
+
+    code_files = ["modeling_jointbert.py", "module.py", "__init__.py"]
+    default_code_dir = project_root / "model_in"
+    source_code_dir = Path(code_dir) if code_dir else default_code_dir
+
+    missing_code = [f for f in code_files if not (output_dir / f).exists()]
+    if missing_code and source_code_dir.exists():
+        for name in missing_code:
+            src = source_code_dir / name
+            if src.exists():
+                shutil.copyfile(src, output_dir / name)
+
+    missing_code = [f for f in code_files if not (output_dir / f).exists()]
+    if missing_code:
+        raise FileNotFoundError(
+            f"Código custom faltante: {missing_code}. "
+            f"Fuente intentada: {source_code_dir}"
+        )
     
     # Crear README si no existe
     readme_path = output_dir / "README.md"
     if not readme_path.exists():
-        readme_content = """# PIBot Joint BERT - 7 Heads
-
-Modelo Joint BERT para clasificación multi-cabeza de consultas sobre indicadores económicos.
-
-## Cabezas de Clasificación
-
-El modelo predice simultáneamente 7 atributos:
-- **indicator**: Indicador económico (ej: imacec, pib)
-- **metric_type**: Tipo de métrica (ej: index, level)
-- **calc_mode**: Modo de cálculo (ej: yoy, mom)
-- **seasonal**: Ajuste estacional (ej: sa, nsa)
-- **req_form**: Forma de solicitud (ej: latest, historical)
-- **frequency**: Frecuencia (ej: m, q, a)
-- **activity**: Actividad/Sector (ej: total, agriculture)
-
-## Uso
-
-### Opción 1: Local (Recomendado para máxima compatibilidad)
-
-```python
-from load_local_model import PIBotPredictor
-
-predictor = PIBotPredictor("path/to/model")
-result = predictor.predict("cual fue el pib del último trimestre")
-print(result)
-```
-
-### Opción 2: Desde Hugging Face Hub
-
-```python
-from load_local_model import PIBotPredictor
-
-# Descargar y usar
-predictor = PIBotPredictor("username/pibot-jointbert")
-result = predictor.predict("cual fue el imacec")
-print(result)
-```
-
-### Línea de comandos
-
-```bash
-python load_local_model.py --model_dir path/to/model --text "tu consulta"
-```
-
-## Estructura del Checkpoint
-
-```
-model_dir/
-├── model.safetensors              # Pesos del modelo
-├── config.json                    # Configuración de BERT
-├── training_args.bin              # Argumentos de entrenamiento
-├── tokenizer.json                 # Tokenizer rápido
-├── tokenizer_config.json
-├── vocab.txt
-├── modeling_jointbert.py          # Arquitectura custom
-├── module.py                      # Clasificadores custom
-├── __init__.py
-├── *_label.txt                    # Labels para cada cabeza (7 archivos)
-└── README.md
-```
-
-## Detalles Técnicos
-
-- **Base Model**: dccuchile/bert-base-spanish-wwm-cased (BETO)
-- **Framework**: PyTorch + Transformers
-- **Formato de pesos**: SafeTensors
-- **Tokenizer**: AutoTokenizer con use_fast=True
-
-## Licencia
-
-[Especificar licencia]
-
-## Autor
-
-[Tu información]
-"""
+        readme_content = _build_model_readme(train_args, label_files)
         readme_path.write_text(readme_content, encoding="utf-8")
         print(f"✓ README.md creado en {output_dir}")
-    
-    # Verificar que los archivos de código estén presentes
-    code_files = ["modeling_jointbert.py", "module.py", "__init__.py"]
-    for cf in code_files:
-        if not (output_dir / cf).exists():
-            raise FileNotFoundError(f"Código faltante: {cf}")
     
     print(f"\n✓ Checkpoint verificado y listo para HF:")
     print(f"  📁 Ubicación: {output_dir}")
     print(f"  📦 Archivos: {len(list(output_dir.glob('*')))}")
+    print(f"  🏷️ Labels: {', '.join(label_files)}")
     print(f"  ✅ Auto-contenido: Sí (puede usarse sin dependencias externas)")
     
     return output_dir
@@ -236,6 +272,14 @@ def main():
         help="Directorio del modelo local"
     )
     parser.add_argument(
+        "--label_dir",
+        help="Directorio con *_label.txt (opcional, por defecto usa data/{task})"
+    )
+    parser.add_argument(
+        "--code_dir",
+        help="Directorio con modeling_jointbert.py/module.py/__init__.py (opcional, por defecto usa model_in/)"
+    )
+    parser.add_argument(
         "--private",
         action="store_true",
         help="Crear repositorio privado"
@@ -257,7 +301,11 @@ def main():
     print("=" * 60)
     
     # Preparar checkpoint
-    checkpoint_dir = prepare_checkpoint_for_hf(args.model_dir)
+    checkpoint_dir = prepare_checkpoint_for_hf(
+        args.model_dir,
+        label_dir=args.label_dir,
+        code_dir=args.code_dir,
+    )
     
     # Subir a HF
     success = upload_to_hf(

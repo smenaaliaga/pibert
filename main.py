@@ -18,7 +18,7 @@ def main(args):
 
     if args.do_train:
         trainer.train()
-        # Guarda el tokenizer junto al checkpoint para cargas reproducibles
+        # Guarda el tokenizer junto al checkpoint
         tokenizer.save_pretrained(args.model_out)
 
     if args.do_eval:
@@ -35,9 +35,9 @@ if __name__ == '__main__':
     # heads
     parser.add_argument("--indicator_label_file", default="indicator_label.txt", type=str, help="Indicator Label file")
     parser.add_argument("--calc_mode_label_file", default="calc_mode_label.txt", type=str, help="Calc Mode Label file")
-    parser.add_argument("--frequency_label_file", default="frequency_label.txt", type=str, help="Frequency Label file")
     parser.add_argument("--activity_label_file", default="activity_label.txt", type=str, help="Activity Label file")
     parser.add_argument("--region_label_file", default="region_label.txt", type=str, help="Region Label file")
+    parser.add_argument("--investment_label_file", default="investment_label.txt", type=str, help="Investment Label file")
     parser.add_argument("--req_form_label_file", default="req_form_label.txt", type=str, help="Req Form Label file")
     parser.add_argument("--slot_label_file", default="slot_label.txt", type=str, help="Slot Label file")
 
