@@ -10,16 +10,6 @@ class CalcModeClassifier(nn.Module):
         x = self.dropout(x)
         return self.linear(x)
     
-class FrequencyClassifier(nn.Module):
-    def __init__(self, input_dim, num_frequency_labels, dropout_rate=0.):
-        super(FrequencyClassifier, self).__init__()
-        self.dropout = nn.Dropout(dropout_rate)
-        self.linear = nn.Linear(input_dim, num_frequency_labels)
-
-    def forward(self, x):
-        x = self.dropout(x)
-        return self.linear(x)
-    
 class ActivityClassifier(nn.Module):
     def __init__(self, input_dim, num_activity_labels, dropout_rate=0.):
         super(ActivityClassifier, self).__init__()
@@ -35,6 +25,16 @@ class RegionClassifier(nn.Module):
         super(RegionClassifier, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
         self.linear = nn.Linear(input_dim, num_region_labels)
+
+    def forward(self, x):
+        x = self.dropout(x)
+        return self.linear(x)
+
+class InvestmentClassifier(nn.Module):
+    def __init__(self, input_dim, num_investment_labels, dropout_rate=0.):
+        super(InvestmentClassifier, self).__init__()
+        self.dropout = nn.Dropout(dropout_rate)
+        self.linear = nn.Linear(input_dim, num_investment_labels)
 
     def forward(self, x):
         x = self.dropout(x)

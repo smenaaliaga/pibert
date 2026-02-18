@@ -17,20 +17,20 @@ MODEL_PATH_MAP = {
     'bert': 'bert-base-uncased',
     'beto': 'dccuchile/bert-base-spanish-wwm-cased',
     'deberta': 'microsoft/mdeberta-v3-base',
-    'roberta': 'PlanTL-GOB-ES/roberta-base-bne',
+    'roberta': 'bertin-project/bertin-roberta-base-spanish',
 }
 
 def get_calc_mode_labels(args):
     return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.calc_mode_label_file), 'r', encoding='utf-8')]
-
-def get_frequency_labels(args):
-    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.frequency_label_file), 'r', encoding='utf-8')]
 
 def get_activity_labels(args):
     return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.activity_label_file), 'r', encoding='utf-8')]
 
 def get_region_labels(args):
     return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.region_label_file), 'r', encoding='utf-8')]
+
+def get_investment_labels(args):
+    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.investment_label_file), 'r', encoding='utf-8')]
 
 def get_req_form_labels(args):
     return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.req_form_label_file), 'r', encoding='utf-8')]
@@ -60,28 +60,29 @@ def set_seed(args):
 
 
 def compute_metrics(calc_mode_preds, calc_mode_labels,
-                    frequency_preds, frequency_labels,
                     activity_preds, activity_labels,
                     region_preds, region_labels,
+                    investment_preds, investment_labels,
                     req_form_preds, req_form_labels,
                     slot_preds, slot_labels):
-    assert len(calc_mode_preds) == len(calc_mode_labels) == len(frequency_preds) == len(frequency_labels) \
+    assert len(calc_mode_preds) == len(calc_mode_labels) \
         == len(activity_preds) == len(activity_labels) == len(region_preds) == len(region_labels) \
+        == len(investment_preds) == len(investment_labels) \
         == len(req_form_preds) == len(req_form_labels) == len(slot_preds) == len(slot_labels)
         
 
     results = {}
     results.update(get_calc_mode_acc(calc_mode_preds, calc_mode_labels))
-    results.update(get_frequency_acc(frequency_preds, frequency_labels))
     results.update(get_activity_acc(activity_preds, activity_labels))
     results.update(get_region_acc(region_preds, region_labels))
+    results.update(get_investment_acc(investment_preds, investment_labels))
     results.update(get_req_form_acc(req_form_preds, req_form_labels))
     results.update(get_slot_metrics(slot_preds, slot_labels))
 
     semantic_result = get_sentence_frame_acc(calc_mode_preds, calc_mode_labels,
-                                             frequency_preds, frequency_labels,
                                              activity_preds, activity_labels,
                                              region_preds, region_labels,
+                                             investment_preds, investment_labels,
                                              req_form_preds, req_form_labels,
                                              slot_preds, slot_labels)
     results.update(semantic_result)
@@ -105,13 +106,6 @@ def get_calc_mode_acc(preds, labels):
     }
 
 
-def get_frequency_acc(preds, labels):
-    acc = (preds == labels).mean()
-    return {
-        "frequency_acc": acc
-    }
-
-
 def get_activity_acc(preds, labels):
     acc = (preds == labels).mean()
     return {
@@ -123,6 +117,13 @@ def get_region_acc(preds, labels):
     acc = (preds == labels).mean()
     return {
         "region_acc": acc
+    }
+
+
+def get_investment_acc(preds, labels):
+    acc = (preds == labels).mean()
+    return {
+        "investment_acc": acc
     }
 
 
@@ -138,17 +139,17 @@ def read_prediction_text(args):
 
 
 def get_sentence_frame_acc(calc_mode_preds, calc_mode_labels,
-                           frequency_preds, frequency_labels,
                            activity_preds, activity_labels,
                            region_preds, region_labels,
+                           investment_preds, investment_labels,
                            req_form_preds, req_form_labels,
                            slot_preds, slot_labels):
     """Semantic frame accuracy: todas las cabezas y todos los slots correctos en la oración."""
     calc_mode_result = (calc_mode_preds == calc_mode_labels)
-    frequency_result = (frequency_preds == frequency_labels)
     req_form_result = (req_form_preds == req_form_labels)
     activity_result = (activity_preds == activity_labels)
     region_result = (region_preds == region_labels)
+    investment_result = (investment_preds == investment_labels)
 
     slot_result = []
     for preds, labels in zip(slot_preds, slot_labels):
@@ -157,7 +158,7 @@ def get_sentence_frame_acc(calc_mode_preds, calc_mode_labels,
         slot_result.append(one_sent_result)
     slot_result = np.array(slot_result)
 
-    semantic_acc = (calc_mode_result & frequency_result & activity_result & region_result & req_form_result  & slot_result).mean()
+    semantic_acc = (calc_mode_result & activity_result & region_result & investment_result & req_form_result & slot_result).mean()
     
     return {
         "semantic_frame_acc": semantic_acc

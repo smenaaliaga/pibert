@@ -8,9 +8,9 @@ from torch.utils.data import TensorDataset
 
 from utils import (
     get_calc_mode_labels,
-    get_frequency_labels,
     get_activity_labels,
     get_region_labels,
+    get_investment_labels,
     get_req_form_labels,
     get_slot_labels,
 )
@@ -29,13 +29,13 @@ class InputExample(object):
         slot_labels: (Optional) list. The slot labels of the example.
     """
 
-    def __init__(self, guid, words, calc_mode_label=None, frequency_label=None, activity_label=None, region_label=None, req_form_label=None, slot_labels=None):
+    def __init__(self, guid, words, calc_mode_label=None, activity_label=None, region_label=None, investment_label=None, req_form_label=None, slot_labels=None):
         self.guid = guid
         self.words = words
         self.calc_mode_label = calc_mode_label
-        self.frequency_label = frequency_label
         self.activity_label = activity_label
         self.region_label = region_label
+        self.investment_label = investment_label
         self.req_form_label = req_form_label
         self.slot_labels = slot_labels
 
@@ -56,14 +56,15 @@ class InputFeatures(object):
     """A single set of features of data."""
 
     def __init__(self, input_ids, attention_mask, token_type_ids, 
-                 calc_mode_label_id, frequency_label_id, activity_label_id, 
+                 calc_mode_label_id, activity_label_id, 
+                 investment_label_id,
                  region_label_id, req_form_label_id, slot_labels_ids):
         self.input_ids = input_ids
         self.attention_mask = attention_mask
         self.token_type_ids = token_type_ids
         self.calc_mode_label_id = calc_mode_label_id
-        self.frequency_label_id = frequency_label_id
         self.activity_label_id = activity_label_id
+        self.investment_label_id = investment_label_id
         self.region_label_id = region_label_id
         self.req_form_label_id = req_form_label_id
         self.slot_labels_ids = slot_labels_ids
@@ -87,9 +88,9 @@ class JointProcessor(object):
     def __init__(self, args):
         self.args = args
         self.calc_mode_labels = get_calc_mode_labels(args)
-        self.frequency_labels = get_frequency_labels(args)
         self.activity_labels = get_activity_labels(args)
         self.region_labels = get_region_labels(args)
+        self.investment_labels = get_investment_labels(args)
         self.req_form_labels = get_req_form_labels(args)
         self.slot_labels = get_slot_labels(args)
 
@@ -116,13 +117,14 @@ class JointProcessor(object):
             # 2. heads from label line
             # Support: either a single label or comma-separated labels for multiple heads
             calc_mode_label = 0
-            frequency_label = 0
             activity_label = 0
             region_label = 0
+            investment_label = 0
             req_form_label = 0
             slot_labels = []
+            o_label_idx = self.slot_labels.index("O") if "O" in self.slot_labels else 0
             for s in slot.split():
-                slot_labels.append(self.slot_labels.index(s) if s in self.slot_labels else self.slot_labels.index("UNK"))
+                slot_labels.append(self.slot_labels.index(s) if s in self.slot_labels else o_label_idx)
             assert len(words) == len(slot_labels)
 
             def map_or_default(name, label_list, default_idx=0):
@@ -135,24 +137,24 @@ class JointProcessor(object):
 
             if "," in label:
                 parts = [p.strip() for p in label.split(",")]
-                # Pad to 4 fields: calc_mode, frequency, activity, region, req_form
-                while len(parts) < 4:
+                # Formato esperado pibimacecv5: calc_mode,activity,region,investment,req_form
+                while len(parts) < 5:
                     parts.append("")
-                calc_mode_name, frequency_name, activity_name, region_name, req_form_name = parts[:4]
+                calc_mode_name, activity_name, region_name, investment_name, req_form_name = parts[:5]
                 
                 calc_mode_label = map_or_default(calc_mode_name, getattr(self, 'calc_mode_labels', []), 0)
-                frequency_label = map_or_default(frequency_name, getattr(self, 'frequency_labels', []), 0)
                 activity_label = map_or_default(activity_name, getattr(self, 'activity_labels', []), 0)
                 region_label = map_or_default(region_name, getattr(self, 'region_labels', []), 0)
+                investment_label = map_or_default(investment_name, getattr(self, 'investment_labels', []), 0)
                 req_form_label = map_or_default(req_form_name, getattr(self, 'req_form_labels', []), 0)
 
             examples.append(InputExample(
                 guid=guid,
                 words=words,
                 calc_mode_label=calc_mode_label,
-                frequency_label=frequency_label,
                 activity_label=activity_label,
                 region_label=region_label,
+                investment_label=investment_label,
                 req_form_label=req_form_label,
                 slot_labels=slot_labels
             ))
@@ -242,9 +244,9 @@ def convert_examples_to_features(examples, max_seq_len, tokenizer,
             logger.info("attention_mask: %s" % " ".join([str(x) for x in attention_mask]))
             logger.info("token_type_ids: %s" % " ".join([str(x) for x in token_type_ids]))
             logger.info("calc_mode_label: %d" % example.calc_mode_label)
-            logger.info("frequency_label: %d" % example.frequency_label)
             logger.info("activity_label: %d" % example.activity_label)
             logger.info("region_label: %d" % example.region_label)
+            logger.info("investment_label: %d" % example.investment_label)
             logger.info("req_form_label: %d" % example.req_form_label)
             logger.info("slot_labels: %s" % " ".join([str(x) for x in slot_labels_ids]))
 
@@ -253,8 +255,8 @@ def convert_examples_to_features(examples, max_seq_len, tokenizer,
                           attention_mask=attention_mask,
                           token_type_ids=token_type_ids,
                           calc_mode_label_id=example.calc_mode_label,
-                          frequency_label_id=example.frequency_label,
                           activity_label_id=example.activity_label,
+                          investment_label_id=example.investment_label,
                           region_label_id=example.region_label,
                           req_form_label_id=example.req_form_label,
                           slot_labels_ids=slot_labels_ids
@@ -270,7 +272,7 @@ def load_and_cache_examples(args, tokenizer, mode):
     # Load data features from cache or dataset file
     cached_features_file = os.path.join(
         args.data_dir,
-        'cached_{}_{}_{}_{}'.format(
+        'cached_{}_{}_{}_{}_v2'.format(
             mode,
             args.task,
             list(filter(None, args.model_name_or_path.split("/"))).pop(),
@@ -305,9 +307,9 @@ def load_and_cache_examples(args, tokenizer, mode):
     all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
     all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
     all_calc_mode_label_ids = torch.tensor([getattr(f, 'calc_mode_label_id', 0) for f in features], dtype=torch.long)
-    all_frequency_label_ids = torch.tensor([getattr(f, 'frequency_label_id', 0) for f in features], dtype=torch.long)
     all_activity_label_ids = torch.tensor([getattr(f, 'activity_label_id', 0) for f in features], dtype=torch.long)
     all_region_label_ids = torch.tensor([getattr(f, 'region_label_id', 0) for f in features], dtype=torch.long)
+    all_investment_label_ids = torch.tensor([getattr(f, 'investment_label_id', 0) for f in features], dtype=torch.long)
     all_req_form_label_ids = torch.tensor([getattr(f, 'req_form_label_id', 0) for f in features], dtype=torch.long)
     all_slot_labels_ids = torch.tensor([f.slot_labels_ids for f in features], dtype=torch.long)
 
@@ -316,9 +318,9 @@ def load_and_cache_examples(args, tokenizer, mode):
         all_attention_mask,
         all_token_type_ids,
         all_calc_mode_label_ids,
-        all_frequency_label_ids,
         all_activity_label_ids,
         all_region_label_ids,
+        all_investment_label_ids,
         all_req_form_label_ids,
         all_slot_labels_ids,
     )

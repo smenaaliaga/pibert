@@ -3,37 +3,30 @@ Procesa un archivo Excel y genera los archivos para la arquitectura multi-head d
 - data/{dataset}/processed/label (cabezas separadas por comas)
 - data/{dataset}/processed/seq.in (texto)
 - data/{dataset}/{head}_label.txt (vocabulario por cabeza)
-- data/{dataset}/slot_label.txt (vacío, solo contiene "O")
+- data/{dataset}/slot_label.txt (etiquetas NER extraidas de NER_BIO)
 
-Estructura esperada del Excel:
-- Columna 1: text (entrada de texto)
-- Columna 2: indicator
-- Columna 3: metric_type
-- Columna 4: seasonal
-- Columna 5: activity
-- Columna 6: frequency
-- Columna 7: req_form
-- Columna 8: calc_mode
+Estructura esperada del Excel (columnas por nombre):
+- Utterance: texto de entrada
+- CalcMode: modo de cálculo
+- ActivityCls: clasificación de actividad
+- RegionCls: clasificación de región
+- InvestmentCls: clasificación de inversión
+- ReqForm: forma de requisitos
+- NER_BIO: etiquetas NER en formato BIO
 
 Uso:
-    python util/process_excel_multi_heads.py --dataset pibimacecv3 --input_file data/pibimacecv3/raw/data.xlsx --sheet_name final
+    python util/process_raw_data.py --dataset pibimacecv5 --input_file data/pibimacecv5/raw/dataset.xlsx
 
 Notas:
 - El archivo Excel debe estar en formato .xlsx o .xls
-- Las columnas se leen en orden: text, intent, indicator, metric_type, calc_mode, seasonal, req_form, context_mode, activity
+- Las columnas se buscan por nombre en el header del Excel
 - Se generan automaticamente los vocabularios (*_label.txt)
-- slot_label.txt se crea solo con "O" (slots no se usan en esta arquitectura por defecto)
+- slot_label.txt se genera desde las etiquetas únicas en NER_BIO
 """
 
 import argparse
 import os
 from pathlib import Path
-
-try:
-    import openpyxl
-    HAS_OPENPYXL = True
-except ImportError:
-    HAS_OPENPYXL = False
 
 try:
     import pandas as pd
@@ -42,50 +35,45 @@ except ImportError:
     HAS_PANDAS = False
 
 
-def process_excel_openpyxl(input_file, sheet_name=None):
-    """Lee Excel usando openpyxl."""
-    if not HAS_OPENPYXL:
-        raise ImportError("openpyxl no está instalado. Instala con: pip install openpyxl")
-    
-    wb = openpyxl.load_workbook(input_file)
-    if sheet_name:
-        ws = wb[sheet_name]
-    else:
-        ws = wb.active
-    
-    rows = []
-    for row in ws.iter_rows(values_only=True):
-        rows.append(row)
-    
-    return rows
-
-
 def process_excel_pandas(input_file, sheet_name=None):
     """Lee Excel usando pandas."""
     if not HAS_PANDAS:
         raise ImportError("pandas no está instalado. Instala con: pip install pandas")
     
-    df = pd.read_excel(input_file, sheet_name=sheet_name)
-    # Convertir a lista de tuplas (fila por fila)
-    rows = [tuple(row) for row in df.values]
-    return rows
+    # Si sheet_name es None, leer la primera hoja (índice 0)
+    if sheet_name is None:
+        df = pd.read_excel(input_file, sheet_name=0)
+    else:
+        df = pd.read_excel(input_file, sheet_name=sheet_name)
+    
+    return df
 
 
-def process_file(dataset, input_file, sheet_name=None, skip_header=True):
+def process_file(dataset, input_file, sheet_name=None):
     """Procesa el archivo Excel y genera los archivos de datos."""
     
     base_path = Path('data') / dataset
     processed_path = base_path / 'processed'
     processed_path.mkdir(parents=True, exist_ok=True)
 
-    # Intentar leer con pandas primero (más robusto), luego openpyxl
-    try:
-        rows = process_excel_pandas(input_file, sheet_name=sheet_name)
-    except ImportError:
-        rows = process_excel_openpyxl(input_file, sheet_name=sheet_name)
+    # Leer Excel con pandas (obligatorio para lectura por nombres de columnas)
+    if not HAS_PANDAS:
+        raise ImportError("pandas es requerido para procesar el Excel. Instala con: pip install pandas openpyxl")
     
-    # Headers:
-    head_names = ['text', 'indicator', 'metric_type', 'seasonal', 'activity', 'frequency', 'req_form', 'calc_mode']
+    df = process_excel_pandas(input_file, sheet_name=sheet_name)
+    
+    # Verificar que existen las columnas requeridas
+    required_columns = ['Utterance', 'CalcMode', 'ActivityCls', 'RegionCls', 'InvestmentCls', 'ReqForm', 'NER_BIO']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    
+    if missing_columns:
+        print(f"Error: Las siguientes columnas requeridas no se encuentran en el Excel:")
+        print(f"  {', '.join(missing_columns)}")
+        print(f"\nColumnas disponibles: {', '.join(df.columns)}")
+        raise ValueError(f"Columnas faltantes: {missing_columns}")
+    
+    # Nombres de las cabezas clasificadoras (en el orden que se guardarán en 'label')
+    head_names = ['CalcMode', 'ActivityCls', 'RegionCls', 'InvestmentCls', 'ReqForm']
     
     # Almacenar datos y vocabularios
     seq_in = []
@@ -93,50 +81,49 @@ def process_file(dataset, input_file, sheet_name=None, skip_header=True):
     labels = []
     
     # Vocabularios por cabeza (usar dict para preservar orden de aparición)
-    vocabularies = {
-        'indicator': {},
-        'metric_type': {},
-        'seasonal': {},
-        'activity': {},
-        'frequency': {},
-        'req_form': {},
-        'calc_mode': {}
-    }
+    vocabularies = {head: {} for head in head_names}
+    
+    # Vocabulario para slots (etiquetas NER_BIO)
+    slot_vocabulary = {}
 
-    # Procesar cada fila del Excel
-    for row_idx, row in enumerate(rows):
-        # Omitir fila de encabezado si corresponde
-        if skip_header and row_idx == 0:
-            # Heurística: si la primera celda contiene 'text' o la segunda 'intent', asumimos encabezado
-            first_cell = str(row[0]).strip().lower() if len(row) > 0 and row[0] else ""
-            second_cell = str(row[1]).strip().lower() if len(row) > 1 and row[1] else ""
-            if first_cell == 'text' or second_cell == 'intent':
-                continue
-        
-        # Asegurar que tenemos suficientes columnas
-        if len(row) < len(head_names):
-            print(f"Advertencia: Fila {row_idx} tiene menos columnas que esperado. Saltando.")
-            continue
-        
-        # Extraer valores
-        text = str(row[0]).strip() if row[0] else ""
+    # Procesar cada fila del DataFrame
+    for idx, row in df.iterrows():
+        # Extraer texto
+        text = str(row['Utterance']).strip() if pd.notna(row['Utterance']) else ""
         
         # Si text está vacío, saltar
         if not text:
+            print(f"Advertencia: Fila {idx+2} tiene texto vacío. Saltando.")
             continue
         
         seq_in.append(text)
         
-        # Crear seq.out con etiquetas "O" por cada token
+        # Extraer etiquetas NER
+        ner_bio = str(row['NER_BIO']).strip() if pd.notna(row['NER_BIO']) else ""
+        
+        # Si no hay etiquetas NER, usar "O" para cada token
         tokens = text.split()
-        slot_tags = " ".join(["O"] * len(tokens))
+        if not ner_bio or ner_bio.lower() == 'nan':
+            slot_tags = " ".join(["O"] * len(tokens))
+        else:
+            slot_tags = ner_bio
+            # Agregar etiquetas al vocabulario de slots
+            for tag in ner_bio.split():
+                if tag not in slot_vocabulary:
+                    slot_vocabulary[tag] = len(slot_vocabulary)
+        
+        # Verificar que el número de tokens coincida con el número de etiquetas
+        if len(slot_tags.split()) != len(tokens):
+            print(f"Advertencia: Fila {idx+2} - número de tokens ({len(tokens)}) no coincide con número de etiquetas NER ({len(slot_tags.split())})")
+            print(f"  Texto: {text}")
+            print(f"  NER: {slot_tags}")
+        
         seq_out.append(slot_tags)
         
-        # Extraer cabezas
+        # Extraer cabezas clasificadoras
         head_values = []
-        for col_idx in range(1, len(head_names)):
-            val = str(row[col_idx]).strip() if row[col_idx] else ""
-            head_name = head_names[col_idx]
+        for head_name in head_names:
+            val = str(row[head_name]).strip() if pd.notna(row[head_name]) else ""
             head_values.append(val)
             
             # Agregar al vocabulario si no está vacío
@@ -161,9 +148,17 @@ def process_file(dataset, input_file, sheet_name=None, skip_header=True):
         for line in seq_out:
             f.write(f"{line}\n")
 
-    # Escribir vocabularios por cabeza
+    # Escribir vocabularios por cabeza con nombres legacy
+    legacy_label_file_map = {
+        'CalcMode': 'calc_mode_label.txt',
+        'ActivityCls': 'activity_label.txt',
+        'RegionCls': 'region_label.txt',
+        'InvestmentCls': 'investment_label.txt',
+        'ReqForm': 'req_form_label.txt',
+    }
+
     for head_name, vocab in vocabularies.items():
-        vocab_file = base_path / f"{head_name}_label.txt"
+        vocab_file = base_path / legacy_label_file_map[head_name]
         # Ordenar por frecuencia (orden de aparición en el vocabulario)
         sorted_labels = sorted(vocab.items(), key=lambda x: x[1])
         with open(vocab_file, 'w', encoding='utf-8') as f:
@@ -171,10 +166,21 @@ def process_file(dataset, input_file, sheet_name=None, skip_header=True):
                 f.write(f"{label}\n")
         print(f"Salida: {vocab_file} ({len(sorted_labels)} etiquetas)")
 
-    # Escribir slot_label.txt vacío (solo "O")
-    with open(base_path / 'slot_label.txt', 'w', encoding='utf-8') as f:
-        f.write("O\n")
-    print(f"Salida: {base_path / 'slot_label.txt'} (solo O)")
+    # Escribir slot_label.txt con etiquetas NER únicas
+    if not slot_vocabulary:
+        # Si no hay etiquetas NER en los datos, crear solo con "O"
+        slot_vocabulary = {"O": 0}
+    elif "O" not in slot_vocabulary:
+        # Asegurar que "O" está en el vocabulario
+        slot_vocabulary["O"] = len(slot_vocabulary)
+    
+    slot_vocab_file = base_path / 'slot_label.txt'
+    # Ordenar etiquetas (O primero, luego el resto alfabéticamente)
+    sorted_slot_labels = sorted(slot_vocabulary.items(), key=lambda x: (x[0] != "O", x[0]))
+    with open(slot_vocab_file, 'w', encoding='utf-8') as f:
+        for label, _ in sorted_slot_labels:
+            f.write(f"{label}\n")
+    print(f"Salida: {slot_vocab_file} ({len(sorted_slot_labels)} etiquetas)")
 
     # Resumen
     print(f"\nProcesadas {len(seq_in)} filas")
@@ -182,21 +188,23 @@ def process_file(dataset, input_file, sheet_name=None, skip_header=True):
     print(f"Salida: {processed_path / 'seq.out'}")
     print(f"Salida: {processed_path / 'label'}")
     print("\nVocabularios generados:")
-    for head_name in head_names[1:]:
+    for head_name in head_names:
         print(f"  {head_name}: {len(vocabularies[head_name])} etiquetas")
+    print(f"  Slots (NER): {len(slot_vocabulary)} etiquetas")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Procesa un Excel con arquitectura multi-head para JointBERT'
+        description='Procesa un Excel con arquitectura multi-head para JointBERT. '
+                    'Busca las siguientes columnas: Utterance, CalcMode, ActivityCls, '
+                    'RegionCls, InvestmentCls, ReqForm, NER_BIO'
     )
     parser.add_argument('--dataset', type=str, required=True, help='Nombre del dataset (carpeta en data/)')
     parser.add_argument('--input_file', type=str, required=True, help='Ruta al archivo Excel')
     parser.add_argument('--sheet_name', type=str, default=None, help='Nombre de la hoja del Excel (por defecto: primera hoja)')
-    parser.add_argument('--no_skip_header', action='store_true', help='No saltar la primera fila aunque sea encabezado')
     args = parser.parse_args()
 
-    process_file(args.dataset, args.input_file, sheet_name=args.sheet_name, skip_header=not args.no_skip_header)
+    process_file(args.dataset, args.input_file, sheet_name=args.sheet_name)
 
 
 if __name__ == '__main__':
