@@ -137,7 +137,7 @@ class JointProcessor(object):
 
             if "," in label:
                 parts = [p.strip() for p in label.split(",")]
-                # Formato esperado pibimacecv5: calc_mode,activity,region,investment,req_form
+                # Formato esperado: calc_mode,activity,region,investment,req_form
                 while len(parts) < 5:
                     parts.append("")
                 calc_mode_name, activity_name, region_name, investment_name, req_form_name = parts[:5]

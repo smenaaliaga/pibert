@@ -47,8 +47,12 @@ checkpoints/
 *.safetensors
 
 # Model outputs
-model_out/*/
+model_out/*
 !model_out/.gitkeep
+
+# Model package
+model_package/*
+!model_package/.gitkeep
 
 # Logs
 logs/
