@@ -90,7 +90,7 @@ data/{dataset}/
 ### 1) Procesar Excel a formato JointBERT
 
 ```bash
-python process_raw_data.py --dataset pibimacecv5 --input_file data/pibimacec/raw/dataset.xlsx
+python util/process_raw_data.py --dataset pibimacecv3 --input_file data/pibimacec/raw/dataset.xlsx
 ```
 
 Columnas esperadas en el Excel:
@@ -111,13 +111,13 @@ python util/split_data.py --dataset pibimacec --test_size 0.2 --dev_size 0.1 --s
 Ejemplo base (BETO):
 
 ```bash
-python main.py --task pibimacec --model_type beto --model_out pibert --do_train --do_eval
+python main.py --task pibimacecv3 --model_type beto --model_out pibert --do_train --do_eval
 ```
 
 Ejemplo recomendado (ajustado):
 
 ```bash
-python main.py --task pibimacec --model_type beto --model_out pibert_base --do_train --do_eval --max_seq_len 64 --train_batch_size 8 --gradient_accumulation_steps 2 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 10 --warmup_steps 300 --weight_decay 0.02 --dropout_rate 0.25 --logging_steps 100 --save_steps 300 --early_stopping --early_stopping_patience 2 --seed 42
+python main.py --task pibimacecv3 --model_type beto --model_out pibert --do_train --do_eval --max_seq_len 64 --train_batch_size 8 --gradient_accumulation_steps 2 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 10 --warmup_steps 300 --weight_decay 0.02 --dropout_rate 0.25 --logging_steps 100 --save_steps 300 --early_stopping --early_stopping_patience 2 --seed 42
 ```
 
 Con CRF:
@@ -195,14 +195,38 @@ bc_pibot_jointbert/
 
 ## Publicar en Hugging Face
 
-Script disponible:
+### 1. Login en Hugging Face
 
 ```bash
-python util/upload_to_hf.py --repo_name <usuario>/<repo> --model_dir <ruta_modelo> --label_dir <ruta_labels>
+hf auth login
 ```
 
-Se recomienda que `model_dir` incluya:
-- pesos (`model.safetensors` o `pytorch_model.bin`)
-- `config.json`
-- archivos de tokenizer
-- archivos `*_label.txt` requeridos
+### 2. Preparar + subir modelo a HF
+
+```bash
+python util/prepare_model_package.py --model_dir model_out/{NOMBRE_MODELO} --labels_dir data/{NOMBRE_DATASET} --clean --upload --repo_name {USER_HF}/{NOMBRE_MODELO_HF}
+```
+
+- `--model_dir`: carpeta del checkpoint entrenado a publicar.
+- `--labels_dir`: carpeta con los archivos `*_label.txt` que usa el modelo.
+- `--clean`: limpia `model_package/` antes de copiar (evita mezclar archivos viejos).
+- `--upload`: sube automáticamente después de preparar el paquete.
+- `--repo_name`: repositorio destino en HF (`usuario-o-org/nombre-repo`).
+
+### 3. Utilizar modelo
+
+Una vez subido, otros proyectos pueden usarlo así:
+
+```python
+from huggingface_hub import snapshot_download
+model_dir = snapshot_download("tu-usuario/pibot-jointbert")
+```
+
+O directamente con `transformers`:
+
+```python
+from transformers import AutoTokenizer, AutoModel
+tokenizer = AutoTokenizer.from_pretrained("tu-usuario/pibot-jointbert", trust_remote_code=True)
+```
+
+> Ver `model_package/README.md` para instrucciones completas de carga e inferencia.
