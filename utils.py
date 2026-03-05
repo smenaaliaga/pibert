@@ -8,6 +8,7 @@ from seqeval.metrics import precision_score, recall_score, f1_score
 
 from transformers import AutoConfig
 from transformers import AutoTokenizer  # usar tokenizer rápido para generar tokenizer.json
+from transformers import DebertaV2Tokenizer
 
 from model_in import JointBERT
 
@@ -40,7 +41,25 @@ def get_slot_labels(args):
 
 
 def load_tokenizer(args):
-    return AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
+    model_name = str(args.model_name_or_path).lower()
+
+    if getattr(args, "model_type", "") == "deberta" or "mdeberta-v3" in model_name:
+        logging.info("Usando DebertaV2Tokenizer (slow) para %s", args.model_name_or_path)
+        return DebertaV2Tokenizer.from_pretrained(args.model_name_or_path)
+
+    try:
+        return AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
+    except (ValueError, ModuleNotFoundError) as exc:
+        err_msg = str(exc).lower()
+        if "tiktoken" in err_msg or "converting from tiktoken failed" in err_msg:
+            logging.warning(
+                "Fast tokenizer no disponible para %s (detalle: %s). "
+                "Usando tokenizer lento (use_fast=False).",
+                args.model_name_or_path,
+                exc,
+            )
+            return AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=False)
+        raise
 
 
 def init_logger():

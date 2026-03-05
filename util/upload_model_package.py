@@ -51,6 +51,24 @@ REQUIRED_LABEL_FILES = [
 ]
 
 
+def detect_model_type(package_dir: Path) -> str:
+    """Detecta si es DeBERTa, BERT, etc, leyendo config.json"""
+    config_path = package_dir / "config.json"
+    if not config_path.exists():
+        return "unknown"
+    
+    import json
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+        model_name = config.get("_name_or_path", "").lower()
+        if "mdeberta" in model_name or "deberta-v3" in model_name:
+            return "deberta"
+        return "bert"
+    except Exception:
+        return "unknown"
+
+
 def validate_model_package(package_dir: Path) -> bool:
     """Valida que model_package tenga todos los archivos necesarios."""
     ok = True
@@ -58,6 +76,10 @@ def validate_model_package(package_dir: Path) -> bool:
     if not package_dir.exists():
         print(f"❌ No se encuentra el directorio: {package_dir}")
         return False
+
+    # Detectar tipo de modelo
+    model_type = detect_model_type(package_dir)
+    print(f"   Tipo de modelo detectado: {model_type}")
 
     # Pesos del modelo
     has_weights = any((package_dir / f).exists() for f in REQUIRED_WEIGHT_FILES)
@@ -77,11 +99,33 @@ def validate_model_package(package_dir: Path) -> bool:
         print(f"⚠ Labels faltantes: {missing_labels}")
         ok = False
 
-    # Tokenizer (al menos uno)
-    has_tokenizer = (package_dir / "tokenizer.json").exists() or (package_dir / "vocab.txt").exists()
-    if not has_tokenizer:
-        print("❌ Falta tokenizer: se requiere tokenizer.json o vocab.txt")
-        ok = False
+    # Tokenizer: validación flexible por tipo de modelo
+    has_tokenizer_json = (package_dir / "tokenizer.json").exists()
+    has_vocab = (package_dir / "vocab.txt").exists()
+    has_spm_model = (package_dir / "spm.model").exists()
+    has_tokenizer_config = (package_dir / "tokenizer_config.json").exists()
+    
+    if model_type == "deberta":
+        # DeBERTa slow: necesita (spm.model O vocab.txt) + tokenizer_config.json
+        # spm.model es para SentencePiece, vocab.txt es fallback
+        has_vocab_equivalent = has_vocab or has_spm_model
+        if not has_vocab_equivalent or not has_tokenizer_config:
+            print(f"⚠ DeBERTa: spm.model={has_spm_model}, vocab.txt={has_vocab}, tokenizer_config.json={has_tokenizer_config}")
+            if not has_vocab_equivalent:
+                print("❌ DeBERTa requiere spm.model o vocab.txt")
+                ok = False
+            if not has_tokenizer_config:
+                print("❌ DeBERTa requiere tokenizer_config.json")
+                ok = False
+        else:
+            print(f"   ✓ DeBERTa valid: spm.model={has_spm_model}, tokenizer.json={has_tokenizer_json}")
+    else:
+        # BERT/otros: tokenizer.json es preferible, vocab.txt es fallback
+        if not has_tokenizer_json and not has_vocab:
+            print("❌ Falta tokenizer: se requiere tokenizer.json o vocab.txt")
+            ok = False
+        elif not has_tokenizer_json:
+            print("⚠ Falta tokenizer.json (pero vocab.txt existe, puede funcionar)")
 
     return ok
 
