@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from transformers import PreTrainedModel, AutoModel
 from .module import CalcModeClassifier, ActivityClassifier, RegionClassifier, InvestmentClassifier, ReqFormClassifier, SlotClassifier
@@ -67,34 +68,41 @@ class JointBERT(PreTrainedModel):
         req_form_logits = self.req_form_classifier(pooled_output)
         slot_logits = self.slot_classifier(sequence_output)
 
-        total_loss = 0   
+        total_loss = 0
+
+        def _get_weight(head_name):
+            """Retorna class weights registrados como buffer, o None."""
+            buf_name = f"{head_name}_class_weights"
+            w = getattr(self, buf_name, None)
+            return w
+
         # 1. Calc Mode CrossEntropy
         if calc_mode_label_ids is not None:
-            calc_mode_loss_fct = nn.CrossEntropyLoss()
+            calc_mode_loss_fct = nn.CrossEntropyLoss(weight=_get_weight('calc_mode'))
             calc_mode_loss = calc_mode_loss_fct(calc_mode_logits.view(-1, self.num_calc_mode_labels), calc_mode_label_ids.view(-1))
             total_loss += calc_mode_loss
 
         # 2. Activity CrossEntropy
         if activity_label_ids is not None:
-            activity_loss_fct = nn.CrossEntropyLoss()
+            activity_loss_fct = nn.CrossEntropyLoss(weight=_get_weight('activity'))
             activity_loss = activity_loss_fct(activity_logits.view(-1, self.num_activity_labels), activity_label_ids.view(-1))
             total_loss += activity_loss
             
         # 3. Region CrossEntropy
         if region_label_ids is not None:
-            region_loss_fct = nn.CrossEntropyLoss()
+            region_loss_fct = nn.CrossEntropyLoss(weight=_get_weight('region'))
             region_loss = region_loss_fct(region_logits.view(-1, self.num_region_labels), region_label_ids.view(-1))
             total_loss += region_loss
 
         # 4. Investment CrossEntropy
         if investment_label_ids is not None:
-            investment_loss_fct = nn.CrossEntropyLoss()
+            investment_loss_fct = nn.CrossEntropyLoss(weight=_get_weight('investment'))
             investment_loss = investment_loss_fct(investment_logits.view(-1, self.num_investment_labels), investment_label_ids.view(-1))
             total_loss += investment_loss
 
         # 5. Req Form CrossEntropy
         if req_form_label_ids is not None:
-            req_form_loss_fct = nn.CrossEntropyLoss()
+            req_form_loss_fct = nn.CrossEntropyLoss(weight=_get_weight('req_form'))
             req_form_loss = req_form_loss_fct(req_form_logits.view(-1, self.num_req_form_labels), req_form_label_ids.view(-1))
             total_loss += req_form_loss
 

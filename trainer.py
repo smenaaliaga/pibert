@@ -49,7 +49,36 @@ class Trainer(object):
             self.device = "mps"
         else:
             self.device = "cpu"
+
+        # Class weights for imbalanced heads
+        if getattr(args, 'use_class_weights', False) and train_dataset is not None:
+            self._register_class_weights(train_dataset)
+
         self.model.to(self.device)
+
+    def _register_class_weights(self, train_dataset):
+        """Calcula class weights por frecuencia inversa y los registra como buffers en el modelo."""
+        # TensorDataset indices: 0=input_ids, 1=attention, 2=token_type, 
+        #   3=calc_mode, 4=activity, 5=region, 6=investment, 7=req_form, 8=slots
+        head_info = [
+            ('calc_mode',   3, self.calc_mode_label_lst),
+            ('activity',    4, self.activity_label_lst),
+            ('region',      5, self.region_label_lst),
+            ('investment',  6, self.investment_label_lst),
+            ('req_form',    7, self.req_form_label_lst),
+        ]
+        for head_name, tensor_idx, label_lst in head_info:
+            labels_tensor = train_dataset.tensors[tensor_idx]
+            num_classes = len(label_lst)
+            counts = torch.bincount(labels_tensor, minlength=num_classes).float()
+            # Inverse frequency: total / (num_classes * count_per_class)
+            # Clamp para evitar division por cero
+            weights = counts.sum() / (num_classes * counts.clamp(min=1.0))
+            # Normalizar para que el promedio sea 1.0
+            weights = weights / weights.mean()
+            self.model.register_buffer(f"{head_name}_class_weights", weights)
+            logger.info("Class weights [%s]: %s", head_name,
+                        {label_lst[i]: f"{weights[i]:.2f}" for i in range(num_classes)})
 
     def train(self):
         train_sampler = RandomSampler(self.train_dataset)

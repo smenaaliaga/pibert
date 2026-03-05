@@ -76,6 +76,9 @@ if __name__ == '__main__':
     parser.add_argument("--use_crf", action="store_true", help="Whether to use CRF")
     parser.add_argument("--slot_pad_label", default="PAD", type=str, help="Pad token for slot label pad (to be ignore when calculate loss)")
 
+    # Class weighting for imbalanced heads
+    parser.add_argument("--use_class_weights", action="store_true", help="Use inverse-frequency class weights for intent heads (helps with imbalanced labels like investment)")
+
     args = parser.parse_args()
 
     args.model_name_or_path = MODEL_PATH_MAP[args.model_type]

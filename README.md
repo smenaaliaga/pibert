@@ -90,7 +90,7 @@ data/{dataset}/
 ### 1) Procesar Excel a formato JointBERT
 
 ```bash
-python util/process_raw_data.py --dataset pibimacecv3 --input_file data/pibimacec/raw/dataset.xlsx
+python util/process_raw_data.py --dataset pibimacecv3 --input_file data/pibimacecv3/raw/dataset.xlsx
 ```
 
 Columnas esperadas en el Excel:
@@ -103,7 +103,7 @@ Esto genera:
 ### 2) Dividir train/dev/test
 
 ```bash
-python util/split_data.py --dataset pibimacec --test_size 0.2 --dev_size 0.1 --seed 42
+python util/split_data.py --dataset pibimacecv3 --test_size 0.15 --dev_size 0.1 --seed 42
 ```
 
 ### 3) Entrenar
@@ -123,7 +123,7 @@ python main.py --task pibimacecv3 --model_type beto --model_out pibert --do_trai
 Con CRF:
 
 ```bash
-python main.py --task pibimacec --model_type beto --model_out pibert_crf --do_train --do_eval --use_crf --max_seq_len 64 --train_batch_size 8 --gradient_accumulation_steps 2 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 10 --warmup_steps 300 --weight_decay 0.02 --dropout_rate 0.25 --logging_steps 100 --save_steps 300 --early_stopping --early_stopping_patience 2 --seed 42
+python main.py --task pibimacecv3 --model_type beto --model_out pibert_crf --do_train --do_eval --use_crf --max_seq_len 64 --train_batch_size 8 --gradient_accumulation_steps 2 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 10 --warmup_steps 300 --weight_decay 0.02 --dropout_rate 0.25 --logging_steps 100 --save_steps 300 --early_stopping --early_stopping_patience 2 --seed 42
 ```
 
 > Estas configuraciones priorizan generalización (más regularización y menos sobreentrenamiento). Ajusta `warmup_steps` a ~8-10% de los pasos totales de optimización y elige por `slot_f1` + `semantic_frame_acc` en test.
