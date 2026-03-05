@@ -34,6 +34,8 @@ MODEL_FILES_OPTIONAL = [
     "tokenizer_config.json",
     "special_tokens_map.json",
     "vocab.txt",
+    "added_tokens.json",
+    "spm.model",  # Para DeBERTa SentencePiece
 ]
 
 CODE_FILES = [
@@ -64,6 +66,22 @@ def log_skip(msg: str):
 
 def log_error(msg: str):
     print(f"  ❌ {msg}")
+
+
+def detect_model_type(config_path: Path) -> str:
+    """Detecta si es DeBERTa, BERT, etc, leyendo config.json"""
+    if not config_path.exists():
+        return "unknown"
+    
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+        model_name = config.get("_name_or_path", "").lower()
+        if "mdeberta" in model_name or "deberta-v3" in model_name:
+            return "deberta"
+        return "bert"
+    except Exception:
+        return "unknown"
 
 
 def copy_file(src: Path, dst: Path, required: bool = True) -> bool:
@@ -355,6 +373,20 @@ def prepare_package(
         if fname == "vocab.txt" and not src.exists():
             src = labels_dir / fname
         copy_file(src, output_dir / fname, required=False)
+    
+    # ── Regenerar tokenizer.json si falta y es DeBERTa ──
+    model_type = detect_model_type(model_dir / "config.json")
+    if model_type == "deberta" and not (output_dir / "tokenizer.json").exists():
+        print("\n   📋 DeBERTa: regenerando tokenizer.json...")
+        try:
+            from transformers import AutoTokenizer
+            tokenizer = AutoTokenizer.from_pretrained(str(model_dir), use_fast=False)
+            tokenizer.save_pretrained(str(output_dir))
+            log_ok("tokenizer.json regenerado desde modelo")
+        except Exception as e:
+            log_skip(f"No se pudo regenerar tokenizer.json ({type(e).__name__})")
+            if not (output_dir / "vocab.txt").exists():
+                log_error("No hay vocab.txt. DeBERTa requiere al menos vocab.txt")
 
     # ── 3) Código custom ──
     print("\n🐍 [3/5] Código custom (desde model_in/)...")
