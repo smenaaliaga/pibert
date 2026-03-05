@@ -53,7 +53,12 @@ class JointBERT(PreTrainedModel):
         outputs = self.encoder(input_ids, attention_mask=attention_mask,
                               token_type_ids=token_type_ids)  # sequence_output, pooled_output, (hidden_states), (attentions)
         sequence_output = outputs[0]
-        pooled_output = outputs[1]  # [CLS]
+        pooled_output = getattr(outputs, "pooler_output", None)
+        if pooled_output is None:
+            if len(outputs) > 1 and outputs[1] is not None and getattr(outputs[1], "dim", lambda: 0)() == 2:
+                pooled_output = outputs[1]
+            else:
+                pooled_output = sequence_output[:, 0]
 
         calc_mode_logits = self.calc_mode_classifier(pooled_output)
         activity_logits = self.activity_classifier(pooled_output)
