@@ -103,7 +103,7 @@ Esto genera:
 ### 2) Dividir train/dev/test
 
 ```bash
-python util/split_data.py --dataset pibimacecv3 --test_size 0.15 --dev_size 0.1 --seed 42
+python util/split_data.py --dataset pibimacecv3 --test_size 0.1 --dev_size 0.1 --seed 42
 ```
 
 ### 3) Entrenar

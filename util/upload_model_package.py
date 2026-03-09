@@ -136,6 +136,7 @@ def upload(
     token: str = None,
     private: bool = False,
     commit_message: str = "Upload PIBot Joint BERT model package",
+    clean: bool = False,
 ):
     """Sube model_package/ a Hugging Face Hub."""
 
@@ -176,7 +177,7 @@ def upload(
 
     # Subir
     try:
-        url = api.upload_folder(
+        upload_kwargs = dict(
             folder_path=str(package_dir),
             repo_id=repo_name,
             repo_type="model",
@@ -184,6 +185,11 @@ def upload(
             token=token,
             ignore_patterns=[".gitkeep", "__pycache__/**"],
         )
+        if clean:
+            # Eliminar del remoto cualquier archivo que no esté en el paquete local
+            upload_kwargs["delete_patterns"] = ["*"]
+            print("\n🧹 Modo limpio: se eliminarán archivos remotos que no estén en el paquete local")
+        url = api.upload_folder(**upload_kwargs)
     except Exception as upload_error:
         raise RuntimeError(
             "No se pudo subir al repositorio. Verifica que tu token tenga permiso de escritura "
@@ -233,6 +239,11 @@ def main():
         default="Upload PIBot Joint BERT model package",
         help="Mensaje del commit",
     )
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Limpiar el repo remoto: elimina archivos que no estén en model_package/ local",
+    )
 
     args = parser.parse_args()
     package_dir = Path(args.model_package_dir)
@@ -256,6 +267,7 @@ def main():
             token=args.token,
             private=args.private,
             commit_message=args.commit_message,
+            clean=args.clean,
         )
     except Exception as e:
         print(f"\n❌ Error al subir: {e}")
