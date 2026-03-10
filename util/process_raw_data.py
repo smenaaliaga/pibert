@@ -6,13 +6,13 @@ Procesa un archivo Excel y genera los archivos para la arquitectura multi-head d
 - data/{dataset}/slot_label.txt (etiquetas NER extraidas de NER_BIO)
 
 Estructura esperada del Excel (columnas por nombre):
-- Utterance: texto de entrada
-- CalcMode: modo de cálculo
-- ActivityCls: clasificación de actividad
-- RegionCls: clasificación de región
-- InvestmentCls: clasificación de inversión
-- ReqForm: forma de requisitos
-- NER_BIO: etiquetas NER en formato BIO
+- Formato legacy: Utterance, CalcMode, ActivityCls, RegionCls, InvestmentCls, ReqForm, NER_BIO
+- Formato nuevo (snake_case): utterance, calc_mode, activity, region, investment, req_form, ner_bio
+
+Notas de compatibilidad:
+- El script acepta variantes frecuentes como calc_mode_cls, activity_cls, region_cls,
+  investment_cls y req_form_cls.
+- NER_BIO/ner_bio es opcional. Si no existe, se generan etiquetas de slot "O".
 
 Uso:
     python util/process_raw_data.py --dataset pibimacecv5 --input_file data/pibimacecv5/raw/dataset.xlsx
@@ -62,18 +62,57 @@ def process_file(dataset, input_file, sheet_name=None):
     
     df = process_excel_pandas(input_file, sheet_name=sheet_name)
     
-    # Verificar que existen las columnas requeridas
-    required_columns = ['Utterance', 'CalcMode', 'ActivityCls', 'RegionCls', 'InvestmentCls', 'ReqForm', 'NER_BIO']
-    missing_columns = [col for col in required_columns if col not in df.columns]
-    
+    # Resolver columnas (compatibilidad entre formato legacy y snake_case)
+    def resolve_column(aliases):
+        # Match exacto primero
+        for name in aliases:
+            if name in df.columns:
+                return name
+        # Match case-insensitive después
+        lower_to_original = {str(col).lower(): col for col in df.columns}
+        for name in aliases:
+            key = str(name).lower()
+            if key in lower_to_original:
+                return lower_to_original[key]
+        return None
+
+    required_column_aliases = {
+        'utterance': ['Utterance', 'utterance'],
+        'calc_mode': ['CalcMode', 'calc_mode', 'calc_mode_cls'],
+        'activity': ['ActivityCls', 'activity', 'activity_cls'],
+        'region': ['RegionCls', 'region', 'region_cls'],
+        'investment': ['InvestmentCls', 'investment', 'investment_cls'],
+        'req_form': ['ReqForm', 'req_form', 'req_form_cls'],
+    }
+    optional_column_aliases = {
+        'ner_bio': ['NER_BIO', 'ner_bio'],
+    }
+
+    resolved_columns = {
+        key: resolve_column(aliases) for key, aliases in required_column_aliases.items()
+    }
+    resolved_optional = {
+        key: resolve_column(aliases) for key, aliases in optional_column_aliases.items()
+    }
+
+    missing_columns = [key for key, col_name in resolved_columns.items() if col_name is None]
+
     if missing_columns:
         print(f"Error: Las siguientes columnas requeridas no se encuentran en el Excel:")
         print(f"  {', '.join(missing_columns)}")
         print(f"\nColumnas disponibles: {', '.join(df.columns)}")
         raise ValueError(f"Columnas faltantes: {missing_columns}")
+
+    print("Columnas detectadas:")
+    for key, col_name in resolved_columns.items():
+        print(f"  {key}: {col_name}")
+    if resolved_optional['ner_bio']:
+        print(f"  ner_bio: {resolved_optional['ner_bio']}")
+    else:
+        print("  ner_bio: no encontrado (se usarán etiquetas 'O')")
     
-    # Nombres de las cabezas clasificadoras (en el orden que se guardarán en 'label')
-    head_names = ['CalcMode', 'ActivityCls', 'RegionCls', 'InvestmentCls', 'ReqForm']
+    # Nombres canónicos de las cabezas (orden en 'label')
+    head_names = ['calc_mode', 'activity', 'region', 'investment', 'req_form']
     
     # Almacenar datos y vocabularios
     seq_in = []
@@ -89,7 +128,8 @@ def process_file(dataset, input_file, sheet_name=None):
     # Procesar cada fila del DataFrame
     for idx, row in df.iterrows():
         # Extraer texto
-        text = str(row['Utterance']).strip() if pd.notna(row['Utterance']) else ""
+        utterance_col = resolved_columns['utterance']
+        text = str(row[utterance_col]).strip() if pd.notna(row[utterance_col]) else ""
         
         # Si text está vacío, saltar
         if not text:
@@ -99,7 +139,11 @@ def process_file(dataset, input_file, sheet_name=None):
         seq_in.append(text)
         
         # Extraer etiquetas NER
-        ner_bio = str(row['NER_BIO']).strip() if pd.notna(row['NER_BIO']) else ""
+        ner_col = resolved_optional['ner_bio']
+        if ner_col is not None and pd.notna(row[ner_col]):
+            ner_bio = str(row[ner_col]).strip()
+        else:
+            ner_bio = ""
         
         # Si no hay etiquetas NER, usar "O" para cada token
         tokens = text.split()
@@ -123,7 +167,8 @@ def process_file(dataset, input_file, sheet_name=None):
         # Extraer cabezas clasificadoras
         head_values = []
         for head_name in head_names:
-            val = str(row[head_name]).strip() if pd.notna(row[head_name]) else ""
+            source_col = resolved_columns[head_name]
+            val = str(row[source_col]).strip() if pd.notna(row[source_col]) else ""
             head_values.append(val)
             
             # Agregar al vocabulario si no está vacío
@@ -148,17 +193,17 @@ def process_file(dataset, input_file, sheet_name=None):
         for line in seq_out:
             f.write(f"{line}\n")
 
-    # Escribir vocabularios por cabeza con nombres legacy
-    legacy_label_file_map = {
-        'CalcMode': 'calc_mode_label.txt',
-        'ActivityCls': 'activity_label.txt',
-        'RegionCls': 'region_label.txt',
-        'InvestmentCls': 'investment_label.txt',
-        'ReqForm': 'req_form_label.txt',
+    # Escribir vocabularios por cabeza
+    label_file_map = {
+        'calc_mode': 'calc_mode_label.txt',
+        'activity': 'activity_label.txt',
+        'region': 'region_label.txt',
+        'investment': 'investment_label.txt',
+        'req_form': 'req_form_label.txt',
     }
 
     for head_name, vocab in vocabularies.items():
-        vocab_file = base_path / legacy_label_file_map[head_name]
+        vocab_file = base_path / label_file_map[head_name]
         # Ordenar por frecuencia (orden de aparición en el vocabulario)
         sorted_labels = sorted(vocab.items(), key=lambda x: x[1])
         with open(vocab_file, 'w', encoding='utf-8') as f:
@@ -196,8 +241,9 @@ def process_file(dataset, input_file, sheet_name=None):
 def main():
     parser = argparse.ArgumentParser(
         description='Procesa un Excel con arquitectura multi-head para JointBERT. '
-                    'Busca las siguientes columnas: Utterance, CalcMode, ActivityCls, '
-                    'RegionCls, InvestmentCls, ReqForm, NER_BIO'
+                    'Acepta columnas legacy (Utterance, CalcMode, ActivityCls, RegionCls, '
+                    'InvestmentCls, ReqForm, NER_BIO) y snake_case '
+                    '(utterance, calc_mode, activity, region, investment, req_form, ner_bio)'
     )
     parser.add_argument('--dataset', type=str, required=True, help='Nombre del dataset (carpeta en data/)')
     parser.add_argument('--input_file', type=str, required=True, help='Ruta al archivo Excel')

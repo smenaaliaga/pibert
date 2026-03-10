@@ -93,8 +93,15 @@ data/{dataset}/
 python util/process_raw_data.py --dataset pibimacecv3 --input_file data/pibimacecv3/raw/dataset.xlsx
 ```
 
-Columnas esperadas en el Excel:
+Columnas esperadas en el Excel (formato nuevo recomendado):
+`utterance`, `calc_mode` (o `calc_mode_cls`), `activity` (o `activity_cls`),
+`region` (o `region_cls`), `investment` (o `investment_cls`),
+`req_form` (o `req_form_cls`), `ner_bio`.
+
+Compatibilidad legacy:
 `Utterance`, `CalcMode`, `ActivityCls`, `RegionCls`, `InvestmentCls`, `ReqForm`, `NER_BIO`.
+
+Nota: `ner_bio` / `NER_BIO` es opcional; si no existe, se generan etiquetas `O` para `seq.out`.
 
 Esto genera:
 - `data/{dataset}/processed/{seq.in,label,seq.out}`
@@ -123,7 +130,11 @@ python main.py --task pibimacecv3 --model_type beto --model_out pibert --do_trai
 Con CRF:
 
 ```bash
-python main.py --task pibimacecv3 --model_type beto --model_out pibert_crf --do_train --do_eval --use_crf --max_seq_len 64 --train_batch_size 8 --gradient_accumulation_steps 2 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 10 --warmup_steps 300 --weight_decay 0.02 --dropout_rate 0.25 --logging_steps 100 --save_steps 300 --early_stopping --early_stopping_patience 2 --seed 42
+python main.py --task pibimacecv3 --model_type beto --model_out pibert_crf --do_train --do_eval --use_crf --use_class_weights --max_seq_len 64 --train_batch_size 8 --gradient_accumulation_steps 2 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 10 --warmup_steps 300 --weight_decay 0.02 --dropout_rate 0.25 --logging_steps 100 --save_steps 300 --early_stopping --early_stopping_patience 2 --seed 42
+```
+
+```bash
+python main.py --task pibimacecv3 --model_type deberta --model_out pibert_deberta_crf --do_train --do_eval --use_crf --use_class_weights --max_seq_len 64 --train_batch_size 8 --gradient_accumulation_steps 2 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 10 --warmup_steps 300 --weight_decay 0.02 --dropout_rate 0.25 --logging_steps 100 --save_steps 300 --early_stopping --early_stopping_patience 2 --seed 42
 ```
 
 > Estas configuraciones priorizan generalización (más regularización y menos sobreentrenamiento). Ajusta `warmup_steps` a ~8-10% de los pasos totales de optimización y elige por `slot_f1` + `semantic_frame_acc` en test.
