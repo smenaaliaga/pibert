@@ -17,7 +17,7 @@ Dada una consulta en lenguaje natural, el modelo predice simultáneamente:
    - `req_form`
 2. **Etiquetas de entidades (slots)** en formato BIO (`B-*`, `I-*`, `O`), por token.
 
-Esto permite mapear preguntas económicas a un frame semántico completo.
+Entre las entidades NER se incluye `PRICE` (`B-PRICE`, `I-PRICE`), que identifica menciones de precios en el texto.
 
 ## Arquitectura (resumen)
 
@@ -148,13 +148,13 @@ Este repositorio incluye `predict_cli.py` para inferencia interactiva, por texto
 ### Modo interactivo
 
 ```bash
-python predict_cli.py --model_dir model_out/pibert_base
+python predict_cli.py --model_dir model_out/pibert_deberta_crf
 ```
 
 ### Texto único
 
 ```bash
-python predict_cli.py --model_dir model_out/pibert_base --text "cual fue el ultimo imacec"
+python predict_cli.py --model_dir model_out/pibert_deberta_crf --text "cual fue el ultimo imacec"
 ```
 
 ### Batch por archivo
@@ -215,7 +215,7 @@ hf auth login
 ### 2. Preparar + subir modelo a HF
 
 ```bash
-python util/prepare_model_package.py --model_dir model_out/{NOMBRE_MODELO} --labels_dir data/{NOMBRE_DATASET} --clean --upload --repo_name {USER_HF}/{NOMBRE_MODELO_HF}
+python util/prepare_model_package.py --model_dir model_out/{NOMBRE_MODELO} --labels_dir data/{NOMBRE_DATASET} --clean --upload --repo_name BCCh/pibert
 ```
 
 - `--model_dir`: carpeta del checkpoint entrenado a publicar.

@@ -26,7 +26,6 @@ scipy==1.16.3
 # NLP & Text Processing
 # ====================================
 seqeval==1.2.2
-dateparser>=1.1.0
 rapidfuzz>=3.0.0
 regex==2025.11.3
 

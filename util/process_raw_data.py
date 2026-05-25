@@ -11,7 +11,7 @@ Estructura esperada del Excel (columnas por nombre):
 
 Notas de compatibilidad:
 - El script acepta variantes frecuentes como calc_mode_cls, activity_cls, region_cls,
-  investment_cls y req_form_cls.
+  investment_cls, price_cls y req_form_cls.
 - NER_BIO/ner_bio es opcional. Si no existe, se generan etiquetas de slot "O".
 
 Uso:
