@@ -108,3 +108,4 @@ temp/
 !data/catalogo/*.md
 !data/**/*_label.txt
 !data/**/slot_label.txt
+!data/**/schema.json

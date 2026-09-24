@@ -1,130 +1,117 @@
+"""
+JointBERT dirigido por esquema: un encoder Transformer, una cabeza de clasificación por
+entrada de `schema.heads` (sobre el token [CLS]) y una cabeza de secuencia para slots BIO
+(softmax o CRF). Nada aquí nombra una cabeza concreta.
+"""
+from __future__ import annotations
+
+import inspect
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import torch
 import torch.nn as nn
-from transformers import PreTrainedModel, AutoModel
-from .module import CalcModeClassifier, ActivityClassifier, RegionClassifier, InvestmentClassifier, ReqFormClassifier, SlotClassifier
+from safetensors.torch import load_file, save_file
+from transformers import AutoConfig, AutoModel
+
+from schema import Schema
+from .module import Classifier
 
 try:
     from torchcrf import CRF
-except ImportError:
+except ImportError:  # pragma: no cover
     CRF = None
 
-class JointBERT(PreTrainedModel):
-    def __init__(self, config, args, calc_mode_label_lst, activity_label_lst, region_label_lst, investment_label_lst, req_form_label_lst, slot_label_lst):
-        super(JointBERT, self).__init__(config)
-        self.args = args
-        
-        self.num_calc_mode_labels = len(calc_mode_label_lst)
-        self.num_activity_labels = len(activity_label_lst)
-        self.num_region_labels = len(region_label_lst)
-        self.num_investment_labels = len(investment_label_lst)
-        self.num_req_form_labels = len(req_form_label_lst)
-        self.num_slot_labels = len(slot_label_lst)
-        
-        # Usar AutoModel para soportar cualquier encoder transformer
-        self.encoder = AutoModel.from_pretrained(args.model_name_or_path, config=config)
 
-        self.calc_mode_classifier = CalcModeClassifier(config.hidden_size, self.num_calc_mode_labels, args.dropout_rate)
-        self.activity_classifier = ActivityClassifier(config.hidden_size, self.num_activity_labels, args.dropout_rate)
-        self.region_classifier = RegionClassifier(config.hidden_size, self.num_region_labels, args.dropout_rate)
-        self.investment_classifier = InvestmentClassifier(config.hidden_size, self.num_investment_labels, args.dropout_rate)
-        self.req_form_classifier = ReqFormClassifier(config.hidden_size, self.num_req_form_labels, args.dropout_rate)
-        self.slot_classifier = SlotClassifier(config.hidden_size, self.num_slot_labels, args.dropout_rate)
+@dataclass
+class JointOutput:
+    loss: torch.Tensor | None
+    head_logits: dict[str, torch.Tensor]
+    slot_logits: torch.Tensor
 
-        if args.use_crf:
+
+class JointBERT(nn.Module):
+    def __init__(self, schema: Schema, model_name_or_path: str | None = None, config=None,
+                 dropout_rate: float = 0.1, use_crf: bool = False, slot_loss_coef: float = 1.0,
+                 ignore_index: int = -100):
+        super().__init__()
+        self.schema = schema
+        self.use_crf = use_crf
+        self.slot_loss_coef = slot_loss_coef
+        self.ignore_index = ignore_index
+        self.dropout_rate = dropout_rate
+
+        if model_name_or_path is not None:
+            self.encoder = AutoModel.from_pretrained(model_name_or_path, config=config)
+        else:
+            self.encoder = AutoModel.from_config(config)
+        self.config = self.encoder.config
+        hidden = self.config.hidden_size
+        self._accepts_token_type = "token_type_ids" in inspect.signature(self.encoder.forward).parameters
+
+        self.heads = nn.ModuleDict({name: Classifier(hidden, len(labels), dropout_rate)
+                                    for name, labels in schema.heads.items()})
+        self.slot_classifier = Classifier(hidden, len(schema.slot_labels), dropout_rate)
+        if use_crf:
             if CRF is None:
-                raise ImportError("torchcrf no está instalado. Instala con: pip install pytorch-crf o ejecuta sin --use_crf")
-            crf_init_errors = []
-            for init_fn in (
-                lambda: CRF(self.num_slot_labels, pad_idx=None, use_gpu=False),
-                lambda: CRF(self.num_slot_labels, batch_first=True),
-                lambda: CRF(num_tags=self.num_slot_labels, batch_first=True),
-                lambda: CRF(self.num_slot_labels),
-                lambda: CRF(num_tags=self.num_slot_labels),
-            ):
-                try:
-                    self.crf = init_fn()
-                    break
-                except TypeError as e:
-                    crf_init_errors.append(str(e))
-            else:
-                raise TypeError("No se pudo inicializar CRF con las firmas conocidas: " + " | ".join(crf_init_errors))
+                raise ImportError("pytorch-crf no está instalado: pip install pytorch-crf")
+            self.crf = CRF(len(schema.slot_labels), batch_first=True)
 
+    # ---- forward ---------------------------------------------------------------
     def forward(self, input_ids, attention_mask, token_type_ids=None,
-        calc_mode_label_ids=None, activity_label_ids=None, region_label_ids=None, investment_label_ids=None, req_form_label_ids=None, slot_labels_ids=None):
-        outputs = self.encoder(input_ids, attention_mask=attention_mask,
-                              token_type_ids=token_type_ids)  # sequence_output, pooled_output, (hidden_states), (attentions)
-        sequence_output = outputs[0]
-        pooled_output = getattr(outputs, "pooler_output", None)
-        if pooled_output is None:
-            if len(outputs) > 1 and outputs[1] is not None and getattr(outputs[1], "dim", lambda: 0)() == 2:
-                pooled_output = outputs[1]
-            else:
-                pooled_output = sequence_output[:, 0]
+                head_label_ids: torch.Tensor | None = None, slot_labels_ids=None) -> JointOutput:
+        kwargs: dict[str, Any] = {"input_ids": input_ids, "attention_mask": attention_mask}
+        if self._accepts_token_type and token_type_ids is not None:
+            kwargs["token_type_ids"] = token_type_ids
+        sequence_output = self.encoder(**kwargs)[0]
+        pooled = sequence_output[:, 0]
 
-        calc_mode_logits = self.calc_mode_classifier(pooled_output)
-        activity_logits = self.activity_classifier(pooled_output)
-        region_logits = self.region_classifier(pooled_output)
-        investment_logits = self.investment_classifier(pooled_output)
-        req_form_logits = self.req_form_classifier(pooled_output)
+        head_logits = {name: head(pooled) for name, head in self.heads.items()}
         slot_logits = self.slot_classifier(sequence_output)
 
-        total_loss = 0   
-        # 1. Calc Mode CrossEntropy
-        if calc_mode_label_ids is not None:
-            calc_mode_loss_fct = nn.CrossEntropyLoss()
-            calc_mode_loss = calc_mode_loss_fct(calc_mode_logits.view(-1, self.num_calc_mode_labels), calc_mode_label_ids.view(-1))
-            total_loss += calc_mode_loss
-
-        # 2. Activity CrossEntropy
-        if activity_label_ids is not None:
-            activity_loss_fct = nn.CrossEntropyLoss()
-            activity_loss = activity_loss_fct(activity_logits.view(-1, self.num_activity_labels), activity_label_ids.view(-1))
-            total_loss += activity_loss
-            
-        # 3. Region CrossEntropy
-        if region_label_ids is not None:
-            region_loss_fct = nn.CrossEntropyLoss()
-            region_loss = region_loss_fct(region_logits.view(-1, self.num_region_labels), region_label_ids.view(-1))
-            total_loss += region_loss
-
-        # 4. Investment CrossEntropy
-        if investment_label_ids is not None:
-            investment_loss_fct = nn.CrossEntropyLoss()
-            investment_loss = investment_loss_fct(investment_logits.view(-1, self.num_investment_labels), investment_label_ids.view(-1))
-            total_loss += investment_loss
-
-        # 5. Req Form CrossEntropy
-        if req_form_label_ids is not None:
-            req_form_loss_fct = nn.CrossEntropyLoss()
-            req_form_loss = req_form_loss_fct(req_form_logits.view(-1, self.num_req_form_labels), req_form_label_ids.view(-1))
-            total_loss += req_form_loss
-
-        # 6. Slot Softmax
-        if slot_labels_ids is not None and self.args.slot_loss_coef != 0:
-            if self.args.use_crf:
-                # CRF doesn't handle ignore_index (-100), so we replace it with PAD (0)
-                slot_labels_ids_crf = slot_labels_ids.clone()
-                slot_labels_ids_crf[slot_labels_ids_crf == self.args.ignore_index] = 0
-                if hasattr(self.crf, 'viterbi_decode'):
-                    # TorchCRF API: forward returns log-likelihood per batch item
-                    slot_loss = -self.crf(slot_logits, slot_labels_ids_crf, attention_mask.bool()).mean()
-                else:
-                    # pytorch-crf API
-                    slot_loss = self.crf(slot_logits, slot_labels_ids_crf, mask=attention_mask.bool(), reduction='mean')
-                    slot_loss = -1 * slot_loss  # negative log-likelihood
+        loss = None
+        if head_label_ids is not None:
+            loss = sequence_output.new_zeros(())
+            ce = nn.CrossEntropyLoss()
+            for i, name in enumerate(self.schema.head_names):
+                loss = loss + ce(head_logits[name], head_label_ids[:, i])
+        if slot_labels_ids is not None and self.slot_loss_coef != 0:
+            if self.use_crf:
+                tags = slot_labels_ids.clone()
+                tags[tags == self.ignore_index] = 0  # el CRF no admite ignore_index; O en posiciones ignoradas
+                slot_loss = -self.crf(slot_logits, tags, mask=attention_mask.bool(), reduction="mean")
             else:
-                slot_loss_fct = nn.CrossEntropyLoss(ignore_index=self.args.ignore_index)
-                # Only keep active parts of the loss
-                if attention_mask is not None:
-                    active_loss = attention_mask.view(-1) == 1
-                    active_logits = slot_logits.view(-1, self.num_slot_labels)[active_loss]
-                    active_labels = slot_labels_ids.view(-1)[active_loss]
-                    slot_loss = slot_loss_fct(active_logits, active_labels)
-                else:
-                    slot_loss = slot_loss_fct(slot_logits.view(-1, self.num_slot_labels), slot_labels_ids.view(-1))
-            total_loss += self.args.slot_loss_coef * slot_loss
+                ce_slot = nn.CrossEntropyLoss(ignore_index=self.ignore_index)
+                active = attention_mask.view(-1) == 1
+                slot_loss = ce_slot(slot_logits.view(-1, len(self.schema.slot_labels))[active],
+                                    slot_labels_ids.view(-1)[active])
+            loss = (loss if loss is not None else 0) + self.slot_loss_coef * slot_loss
+        return JointOutput(loss, head_logits, slot_logits)
 
-        outputs = ((calc_mode_logits, activity_logits, region_logits, investment_logits, req_form_logits, slot_logits),) + outputs[2:]  # add hidden states and attention if they are here 
+    def decode_slots(self, slot_logits: torch.Tensor, attention_mask: torch.Tensor) -> list[list[int]]:
+        if self.use_crf:
+            return self.crf.decode(slot_logits, mask=attention_mask.bool())
+        return slot_logits.argmax(dim=-1).tolist()
 
-        outputs = (total_loss,) + outputs
+    # ---- persistencia ------------------------------------------------------------
+    def save(self, out_dir: Path | str) -> None:
+        out = Path(out_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        self.config.save_pretrained(out)
+        save_file({k: v.contiguous() for k, v in self.state_dict().items()}, out / "model.safetensors")
+        self.schema.save(out)
+        (out / "jointbert.json").write_text(json.dumps({
+            "dropout_rate": self.dropout_rate, "use_crf": self.use_crf,
+            "slot_loss_coef": self.slot_loss_coef, "ignore_index": self.ignore_index,
+        }, indent=1), encoding="utf-8")
 
-        return outputs  # (loss), logits, (hidden_states), (attentions) # Logits is a tuple of all classifier logits
+    @classmethod
+    def load(cls, model_dir: Path | str, device: str | torch.device = "cpu") -> "JointBERT":
+        d = Path(model_dir)
+        schema = Schema.load(d)
+        cfg = json.loads((d / "jointbert.json").read_text(encoding="utf-8"))
+        model = cls(schema, model_name_or_path=None, config=AutoConfig.from_pretrained(d), **cfg)
+        model.load_state_dict(load_file(d / "model.safetensors"))
+        return model.to(device).eval()

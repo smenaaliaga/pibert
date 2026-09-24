@@ -182,6 +182,15 @@ def process_file(dataset, input_file, sheet_name=None):
             f.write(f"{label}\n")
     print(f"Salida: {slot_vocab_file} ({len(sorted_slot_labels)} etiquetas)")
 
+    # schema.json: fuente de verdad para el modelo (los *_label.txt se mantienen por compatibilidad)
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from schema import Schema
+    heads = {legacy_label_file_map[h].replace("_label.txt", ""): sorted(vocabularies[h]) for h in head_names}
+    entities = sorted({t[2:] for t in slot_vocabulary if t != "O"})
+    Schema(heads=heads, entities=entities, version="legado").save(base_path)
+    print(f"Salida: {base_path / 'schema.json'}")
+
     # Resumen
     print(f"\nProcesadas {len(seq_in)} filas")
     print(f"Salida: {processed_path / 'seq.in'}")

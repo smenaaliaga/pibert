@@ -1,232 +1,148 @@
-# Clasificador Joint BERT para PIBot
+# PIBERT: de la consulta en lenguaje natural a la serie de la BDE
 
-Implementación de un modelo **joint intent + slot filling** para consultas macroeconómicas (PIBERT), basado en el enfoque de JointBERT.
+Sistema de comprensión de consultas sobre PIB e Imacec del Banco Central de Chile. Una consulta
+se convierte en una **tupla parcial** de dimensiones (indicador, frecuencia, estacionalidad,
+presentación, valoración, actividad, región, gasto, más período y cálculo) que se resuelve contra
+el **catálogo** de series publicadas. El modelo neuronal es sólo el extractor; la resolución es
+simbólica.
 
-- Paper base: https://arxiv.org/abs/1810.04805v2
+```
+texto ──► extractor (JointBERT: cabezas + NER) ──► normalización ──► tupla parcial q
+                                                                        │
+                       catálogo (data/catalogo/series.csv) ◄────────────┘
+                       filtrar → propagar restricciones → preferencias → serie | aclarar | no existe
+```
+
+- Paper base de la arquitectura de extracción: JointBERT, https://arxiv.org/abs/1902.10909
 - Implementación de referencia: https://github.com/monologg/JointBERT
 
-## ¿Qué resuelve este proyecto?
+## Estado
 
-Dada una consulta en lenguaje natural, el modelo predice simultáneamente:
-
-1. **5 cabezas de intención**:
-   - `calc_mode`
-   - `activity`
-   - `region`
-   - `investment`
-   - `req_form`
-2. **Etiquetas de entidades (slots)** en formato BIO (`B-*`, `I-*`, `O`), por token.
-
-Esto permite mapear preguntas económicas a un frame semántico completo.
-
-## Arquitectura (resumen)
-
-- Encoder Transformer (BERT/BETO/DeBERTa/RoBERTa).
-- Cabezas de clasificación independientes para cada intención.
-- Cabeza de secuencia para slot filling (opcional con `--use_crf`).
-
-### Modelos soportados (`--model_type`)
-
-| Shortcut | Modelo |
+| Componente | Estado |
 |---|---|
-| `bert` | `bert-base-uncased` |
-| `beto` | `dccuchile/bert-base-spanish-wwm-cased` |
-| `deberta` | `microsoft/mdeberta-v3-base` |
-| `roberta` | `bertin-project/bertin-roberta-base-spanish` |
+| Catálogo de resolución (`util/build_catalog.py`, `data/catalogo/`) | listo, 4.490 series / 276 cuadros |
+| Resolvedor (`catalog.py`) | listo: filtrado, propagación, preferencias, pregunta aclaratoria |
+| Modelo dirigido por esquema (`schema.py`, `model_in/`) | listo |
+| Dataset con la definición nueva (3 cabezas binarias + cálculo, 10 entidades) | pendiente; `pibimacecv3` usa el esquema heredado |
+| Normalizadores (span → valor canónico) y `extract.py` | pendiente |
+| Evaluación de punta a punta (exactitud de tupla y de serie) | pendiente |
+| Publicación en Hugging Face (`util/prepare_model_package.py`) | desactualizado respecto del nuevo formato de checkpoint |
 
-## Requisitos
-
-- Python 3.10+
-- `pip`
-- GPU NVIDIA opcional (recomendado para entrenamiento)
-
-## Instalación rápida
+## Instalación
 
 ```bash
-python -m venv .venv
-
-# Windows
-.venv\Scripts\activate
-
-# Linux / macOS
-source .venv/bin/activate
-
-pip install -r requirements.txt
+uv venv .venv && uv pip install --python .venv/bin/python -r requirements.txt
+# o: python -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python -m pytest -q tests
 ```
 
-> Nota: `requirements.txt` está preparado para PyTorch con CUDA 12.1.
+Con GPU NVIDIA instala `torch` primero según https://pytorch.org/get-started/locally/. En Apple
+Silicon se usa MPS automáticamente.
 
-## Estructura de datos esperada
+## Catálogo
 
-Para cada dataset en `data/{dataset}`:
-
-```text
-data/{dataset}/
-├─ raw/                 # Fuente original (ej. Excel)
-├─ processed/           # Archivos consolidados para split
-│  ├─ seq.in
-│  ├─ label
-│  └─ seq.out
-├─ train/
-├─ dev/
-├─ test/
-├─ calc_mode_label.txt
-├─ activity_label.txt
-├─ region_label.txt
-├─ investment_label.txt
-├─ req_form_label.txt
-└─ slot_label.txt
+```bash
+.venv/bin/python util/build_catalog.py     # regenera data/catalogo/{series,cuadros}.csv, vocabularios.json, reporte.md
 ```
 
-### Formato de archivos clave
+```python
+from catalog import Catalog
+r = Catalog.load().resolve(region="valparaiso", actividad="comercio")
+r.estado, r.cuadros, r.supuestos, r.colapsadas, r.aclarar
+```
+
+Detalles del formato de los códigos de serie, las tres clases de dimensión y las preferencias en
+`data/catalogo/README.md`.
+
+## Esquema del modelo
+
+`schema.json` define las cabezas clasificadoras (nombre → etiquetas) y los tipos de entidad. Es la
+única fuente de verdad para el modelo, el cargador de datos, el entrenador y la inferencia.
+
+```bash
+.venv/bin/python util/make_schema.py --task pibimacecv3 --from-data      # esquema heredado del dataset
+.venv/bin/python util/make_schema.py --task pibimacecv4 --from-catalog   # esquema nuevo desde vocabularios.json
+```
+
+Esquema nuevo: cabezas `activ_cls`, `reg_cls`, `gast_cls` (binarias) y `calculo`
+(nivel, var_anual, var_periodo_anterior); entidades INDICADOR, FRECUENCIA, ESTACIONALIDAD,
+PRESENTACION, VALORACION, ACTIVIDAD, REGION, GASTO, PERIODO, REFERENCIA.
+
+## Datos
+
+```
+data/<task>/
+├─ raw/                 # Excel de origen
+├─ processed/           # seq.in, label, seq.out consolidados
+├─ train/ dev/ test/    # seq.in, label, seq.out
+└─ schema.json
+```
 
 - `seq.in`: una consulta por línea.
-- `label`: 5 etiquetas separadas por coma por línea, en este orden:
-  `calc_mode,activity,region,investment,req_form`
-- `seq.out`: etiquetas BIO por token separadas por espacio.
+- `label`: una etiqueta por cabeza separada por coma, en el orden de `schema.heads`.
+- `seq.out`: etiquetas BIO por palabra.
 
-## Flujo de trabajo recomendado
-
-### 1) Procesar Excel a formato JointBERT
+Cualquier etiqueta fuera del esquema detiene la carga con un error que indica la línea.
 
 ```bash
-python util/process_raw_data.py --dataset pibimacecv3 --input_file data/pibimacec/raw/dataset.xlsx
+.venv/bin/python util/process_raw_data.py --dataset pibimacecv3 --input_file data/pibimacecv3/raw/dataset.xlsx
+.venv/bin/python util/split_data.py --dataset pibimacecv3 --test_size 0.15 --dev_size 0.1 --seed 42
 ```
 
-Columnas esperadas en el Excel:
-`Utterance`, `CalcMode`, `ActivityCls`, `RegionCls`, `InvestmentCls`, `ReqForm`, `NER_BIO`.
-
-Esto genera:
-- `data/{dataset}/processed/{seq.in,label,seq.out}`
-- `data/{dataset}/*_label.txt`
-
-### 2) Dividir train/dev/test
+## Entrenamiento
 
 ```bash
-python util/split_data.py --dataset pibimacec --test_size 0.2 --dev_size 0.1 --seed 42
+.venv/bin/python main.py --task pibimacecv3 --model_type beto --model_out pibert --do_train --do_eval \
+  --max_seq_len 64 --train_batch_size 16 --learning_rate 2e-5 --num_train_epochs 10 --warmup_steps 300 \
+  --weight_decay 0.01 --dropout_rate 0.2 --early_stopping --early_stopping_patience 2 --seed 42
 ```
-
-### 3) Entrenar
-
-Ejemplo base (BETO):
-
-```bash
-python main.py --task pibimacecv3 --model_type beto --model_out pibert --do_train --do_eval
-```
-
-Ejemplo recomendado (ajustado):
-
-```bash
-python main.py --task pibimacecv3 --model_type beto --model_out pibert --do_train --do_eval --max_seq_len 64 --train_batch_size 8 --gradient_accumulation_steps 2 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 10 --warmup_steps 300 --weight_decay 0.02 --dropout_rate 0.25 --logging_steps 100 --save_steps 300 --early_stopping --early_stopping_patience 2 --seed 42
-```
-
-Con CRF:
-
-```bash
-python main.py --task pibimacec --model_type beto --model_out pibert_crf --do_train --do_eval --use_crf --max_seq_len 64 --train_batch_size 8 --gradient_accumulation_steps 2 --eval_batch_size 32 --learning_rate 1.5e-5 --num_train_epochs 10 --warmup_steps 300 --weight_decay 0.02 --dropout_rate 0.25 --logging_steps 100 --save_steps 300 --early_stopping --early_stopping_patience 2 --seed 42
-```
-
-> Estas configuraciones priorizan generalización (más regularización y menos sobreentrenamiento). Ajusta `warmup_steps` a ~8-10% de los pasos totales de optimización y elige por `slot_f1` + `semantic_frame_acc` en test.
-
-> `main.py` guarda y carga modelos bajo `model_out/{model_out}` automáticamente.
-
-## Predicción
-
-Este repositorio incluye `predict_cli.py` para inferencia interactiva, por texto único y por archivo.
-
-### Modo interactivo
-
-```bash
-python predict_cli.py --model_dir model_out/pibert_base
-```
-
-### Texto único
-
-```bash
-python predict_cli.py --model_dir model_out/pibert_base --text "cual fue el ultimo imacec"
-```
-
-### Batch por archivo
-
-```bash
-python predict_cli.py --model_dir model_out/pibert_base --input_file consultas.txt --output_file resultados.txt
-```
-
-Salida incluye:
-- predicción y confianza por cada cabeza
-- entidades agrupadas detectadas desde BIO
-
-## Argumentos principales de entrenamiento
 
 | Argumento | Descripción | Default |
 |---|---|---|
-| `--task` | Nombre del dataset en `data/` | requerido |
-| `--model_out` | Nombre de salida (dentro de `model_out/`) | requerido |
-| `--model_type` | Shortcut del modelo base | `bert` |
-| `--max_seq_len` | Longitud máxima de secuencia | `50` |
-| `--train_batch_size` | Batch de entrenamiento | `32` |
-| `--eval_batch_size` | Batch de evaluación | `64` |
-| `--learning_rate` | Learning rate Adam | `5e-5` |
-| `--num_train_epochs` | Épocas | `10` |
-| `--dropout_rate` | Dropout en capas FC | `0.1` |
-| `--early_stopping` | Activa early stopping | `False` |
-| `--use_crf` | Activa capa CRF para slots | `False` |
+| `--task` | dataset en `data/` | requerido |
+| `--model_out` | nombre del checkpoint dentro de `model_out/` | requerido |
+| `--model_type` | `beto`, `deberta`, `roberta`, `bert`, `tiny` o un identificador de Hugging Face | `beto` |
+| `--schema` | ruta a `schema.json` | `data/<task>/schema.json` |
+| `--use_crf` | CRF sobre los slots | off |
+| `--early_stopping` | guarda el mejor checkpoint por pérdida en dev; los guardados periódicos van a `model_out/<nombre>/last` | off |
 
-## Estructura del proyecto
+El checkpoint es autocontenido: `config.json`, `model.safetensors`, `schema.json`, `jointbert.json`,
+tokenizer y `training_args.json`. `--do_eval` escribe `eval_results.json` con accuracy y macro-F1 por
+cabeza, P/R/F1 de slots y exactitud de frame semántico.
 
-```text
-bc_pibot_jointbert/
-├─ data/
-├─ model_in/                 # Definición de JointBERT
-├─ model_out/                # Checkpoints y modelos entrenados
-├─ util/
-│  ├─ split_data.py
-│  ├─ upload_to_hf.py
-│  └─ upload_to_hf_improved.py
-├─ data_loader.py
-├─ main.py                   # Entrenamiento/evaluación
-├─ predict_cli.py            # Inference CLI
-├─ process_raw_data.py       # Procesamiento de Excel
-├─ trainer.py
-├─ utils.py
-├─ requirements.txt
-└─ README.md
-```
-
-## Publicar en Hugging Face
-
-### 1. Login en Hugging Face
+Prueba de humo (encoder de 4M parámetros, dos épocas en menos de un minuto):
 
 ```bash
-hf auth login
+.venv/bin/python main.py --task pibimacecv3 --model_type tiny --model_out smoke --do_train --do_eval \
+  --num_train_epochs 2 --learning_rate 1e-3 --early_stopping --logging_steps 0
 ```
 
-### 2. Preparar + subir modelo a HF
+## Inferencia
 
 ```bash
-python util/prepare_model_package.py --model_dir model_out/{NOMBRE_MODELO} --labels_dir data/{NOMBRE_DATASET} --clean --upload --repo_name {USER_HF}/{NOMBRE_MODELO_HF}
+.venv/bin/python predict_cli.py --model_dir model_out/pibert                         # interactivo
+.venv/bin/python predict_cli.py --model_dir model_out/pibert --text "pib de valparaiso 2023"
+.venv/bin/python predict_cli.py --model_dir model_out/pibert --input_file consultas.txt --output_file salida.jsonl
 ```
 
-- `--model_dir`: carpeta del checkpoint entrenado a publicar.
-- `--labels_dir`: carpeta con los archivos `*_label.txt` que usa el modelo.
-- `--clean`: limpia `model_package/` antes de copiar (evita mezclar archivos viejos).
-- `--upload`: sube automáticamente después de preparar el paquete.
-- `--repo_name`: repositorio destino en HF (`usuario-o-org/nombre-repo`).
+La salida trae etiqueta y confianza por cabeza, las etiquetas BIO por palabra y las entidades
+agrupadas. La conversión de entidades a tupla parcial y la llamada a `Catalog.resolve` es el
+siguiente paso pendiente.
 
-### 3. Utilizar modelo
+## Estructura
 
-Una vez subido, otros proyectos pueden usarlo así:
-
-```python
-from huggingface_hub import snapshot_download
-model_dir = snapshot_download("tu-usuario/pibot-jointbert")
 ```
-
-O directamente con `transformers`:
-
-```python
-from transformers import AutoTokenizer, AutoModel
-tokenizer = AutoTokenizer.from_pretrained("tu-usuario/pibot-jointbert", trust_remote_code=True)
+pibert/
+├─ catalog.py             # catálogo y resolvedor
+├─ schema.py              # esquema de cabezas y entidades
+├─ data_loader.py         # lectura y tensores
+├─ trainer.py             # entrenamiento y evaluación
+├─ main.py                # CLI de entrenamiento
+├─ predict_cli.py         # CLI de inferencia
+├─ utils.py               # métricas, tokenizer, dispositivo
+├─ model_in/              # JointBERT dirigido por esquema
+├─ util/                  # build_catalog, make_schema, process_raw_data, split_data, empaquetado HF
+├─ data/                  # datasets y catálogo
+├─ tests/
+└─ paper/                 # borrador LaTeX
 ```
-
-> Ver `model_package/README.md` para instrucciones completas de carga e inferencia.

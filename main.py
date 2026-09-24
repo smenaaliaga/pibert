@@ -1,84 +1,68 @@
-import os
 import argparse
+import json
+import os
 
-from trainer import Trainer
-from utils import init_logger, load_tokenizer, set_seed, MODEL_PATH_MAP
 from data_loader import load_and_cache_examples
+from schema import Schema
+from trainer import Trainer
+from utils import MODEL_PATH_MAP, init_logger, load_tokenizer, pick_device, resolve_model_name, set_seed
+
 
 def main(args):
     init_logger()
-    set_seed(args)
-    tokenizer = load_tokenizer(args)
+    set_seed(args.seed, pick_device(args.no_cuda))
+    schema = Schema.load(args.schema)
+    tokenizer = load_tokenizer(args.model_name_or_path)
 
-    train_dataset = load_and_cache_examples(args, tokenizer, mode="train")
-    dev_dataset = load_and_cache_examples(args, tokenizer, mode="dev")
-    test_dataset = load_and_cache_examples(args, tokenizer, mode="test")
-
-    trainer = Trainer(args, train_dataset, dev_dataset, test_dataset)
+    datasets = {m: load_and_cache_examples(args, tokenizer, schema, m) for m in ("train", "dev", "test")}
+    trainer = Trainer(args, schema, datasets["train"], datasets["dev"], datasets["test"])
 
     if args.do_train:
         trainer.train()
-        # Guarda el tokenizer junto al checkpoint
         tokenizer.save_pretrained(args.model_out)
 
     if args.do_eval:
         trainer.load_model()
-        trainer.evaluate("test")
+        results = trainer.evaluate("test")
+        with open(os.path.join(args.model_out, "eval_results.json"), "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=1)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("--task", required=True, help="Nombre del dataset en data/")
+    p.add_argument("--model_out", required=True, help="Nombre del modelo (se guarda en model_out/)")
+    p.add_argument("--data_dir", default="./data")
+    p.add_argument("--schema", default=None, help="schema.json (default: data/<task>/schema.json)")
+    p.add_argument("--model_type", default="beto",
+                   help="Atajo (" + ", ".join(MODEL_PATH_MAP) + ") o identificador de Hugging Face")
 
-    parser.add_argument("--task", default=None, required=True, type=str, help="The name of the task to train")
-    parser.add_argument("--model_out", default=None, required=True, type=str, help="Model name to save/load (will be saved in model_out/)")
-    parser.add_argument("--data_dir", default="./data", type=str, help="The input data dir")
-    # heads
-    parser.add_argument("--indicator_label_file", default="indicator_label.txt", type=str, help="Indicator Label file")
-    parser.add_argument("--calc_mode_label_file", default="calc_mode_label.txt", type=str, help="Calc Mode Label file")
-    parser.add_argument("--activity_label_file", default="activity_label.txt", type=str, help="Activity Label file")
-    parser.add_argument("--region_label_file", default="region_label.txt", type=str, help="Region Label file")
-    parser.add_argument("--investment_label_file", default="investment_label.txt", type=str, help="Investment Label file")
-    parser.add_argument("--req_form_label_file", default="req_form_label.txt", type=str, help="Req Form Label file")
-    parser.add_argument("--slot_label_file", default="slot_label.txt", type=str, help="Slot Label file")
+    p.add_argument("--seed", type=int, default=1234)
+    p.add_argument("--train_batch_size", type=int, default=32)
+    p.add_argument("--eval_batch_size", type=int, default=64)
+    p.add_argument("--max_seq_len", type=int, default=50)
+    p.add_argument("--learning_rate", type=float, default=5e-5)
+    p.add_argument("--num_train_epochs", type=float, default=10.0)
+    p.add_argument("--weight_decay", type=float, default=0.0)
+    p.add_argument("--gradient_accumulation_steps", type=int, default=1)
+    p.add_argument("--adam_epsilon", type=float, default=1e-8)
+    p.add_argument("--max_grad_norm", type=float, default=1.0)
+    p.add_argument("--max_steps", type=int, default=-1)
+    p.add_argument("--warmup_steps", type=int, default=0)
+    p.add_argument("--dropout_rate", type=float, default=0.1)
+    p.add_argument("--early_stopping", action="store_true")
+    p.add_argument("--early_stopping_patience", type=int, default=3)
+    p.add_argument("--logging_steps", type=int, default=200)
+    p.add_argument("--save_steps", type=int, default=200)
+    p.add_argument("--do_train", action="store_true")
+    p.add_argument("--do_eval", action="store_true")
+    p.add_argument("--no_cuda", action="store_true")
+    p.add_argument("--ignore_index", type=int, default=-100)
+    p.add_argument("--slot_loss_coef", type=float, default=1.0)
+    p.add_argument("--use_crf", action="store_true")
 
-    parser.add_argument("--model_type", default="bert", type=str, help="Model type selected in the list: " + ", ".join(MODEL_PATH_MAP.keys()))
-
-    parser.add_argument('--seed', type=int, default=1234, help="random seed for initialization")
-    parser.add_argument("--train_batch_size", default=32, type=int, help="Batch size for training.")
-    parser.add_argument("--eval_batch_size", default=64, type=int, help="Batch size for evaluation.")
-    parser.add_argument("--max_seq_len", default=50, type=int, help="The maximum total input sequence length after tokenization.")
-    parser.add_argument("--learning_rate", default=5e-5, type=float, help="The initial learning rate for Adam.")
-    parser.add_argument("--num_train_epochs", default=10.0, type=float, help="Total number of training epochs to perform.")
-    parser.add_argument("--weight_decay", default=0.0, type=float, help="Weight decay if we apply some.")
-    parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
-                        help="Number of updates steps to accumulate before performing a backward/update pass.")
-    parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
-    parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
-    parser.add_argument("--max_steps", default=-1, type=int, help="If > 0: set total number of training steps to perform. Override num_train_epochs.")
-    parser.add_argument("--warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps.")
-    parser.add_argument("--dropout_rate", default=0.1, type=float, help="Dropout for fully-connected layers")
-    parser.add_argument("--early_stopping", action="store_true", help="Enable early stopping based on dev loss")
-    parser.add_argument("--early_stopping_patience", default=3, type=int, help="Number of epochs without improvement before stopping")
-
-    parser.add_argument('--logging_steps', type=int, default=200, help="Log every X updates steps.")
-    parser.add_argument('--save_steps', type=int, default=200, help="Save checkpoint every X updates steps.")
-
-    parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
-    parser.add_argument("--do_eval", action="store_true", help="Whether to run eval on the test set.")
-    parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
-
-    parser.add_argument("--ignore_index", default=-100, type=int,
-                        help='Specifies a target value that is ignored and does not contribute to the input gradient (default: -100)')
-
-    parser.add_argument('--slot_loss_coef', type=float, default=1.0, help='Coefficient for the slot loss.')
-
-    # CRF option
-    parser.add_argument("--use_crf", action="store_true", help="Whether to use CRF")
-    parser.add_argument("--slot_pad_label", default="PAD", type=str, help="Pad token for slot label pad (to be ignore when calculate loss)")
-
-    args = parser.parse_args()
-
-    args.model_name_or_path = MODEL_PATH_MAP[args.model_type]
-    # Convertir model_out en ruta completa dentro de model_out/
+    args = p.parse_args()
+    args.model_name_or_path = resolve_model_name(args.model_type)
     args.model_out = os.path.join("model_out", args.model_out)
+    args.schema = args.schema or os.path.join(args.data_dir, args.task, "schema.json")
     main(args)
