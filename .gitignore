@@ -109,3 +109,4 @@ temp/
 !data/**/*_label.txt
 !data/**/slot_label.txt
 !data/**/schema.json
+!data/**/seq.out
