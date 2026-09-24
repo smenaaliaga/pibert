@@ -46,6 +46,7 @@ FRASES_REFERENCIA = ["referencia 2013", "referencia 2008", "base 2003", "compila
                      "de la referencia 2018", "base 1996"]
 PIB_RE = re.compile(r"\b(pib|producto interno bruto|pibr)\b", re.I)
 REVISAR: list[tuple[str, str]] = []   # filas a revisar a mano
+AUMENTADAS: set[str] = set()          # textos generados por aumento
 
 
 def norm(s: str) -> str:
@@ -94,6 +95,7 @@ def augment(rows: list[tuple[str, str, str]], frac: float, frases: list[str], et
         frase = rng.choice(frases)
         n = len(frase.split())
         out.append((f"{t} {frase}", l, o + " " + " ".join([f"B-{etype}"] + [f"I-{etype}"] * (n - 1))))
+    AUMENTADAS.update(r[0] for r in out)
     return out
 
 
@@ -112,6 +114,7 @@ def main():
     schema.save(dst.mkdir(parents=True, exist_ok=True) or dst)
     rng = random.Random(a.seed)
     report = ["# Migración v3 → v4", ""]
+    todas: list[tuple[str, str, str, str]] = []   # (split, texto, label, tags)
     for split in ("train", "dev", "test"):
         stats: Counter = Counter()
         rows = [r for r in (migrate_row(*row, stats) for row in read_split(src, split)) if r]
@@ -123,6 +126,7 @@ def main():
         d.mkdir(exist_ok=True)
         for name, idx in (("seq.in", 0), ("label", 1), ("seq.out", 2)):
             (d / name).write_text("\n".join(r[idx] for r in rows) + "\n", encoding="utf-8")
+        todas += [(split, *r) for r in rows]
         # validación estricta contra el esquema
         for r in rows:
             for h, v in zip(schema.head_names, r[1].split(",")):
@@ -140,6 +144,19 @@ def main():
     if REVISAR:
         report += [f"## Filas para revisar a mano: {len(REVISAR)}", ""]
         report += [f"- [{motivo}] {texto}" for motivo, texto in REVISAR] + [""]
+    # processed/: consolidado; raw/dataset.xlsx: fuente editable con una columna por cabeza
+    proc = dst / "processed"
+    proc.mkdir(exist_ok=True)
+    for name, idx in (("seq.in", 1), ("label", 2), ("seq.out", 3)):
+        (proc / name).write_text("\n".join(r[idx] for r in todas) + "\n", encoding="utf-8")
+    import pandas as pd
+    revisar = {t for _, t in REVISAR}
+    df = pd.DataFrame([{"Utterance": t, **dict(zip(schema.head_names, l.split(","))), "NER_BIO": o,
+                        "Split": sp, "Aumentada": int(t in AUMENTADAS), "Revisar": int(t in revisar)}
+                       for sp, t, l, o in todas])
+    (dst / "raw").mkdir(exist_ok=True)
+    df.to_excel(dst / "raw" / "dataset.xlsx", index=False)
+    report += [f"- processed/: {len(todas)} filas; raw/dataset.xlsx con columnas {list(df.columns)}", ""]
     (dst / "migracion_reporte.md").write_text("\n".join(report), encoding="utf-8")
     print("\n".join(l for l in report if not l.startswith("- [")))
 

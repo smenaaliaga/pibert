@@ -62,8 +62,18 @@ def process_file(dataset, input_file, sheet_name=None):
     
     df = process_excel_pandas(input_file, sheet_name=sheet_name)
     
+    # Esquema nuevo: si existe data/{dataset}/schema.json, las columnas de cabeza llevan el nombre de la cabeza
+    schema_path = base_path / 'schema.json'
+    schema_heads = None
+    if schema_path.exists():
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from schema import Schema
+        schema_heads = Schema.load(schema_path).head_names
+        print(f"Esquema {schema_path}: cabezas {schema_heads}")
+
     # Verificar que existen las columnas requeridas
-    required_columns = ['Utterance', 'CalcMode', 'ActivityCls', 'RegionCls', 'InvestmentCls', 'ReqForm', 'NER_BIO']
+    required_columns = ['Utterance', 'NER_BIO'] + (schema_heads or ['CalcMode', 'ActivityCls', 'RegionCls', 'InvestmentCls', 'ReqForm'])
     missing_columns = [col for col in required_columns if col not in df.columns]
     
     if missing_columns:
@@ -73,7 +83,7 @@ def process_file(dataset, input_file, sheet_name=None):
         raise ValueError(f"Columnas faltantes: {missing_columns}")
     
     # Nombres de las cabezas clasificadoras (en el orden que se guardarán en 'label')
-    head_names = ['CalcMode', 'ActivityCls', 'RegionCls', 'InvestmentCls', 'ReqForm']
+    head_names = schema_heads or ['CalcMode', 'ActivityCls', 'RegionCls', 'InvestmentCls', 'ReqForm']
     
     # Almacenar datos y vocabularios
     seq_in = []
@@ -135,6 +145,18 @@ def process_file(dataset, input_file, sheet_name=None):
         label_line = ",".join(head_values)
         labels.append(label_line)
     
+    # Columna Split opcional: además de processed/, escribe train/dev/test directamente
+    if 'Split' in df.columns:
+        splits = [str(v).strip() for v, t in zip(df['Split'], df['Utterance']) if pd.notna(t) and str(t).strip()]
+        for split in sorted(set(splits)):
+            d = base_path / split
+            d.mkdir(parents=True, exist_ok=True)
+            idx = [i for i, sp in enumerate(splits) if sp == split]
+            for name, data in (('seq.in', seq_in), ('label', labels), ('seq.out', seq_out)):
+                with open(d / name, 'w', encoding='utf-8') as f:
+                    f.write("".join(f"{data[i]}\n" for i in idx))
+            print(f"Salida: {d} ({len(idx)} filas)")
+
     # Escribir archivos procesados
     with open(processed_path / 'seq.in', 'w', encoding='utf-8') as f:
         for line in seq_in:
@@ -156,8 +178,12 @@ def process_file(dataset, input_file, sheet_name=None):
         'InvestmentCls': 'investment_label.txt',
         'ReqForm': 'req_form_label.txt',
     }
+    if schema_heads:
+        legacy_label_file_map = {h: f"{h}_label.txt" for h in schema_heads}
 
     for head_name, vocab in vocabularies.items():
+        if schema_heads:
+            break  # con schema.json los vocabularios viven en el esquema; no se escriben *_label.txt
         vocab_file = base_path / legacy_label_file_map[head_name]
         # Ordenar por frecuencia (orden de aparición en el vocabulario)
         sorted_labels = sorted(vocab.items(), key=lambda x: x[1])
@@ -174,7 +200,7 @@ def process_file(dataset, input_file, sheet_name=None):
         # Asegurar que "O" está en el vocabulario
         slot_vocabulary["O"] = len(slot_vocabulary)
     
-    slot_vocab_file = base_path / 'slot_label.txt'
+    slot_vocab_file = base_path / ('slot_label.txt' if not schema_heads else 'slot_label.txt.unused')
     # Ordenar etiquetas (O primero, luego el resto alfabéticamente)
     sorted_slot_labels = sorted(slot_vocabulary.items(), key=lambda x: (x[0] != "O", x[0]))
     with open(slot_vocab_file, 'w', encoding='utf-8') as f:
@@ -186,10 +212,11 @@ def process_file(dataset, input_file, sheet_name=None):
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from schema import Schema
-    heads = {legacy_label_file_map[h].replace("_label.txt", ""): sorted(vocabularies[h]) for h in head_names}
-    entities = sorted({t[2:] for t in slot_vocabulary if t != "O"})
-    Schema(heads=heads, entities=entities, version="legado").save(base_path)
-    print(f"Salida: {base_path / 'schema.json'}")
+    if not schema_heads:
+        heads = {legacy_label_file_map[h].replace("_label.txt", ""): sorted(vocabularies[h]) for h in head_names}
+        entities = sorted({t[2:] for t in slot_vocabulary if t != "O"})
+        Schema(heads=heads, entities=entities, version="legado").save(base_path)
+        print(f"Salida: {base_path / 'schema.json'}")
 
     # Resumen
     print(f"\nProcesadas {len(seq_in)} filas")

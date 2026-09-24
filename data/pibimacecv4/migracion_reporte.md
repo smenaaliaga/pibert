@@ -93,3 +93,5 @@
 - [region=specific sin span REGION (queda reg_cls=0)] Qué actividades impulsaron el pib, con ajuste estacional el 2020 anualmente
 - [region=specific sin span REGION (queda reg_cls=0)] Cuales actividades tuvieron mayor incidencia en el producto interno bruto descontando el ajuste estacional desde 2016 hasta 2017 anual
 - [region=specific sin span REGION (queda reg_cls=0)] Cuales actividades tuvieron mayor incidencia en el pib, ajuste estacional durante 2023 y 2025 frecuencia anual
+
+- processed/: 7618 filas; raw/dataset.xlsx con columnas ['Utterance', 'activ_cls', 'reg_cls', 'gast_cls', 'calculo', 'NER_BIO', 'Split', 'Aumentada', 'Revisar']
