@@ -1,184 +1,70 @@
-import os
-import random
+from __future__ import annotations
+
 import logging
+import random
 
-import torch
 import numpy as np
-from seqeval.metrics import precision_score, recall_score, f1_score
+import torch
+from seqeval.metrics import f1_score, precision_score, recall_score
+from sklearn.metrics import f1_score as sk_f1
+from transformers import AutoTokenizer
 
-from transformers import AutoConfig
-from transformers import AutoTokenizer  # usar tokenizer rápido para generar tokenizer.json
-from transformers import DebertaV2Tokenizer
-
-from model_in import JointBERT
-
-MODEL_CONFIG = (AutoConfig, JointBERT, AutoTokenizer)
+from schema import Schema
 
 MODEL_PATH_MAP = {
-    'bert': 'bert-base-uncased',
-    'beto': 'dccuchile/bert-base-spanish-wwm-cased',
-    'deberta': 'microsoft/mdeberta-v3-base',
-    'roberta': 'bertin-project/bertin-roberta-base-spanish',
+    "bert": "bert-base-uncased",
+    "beto": "dccuchile/bert-base-spanish-wwm-cased",
+    "deberta": "microsoft/mdeberta-v3-base",
+    "roberta": "bertin-project/bertin-roberta-base-spanish",
+    "tiny": "google/bert_uncased_L-2_H-128_A-2",   # sólo para pruebas de humo
 }
 
-def get_calc_mode_labels(args):
-    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.calc_mode_label_file), 'r', encoding='utf-8')]
 
-def get_activity_labels(args):
-    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.activity_label_file), 'r', encoding='utf-8')]
-
-def get_region_labels(args):
-    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.region_label_file), 'r', encoding='utf-8')]
-
-def get_investment_labels(args):
-    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.investment_label_file), 'r', encoding='utf-8')]
-
-def get_req_form_labels(args):
-    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.req_form_label_file), 'r', encoding='utf-8')]
-
-def get_slot_labels(args):
-    return [label.strip() for label in open(os.path.join(args.data_dir, args.task, args.slot_label_file), 'r', encoding='utf-8')]
+def resolve_model_name(model_type: str) -> str:
+    """Atajo de MODEL_PATH_MAP o un identificador/ruta de Hugging Face tal cual."""
+    return MODEL_PATH_MAP.get(model_type, model_type)
 
 
-def load_tokenizer(args):
-    model_name = str(args.model_name_or_path).lower()
-
-    if getattr(args, "model_type", "") == "deberta" or "mdeberta-v3" in model_name:
-        logging.info("Usando DebertaV2Tokenizer (slow) para %s", args.model_name_or_path)
-        return DebertaV2Tokenizer.from_pretrained(args.model_name_or_path)
-
-    try:
-        return AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
-    except (ValueError, ModuleNotFoundError) as exc:
-        err_msg = str(exc).lower()
-        if "tiktoken" in err_msg or "converting from tiktoken failed" in err_msg:
-            logging.warning(
-                "Fast tokenizer no disponible para %s (detalle: %s). "
-                "Usando tokenizer lento (use_fast=False).",
-                args.model_name_or_path,
-                exc,
-            )
-            return AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=False)
-        raise
+def load_tokenizer(name_or_path: str):
+    return AutoTokenizer.from_pretrained(name_or_path)
 
 
 def init_logger():
-    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-                        datefmt='%m/%d/%Y %H:%M:%S',
-                        level=logging.INFO)
+    logging.basicConfig(format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+                        datefmt="%m/%d/%Y %H:%M:%S", level=logging.INFO)
 
 
-def set_seed(args):
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    if not args.no_cuda and torch.cuda.is_available():
-        torch.cuda.manual_seed_all(args.seed)
-    elif not args.no_cuda and torch.backends.mps.is_available():
-        torch.mps.manual_seed(args.seed)
+def pick_device(no_cuda: bool = False) -> str:
+    if not no_cuda and torch.cuda.is_available():
+        return "cuda"
+    if not no_cuda and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
 
 
-def compute_metrics(calc_mode_preds, calc_mode_labels,
-                    activity_preds, activity_labels,
-                    region_preds, region_labels,
-                    investment_preds, investment_labels,
-                    req_form_preds, req_form_labels,
-                    slot_preds, slot_labels):
-    assert len(calc_mode_preds) == len(calc_mode_labels) \
-        == len(activity_preds) == len(activity_labels) == len(region_preds) == len(region_labels) \
-        == len(investment_preds) == len(investment_labels) \
-        == len(req_form_preds) == len(req_form_labels) == len(slot_preds) == len(slot_labels)
-        
+def set_seed(seed: int, device: str = "cpu"):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if device == "cuda":
+        torch.cuda.manual_seed_all(seed)
+    elif device == "mps":
+        torch.mps.manual_seed(seed)
 
-    results = {}
-    results.update(get_calc_mode_acc(calc_mode_preds, calc_mode_labels))
-    results.update(get_activity_acc(activity_preds, activity_labels))
-    results.update(get_region_acc(region_preds, region_labels))
-    results.update(get_investment_acc(investment_preds, investment_labels))
-    results.update(get_req_form_acc(req_form_preds, req_form_labels))
-    results.update(get_slot_metrics(slot_preds, slot_labels))
 
-    semantic_result = get_sentence_frame_acc(calc_mode_preds, calc_mode_labels,
-                                             activity_preds, activity_labels,
-                                             region_preds, region_labels,
-                                             investment_preds, investment_labels,
-                                             req_form_preds, req_form_labels,
-                                             slot_preds, slot_labels)
-    results.update(semantic_result)
-
+def compute_metrics(schema: Schema, head_preds: dict[str, np.ndarray], head_labels: dict[str, np.ndarray],
+                    slot_preds: list[list[str]], slot_labels: list[list[str]]) -> dict[str, float]:
+    """Accuracy y macro-F1 por cabeza, P/R/F1 de slots (seqeval) y exactitud de frame semántico."""
+    results: dict[str, float] = {}
+    frame_ok = np.ones(len(slot_labels), dtype=bool)
+    for name in schema.head_names:
+        p, l = head_preds[name], head_labels[name]
+        results[f"{name}_acc"] = float((p == l).mean())
+        results[f"{name}_f1"] = float(sk_f1(l, p, average="macro", zero_division=0))
+        frame_ok &= p == l
+    results["slot_precision"] = float(precision_score(slot_labels, slot_preds))
+    results["slot_recall"] = float(recall_score(slot_labels, slot_preds))
+    results["slot_f1"] = float(f1_score(slot_labels, slot_preds))
+    slot_ok = np.array([p == l for p, l in zip(slot_preds, slot_labels)])
+    results["semantic_frame_acc"] = float((frame_ok & slot_ok).mean())
     return results
-
-
-def get_slot_metrics(preds, labels):
-    assert len(preds) == len(labels)
-    return {
-        "slot_precision": precision_score(labels, preds),
-        "slot_recall": recall_score(labels, preds),
-        "slot_f1": f1_score(labels, preds)
-    }
-
-
-def get_calc_mode_acc(preds, labels):
-    acc = (preds == labels).mean()
-    return {
-        "calc_mode_acc": acc
-    }
-
-
-def get_activity_acc(preds, labels):
-    acc = (preds == labels).mean()
-    return {
-        "activity_acc": acc
-    }
-
-
-def get_region_acc(preds, labels):
-    acc = (preds == labels).mean()
-    return {
-        "region_acc": acc
-    }
-
-
-def get_investment_acc(preds, labels):
-    acc = (preds == labels).mean()
-    return {
-        "investment_acc": acc
-    }
-
-
-def get_req_form_acc(preds, labels):
-    acc = (preds == labels).mean()
-    return {
-        "req_form_acc": acc
-    }
-
-
-def read_prediction_text(args):
-    return [text.strip() for text in open(os.path.join(args.pred_dir, args.pred_input_file), 'r', encoding='utf-8')]
-
-
-def get_sentence_frame_acc(calc_mode_preds, calc_mode_labels,
-                           activity_preds, activity_labels,
-                           region_preds, region_labels,
-                           investment_preds, investment_labels,
-                           req_form_preds, req_form_labels,
-                           slot_preds, slot_labels):
-    """Semantic frame accuracy: todas las cabezas y todos los slots correctos en la oración."""
-    calc_mode_result = (calc_mode_preds == calc_mode_labels)
-    req_form_result = (req_form_preds == req_form_labels)
-    activity_result = (activity_preds == activity_labels)
-    region_result = (region_preds == region_labels)
-    investment_result = (investment_preds == investment_labels)
-
-    slot_result = []
-    for preds, labels in zip(slot_preds, slot_labels):
-        assert len(preds) == len(labels)
-        one_sent_result = all(p == l for p, l in zip(preds, labels))
-        slot_result.append(one_sent_result)
-    slot_result = np.array(slot_result)
-
-    semantic_acc = (calc_mode_result & activity_result & region_result & investment_result & req_form_result & slot_result).mean()
-    
-    return {
-        "semantic_frame_acc": semantic_acc
-    }

@@ -1,102 +1,27 @@
-# ====================================
-# Core Deep Learning & NLP
-# ====================================
-# PyTorch with CUDA 12.1 support (for NVIDIA GPUs)
-# For CPU-only: use torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1
-torch==2.5.1+cu121
-torchvision==0.20.1+cu121
-torchaudio==2.5.1+cu121
---extra-index-url https://download.pytorch.org/whl/cu121
-transformers==4.46.0
+# Versiones probadas (macOS arm64, CPU/MPS): torch 2.14, transformers 5.17.
+# GPU NVIDIA: instala torch primero desde https://pytorch.org/get-started/locally/ y luego este archivo.
+torch>=2.5
+transformers>=4.46,<6
+safetensors>=0.4
 pytorch-crf==0.7.2
-tokenizers==0.20.3
-tiktoken==0.12.0
-sentencepiece==0.2.1
-safetensors==0.7.0
+sentencepiece>=0.2
+tiktoken>=0.7
+protobuf>=4
 
-# ====================================
-# Data Processing & Scientific Computing
-# ====================================
-numpy==2.3.3
-pandas>=2.0.0
-scikit-learn==1.7.2
-scipy==1.16.3
-
-# ====================================
-# NLP & Text Processing
-# ====================================
+numpy>=1.26
+pandas>=2.0
+scikit-learn>=1.4
 seqeval==1.2.2
+tqdm>=4.66
+
+# normalización (paso 3) y catálogo
 dateparser>=1.1.0
 rapidfuzz>=3.0.0
-regex==2025.11.3
-
-# ====================================
-# File Handling (Excel support)
-# ====================================
 openpyxl>=3.0.0
+tabulate>=0.9
 
-# ====================================
-# Utilities & CLI
-# ====================================
-tqdm==4.67.1
-click==8.3.1
-colorama==0.4.6
-typer-slim==0.20.0
+# publicación
+huggingface-hub>=0.25
 
-# ====================================
-# Hugging Face Hub & Dependencies
-# ====================================
-huggingface-hub==0.36.0
-filelock==3.19.1
-fsspec==2025.9.0
-PyYAML==6.0.3
-packaging==25.0
-
-# ====================================
-# HTTP & Networking
-# ====================================
-requests==2.32.5
-urllib3==2.5.0
-httpx==0.28.1
-httpcore==1.0.9
-h11==0.16.0
-certifi==2025.11.12
-idna==3.11
-charset-normalizer==3.4.4
-anyio==4.12.0
-
-# ====================================
-# Template & Rendering
-# ====================================
-Jinja2==3.1.6
-MarkupSafe==2.1.5
-
-# ====================================
-# System & Threading
-# ====================================
-joblib==1.5.2
-threadpoolctl==3.6.0
-shellingham==1.5.4
-typing_extensions==4.15.0
-
-# ====================================
-# Math & Symbolic
-# ====================================
-sympy==1.13.1
-mpmath==1.3.0
-networkx==3.5
-
-# ====================================
-# Image Processing (PyTorch dependency)
-# ====================================
-pillow==11.3.0
-
-# ====================================
-# Build Tools
-# ====================================
-setuptools==70.2.0
-
-# ====================================
-# Xet (HuggingFace file handler)
-# ====================================
-hf-xet==1.2.0
+# desarrollo
+pytest>=8

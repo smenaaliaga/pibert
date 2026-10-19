@@ -1,0 +1,57 @@
+{
+ "version": "catalogo",
+ "heads": {
+  "activ_cls": [
+   "0",
+   "1"
+  ],
+  "reg_cls": [
+   "0",
+   "1"
+  ],
+  "gast_cls": [
+   "0",
+   "1"
+  ],
+  "calculo": [
+   "nivel",
+   "var_anual",
+   "var_periodo_anterior"
+  ]
+ },
+ "entities": [
+  "INDICADOR",
+  "FRECUENCIA",
+  "ESTACIONALIDAD",
+  "PRESENTACION",
+  "VALORACION",
+  "ACTIVIDAD",
+  "REGION",
+  "GASTO",
+  "PERIODO",
+  "REFERENCIA"
+ ],
+ "slot_labels": [
+  "O",
+  "B-INDICADOR",
+  "I-INDICADOR",
+  "B-FRECUENCIA",
+  "I-FRECUENCIA",
+  "B-ESTACIONALIDAD",
+  "I-ESTACIONALIDAD",
+  "B-PRESENTACION",
+  "I-PRESENTACION",
+  "B-VALORACION",
+  "I-VALORACION",
+  "B-ACTIVIDAD",
+  "I-ACTIVIDAD",
+  "B-REGION",
+  "I-REGION",
+  "B-GASTO",
+  "I-GASTO",
+  "B-PERIODO",
+  "I-PERIODO",
+  "B-REFERENCIA",
+  "I-REFERENCIA"
+ ]
+}

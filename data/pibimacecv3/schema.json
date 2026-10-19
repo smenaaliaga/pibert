@@ -1,0 +1,57 @@
+{
+ "version": "legado",
+ "heads": {
+  "calc_mode": [
+   "contribution",
+   "original",
+   "prev_period",
+   "yoy"
+  ],
+  "activity": [
+   "general",
+   "none",
+   "specific"
+  ],
+  "region": [
+   "general",
+   "none",
+   "specific"
+  ],
+  "investment": [
+   "general",
+   "none",
+   "specific"
+  ],
+  "req_form": [
+   "latest",
+   "point",
+   "range"
+  ]
+ },
+ "entities": [
+  "ACTIVITY",
+  "FREQUENCY",
+  "INDICATOR",
+  "INVESTMENT",
+  "PERIOD",
+  "REGION",
+  "SEASONALITY"
+ ],
+ "slot_labels": [
+  "O",
+  "B-ACTIVITY",
+  "I-ACTIVITY",
+  "B-FREQUENCY",
+  "I-FREQUENCY",
+  "B-INDICATOR",
+  "I-INDICATOR",
+  "B-INVESTMENT",
+  "I-INVESTMENT",
+  "B-PERIOD",
+  "I-PERIOD",
+  "B-REGION",
+  "I-REGION",
+  "B-SEASONALITY",
+  "I-SEASONALITY"
+ ]
+}

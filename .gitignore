@@ -87,3 +87,26 @@ Desktop.ini
 tmp/
 temp/
 *.tmp
+# LaTeX (archivos auxiliares de compilación)
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+# Catálogo de resolución y vocabularios de etiquetas: sí se versionan
+!data/catalogo/*.csv
+!data/catalogo/*.json
+!data/catalogo/*.md
+!data/**/*_label.txt
+!data/**/slot_label.txt
+!data/**/schema.json
+!data/**/seq.out
