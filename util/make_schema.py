@@ -2,7 +2,7 @@
 Genera data/<task>/schema.json.
 
     python util/make_schema.py --task pibimacecv3 --from-data          # esquema heredado (5 cabezas)
-    python util/make_schema.py --task pibimacecv4 --from-catalog       # esquema nuevo (3 binarias + calculo)
+    python util/make_schema.py --task pibimacecv5 --from-catalog       # esquema del paper (3 binarias, CALCULO entidad)
 """
 import argparse
 import sys

@@ -1,0 +1,90 @@
+# Migración pibimacecv4 → pibimacecv5
+
+- filas: 7618; por split: {'train': 5717, 'dev': 760, 'test': 1141}
+- esquema: cabezas ['activ_cls', 'reg_cls', 'gast_cls']; entidades ['INDICADOR', 'FRECUENCIA', 'ESTACIONALIDAD', 'PRESENTACION', 'VALORACION', 'ACTIVIDAD', 'REGION', 'GASTO', 'PERIODO', 'CALCULO']
+- spans por entidad: {'INDICADOR': 7618, 'CALCULO': 6075, 'PERIODO': 5092, 'ESTACIONALIDAD': 4568, 'FRECUENCIA': 3208, 'ACTIVIDAD': 2176, 'REGION': 1822, 'PRESENTACION': 1748, 'GASTO': 651, 'VALORACION': 417}
+- transformaciones: {'calculo var_anual -> nivel': 72, 'calculo var_periodo_anterior -> var_anual': 8, 'frecuencia_a_calculo': 351, 'referencia_a_O': 208, 'spans_calculo=0': 3774, 'spans_calculo=1': 1662, 'spans_calculo=2': 2133, 'spans_calculo=3': 49}
+- filas para revisar a mano: 153 (columna Revisar; Motivo para las nuevas)
+
+## Cálculo sin mención consistente: 80
+
+- [calculo=var_anual sin mención CALCULO] Cuál fue el movimiento de actividad económica de servicios de personas en la zona de región vi en el pib regional el 2do trim 2024
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por componentes del gasto del pib con desestacionalizado de 2018 a 2019 periodicidad anual
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por componentes del gasto del pib el 2021 periodicidad anual
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por componentes del gasto del pib sin estacionalidad aplicada la información más actual
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por componentes del gasto del producto interno bruto, serie ajustada el 2018 anualmente
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del pib el T1 2018
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del pib en su versión desestacionalizado durante el cuarto trimestre 2016
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del pib regional sin estacionalidad el T4 2021
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del pib regional, descontando el ajuste estacional de 2015 a 2019 anual
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del pib, quitando el ajuste estacional el 2024-T4
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del pibr, serie ajustada el 2026 anual
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del producto interno bruto con serie desestacionalizada del 3er trimestre y 3er trimestre 2017
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del producto interno bruto con serie desestacionalizada del 3er trimestre y 3er trimestre 2017 en términos nominales
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del producto interno bruto entre 4to trimestre 2015 y 1er trimestre 2023
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del producto interno bruto entre 4to trimestre 2015 y 1er trimestre 2023 en pesos corrientes
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por regiones del producto interno bruto, serie original el valor más reciente publicado
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del imacec desde febrero y agosto 2023
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del imacec durante abril 2020 a marzo 2024
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del imacec, con tratamiento estacional el dato más reciente
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del pib del 3er trimestre y 3er trimestre 2022
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del pib del 3er trimestre y 3er trimestre 2022 a precios encadenados
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del pib el 2023 frecuencia anual
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del pib el 2do trimestre 2023
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del pib en su versión ajustado estacionalmente el 2026 periodicidad anual
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del pib regional la última información disponible
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del pib, ajuste de estacionalidad el 2018-T4 frecuencia trimestral
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del pib, datos sin ajuste estacional entre 3er trimestre 2017 al 2do trimestre 2026
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del pib, libre de estacionalidad de 2020 a 2024 periodicidad anual
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del pibr, serie sin ajuste estacional el 2018 anualmente
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del producto interno bruto con desestacionalizado la información más actual
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del producto interno bruto el 2025-T2 trimestral
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del producto interno bruto el T2 2026
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del producto interno bruto en su versión desestacionalizado durante el 4to trimestre 2017 por trimestre
+- [calculo=var_anual sin mención CALCULO] Cuál fue el resultado por sectores del producto interno bruto, eliminando el componente estacional desde 2015 hasta 2016 anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura del gasto del pib de 2021 a 2025 anualmente
+- [calculo=var_anual sin mención CALCULO] Dame la apertura del gasto del pib sin estacionalidad el 2018 frecuencia anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura del gasto del producto interno bruto con ajustado por estacionalidad durante el primer trimestre 2026 periodicidad trimestral
+- [calculo=var_anual sin mención CALCULO] Dame la apertura del gasto del producto interno bruto en su versión ajustado estacionalmente el 2022 periodicidad anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura del gasto del producto interno bruto no ajustado por estacionalidad del 2do trimestre 2020 y 2do trimestre 2023
+- [calculo=var_anual sin mención CALCULO] Dame la apertura del gasto del producto interno bruto, serie ajustada la últimas cifras publicadas
+- [calculo=var_anual sin mención CALCULO] Dame la apertura del gasto del producto interno bruto, serie ajustada la últimas cifras publicadas compilación de referencia 2013
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro de la economía, con ajuste estacional desde octubre 2020 a enero 2021
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del imacec con ajustado estacionalmente junio de 2018 periodicidad mensual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del imacec de junio 2022 y diciembre 2026
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pib ajuste estacional entre 2023 y 2023 frecuencia anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pib ajuste estacional entre 2023 y 2023 frecuencia anual referencia 2008
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pib el 2026 frecuencia anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pib quitando el ajuste estacional entre 2023 y 2025 anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pib regional el 2022 frecuencia anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pib regional el 2022 frecuencia anual real
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pib regional el valor más reciente publicado
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pib regional el valor más reciente publicado a precios corrientes
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pib regional entre 3er trimestre y 3er trimestre 2023 frecuencia trimestral
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pib, desestacionalizado el T2 2026
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pibr el 1er trimestre 2022 periodicidad trimestral
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pibr eliminando el componente estacional el a lo largo del cuarto trimestre 2021
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pibr no ajustado por estacionalidad el 2do trim 2022
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del pibr no ajustado por estacionalidad el 2do trim 2022 real
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del producto interno bruto descontando el ajuste estacional entre 2do trimestre 2021 al 3er trimestre 2023
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del producto interno bruto el 2019 anualmente
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del producto interno bruto el a lo largo del cuarto trimestre 2022
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del producto interno bruto el cuarto trimestre 2019 trimestral
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del producto interno bruto serie desestacionalizada los datos más actualizados
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del producto interno bruto, ajustado estacionalmente desde 2015 hasta 2024 anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del producto interno bruto, libre de estacionalidad el segundo trimestre 2023
+- [calculo=var_anual sin mención CALCULO] Dame la apertura por rubro del producto interno bruto, serie sin ajuste estacional el 2026-T1
+- [calculo=var_anual sin mención CALCULO] Dame la apertura territorial del pib regional, serie sin ajuste estacional de 2018 a 2025 frecuencia anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura territorial del pib regional, sin correccion de estacionalidad el 2025 anualmente
+- [calculo=var_anual sin mención CALCULO] Dame la apertura territorial del pib regional, sin estacionalidad desde 2020 hasta 2022 anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura territorial del pibr, descontando el ajuste estacional el 1er trimestre 2020 trimestral
+- [calculo=var_anual sin mención CALCULO] Dame la apertura territorial del pibr, sin ajustar por estacionalidad el 2025 periodicidad anual
+- [calculo=var_anual sin mención CALCULO] Dame la apertura territorial del producto interno bruto ajuste estacional la últimas cifras publicadas
+- [calculo=var_periodo_anterior, los spans normalizan a var_anual] Cuál fue la variación mas reciente de 9a región en el pib regional
+- [calculo=var_periodo_anterior, los spans normalizan a var_anual] Cuál fue la variación mas reciente de actividad de hotelería y restaurantes en el producto interno bruto, serie original
+- [calculo=var_periodo_anterior, los spans normalizan a var_anual] Cuál fue la variación mas reciente de actividad económica de impuestos netos, particularmente en 14a región en el pib, no ajustado
+- [calculo=var_periodo_anterior, los spans normalizan a var_anual] Cuál fue la variación mas reciente de actividad servicios de administración pública en el producto interno bruto
+- [calculo=var_periodo_anterior, los spans normalizan a var_anual] Cuál fue la variación mas reciente de aysén del general carlos ibáñez del campo en el producto interno bruto, datos sin ajuste estacional
+- [calculo=var_periodo_anterior, los spans normalizan a var_anual] Cuál fue la variación mas reciente de existencia en el producto interno bruto, sin efecto estacional
+- [calculo=var_periodo_anterior, los spans normalizan a var_anual] Cuál fue la variación mas reciente de formación de capital en el pib, sin ajuste estacional
+- [calculo=var_periodo_anterior, los spans normalizan a var_anual] Cuál fue la variación mas reciente de sector bienes en la economía

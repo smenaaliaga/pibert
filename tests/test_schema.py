@@ -16,16 +16,17 @@ def test_legacy_schema_from_data():
 
 def test_catalog_schema():
     s = Schema.from_catalog()
-    assert s.head_names == ["activ_cls", "reg_cls", "gast_cls", "calculo"]
+    # paper, sección 4: tres cabezas binarias; PERIODO y CALCULO son entidades de la solicitud
+    assert s.heads == {"activ_cls": ["0", "1"], "reg_cls": ["0", "1"], "gast_cls": ["0", "1"]}
     assert s.entities == ["INDICADOR", "FRECUENCIA", "ESTACIONALIDAD", "PRESENTACION", "VALORACION",
-                          "ACTIVIDAD", "REGION", "GASTO", "PERIODO", "REFERENCIA"]
+                          "ACTIVIDAD", "REGION", "GASTO", "PERIODO", "CALCULO"]
     assert s.slot_index("B-GASTO") == 1 + 2 * s.entities.index("GASTO")
 
 
 def test_unknown_labels_raise():
     s = Schema.from_catalog()
     with pytest.raises(ValueError):
-        s.head_index("calculo", "yoy")
+        s.head_index("activ_cls", "general")
     with pytest.raises(ValueError):
         s.slot_index("B-INVESTMENT")
 

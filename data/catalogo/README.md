@@ -78,6 +78,12 @@ defaults blandos en orden: se imponen sólo si algún candidato las cumple. La t
 estacionalidad y presentación según indicador y cálculo (paper, sección 4.4) aún no está implementada;
 mientras tanto esos casos terminan en pregunta aclaratoria.
 
+`resolve_consulta(cabezas, **q)` recibe además las cabezas `activ_cls`/`reg_cls`/`gast_cls` y aplica
+el Cuadro 2 del paper: sin span ni cabeza, la fila agregada; con span, las categorías mencionadas;
+con cabeza, el cuadro completo (con las mencionadas en `destacadas`). Cada eje conserva su propia
+cardinalidad, y los cuadros que difieren sólo en `apertura` o `region_fija` (cortes alternativos
+del mismo dato) no piden aclaración.
+
 ## Convenciones
 
 - `total` en `actividad`/`region` es la fila agregada de un cuadro abierto por ese eje; vacío

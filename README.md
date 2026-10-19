@@ -21,10 +21,10 @@ texto ──► extractor (JointBERT: cabezas + NER) ──► normalización �
 | Componente | Estado |
 |---|---|
 | Catálogo de resolución (`util/build_catalog.py`, `data/catalogo/`) | listo, 4.490 series / 276 cuadros |
-| Resolvedor (`catalog.py`) | listo: filtrado, propagación, preferencias, pregunta aclaratoria |
+| Resolvedor (`catalog.py`) | listo: filtrado, propagación, preferencias, pregunta aclaratoria, cardinalidad por eje (Cuadro 2) |
 | Modelo dirigido por esquema (`schema.py`, `model_in/`) | listo |
-| Dataset con la definición nueva (3 cabezas binarias + cálculo, 10 entidades) | pendiente; `pibimacecv3` usa el esquema heredado |
-| Normalizadores (span → valor canónico) y `extract.py` | pendiente |
+| Dataset con la definición del paper (3 cabezas binarias, 10 entidades) | `pibimacecv5`; 153 filas marcadas `Revisar` en `raw/dataset.xlsx` |
+| Normalizadores (span → valor canónico) y `extract.py` | CALCULO y REFERENCIA en `normalizacion.py`; el resto pendiente |
 | Evaluación de punta a punta (exactitud de tupla y de serie) | pendiente |
 | Publicación en Hugging Face (`util/prepare_model_package.py`) | desactualizado respecto del nuevo formato de checkpoint |
 
@@ -61,12 +61,25 @@ Detalles del formato de los códigos de serie, las tres clases de dimensión y l
 
 ```bash
 .venv/bin/python util/make_schema.py --task pibimacecv3 --from-data      # esquema heredado del dataset
-.venv/bin/python util/make_schema.py --task pibimacecv4 --from-catalog   # esquema nuevo desde vocabularios.json
+.venv/bin/python util/make_schema.py --task pibimacecv5 --from-catalog   # esquema del paper desde vocabularios.json
 ```
 
-Esquema nuevo: cabezas `activ_cls`, `reg_cls`, `gast_cls` (binarias) y `calculo`
-(nivel, var_anual, var_periodo_anterior); entidades INDICADOR, FRECUENCIA, ESTACIONALIDAD,
-PRESENTACION, VALORACION, ACTIVIDAD, REGION, GASTO, PERIODO, REFERENCIA.
+Esquema del paper (sección 4): cabezas binarias `activ_cls`, `reg_cls`, `gast_cls`; entidades
+INDICADOR, FRECUENCIA, ESTACIONALIDAD, PRESENTACION, VALORACION, ACTIVIDAD, REGION, GASTO, PERIODO,
+CALCULO. Los spans de CALCULO se normalizan con `normalizacion.normalizar_calculo` (sin mención:
+`nivel`); la referencia se resuelve fuera del modelo con `normalizacion.detectar_referencia`.
+
+Las cabezas indican si la consulta invoca la clasificación completa de un eje; junto con los spans
+fijan la cardinalidad de la respuesta en `Catalog.resolve_consulta`:
+
+```python
+r = Catalog.load().resolve_consulta({"activ_cls": 1}, indicador="imacec", estacionalidad="original")
+r.modo         # "agregada" | "categorias" | "cuadro"
+r.destacadas   # categorías mencionadas cuando el eje se pide completo
+```
+
+`pibimacecv5` se genera desde `pibimacecv4` con `util/migrate_v4_to_v5.py` (pre-anotación de CALCULO
+por léxico; las filas cuyo cálculo esperado no coincide con sus spans quedan con `Revisar` y `Motivo`).
 
 ## Datos
 

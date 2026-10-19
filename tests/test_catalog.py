@@ -86,3 +86,65 @@ def test_lista_equivale_a_cualquiera(cat):
 def test_dimension_desconocida(cat):
     with pytest.raises(KeyError):
         cat.filter(periodo="2024")
+
+
+# ---- Cuadro 2: cardinalidad según span y cabeza sobre el eje de desagregación ------------------
+IMACEC = {"indicador": "imacec", "estacionalidad": "original"}
+PIB_T = {"frecuencia": "trimestral", "estacionalidad": "original"}
+
+
+def test_sin_span_ni_cabeza_fila_agregada(cat):
+    # la fila agregada figura en varios cuadros (cortes alternativos): una serie, varios pares
+    r = cat.resolve_consulta({}, indicador="pib", **PIB_T)
+    assert (r.estado, r.modo) == ("resuelto", "agregada")
+    assert r.series == ["F032.PIB.FLU.R.CLP.EP18.Z.Z.0.T"] and len(r.cuadros) > 1
+
+
+def test_span_sin_cabeza_categorias_mencionadas(cat):
+    r = cat.resolve_consulta({"activ_cls": 0}, actividad=["mineria", "comercio"], **IMACEC)
+    assert (r.estado, r.modo) == ("resuelto", "categorias")
+    assert r.candidatos.values("actividad") == {"mineria": 1, "comercio": 1}
+
+
+def test_cabeza_sin_span_cuadro_completo(cat):
+    # «cuánto crecieron las actividades del Imacec»
+    r = cat.resolve_consulta({"activ_cls": 1}, **IMACEC)
+    assert (r.estado, r.modo) == ("resuelto", "cuadro")
+    assert list(r.cuadros) == ["Q001"] and len(r.series) == sum(s["cuadro_id"] == "Q001" for s in cat)
+    assert r.destacadas == {}
+
+
+def test_span_y_cabeza_cuadro_completo_con_destacadas(cat):
+    r = cat.resolve_consulta({"activ_cls": 1}, actividad="mineria", **IMACEC)
+    assert list(r.cuadros) == ["Q001"] and len(r.series) == sum(s["cuadro_id"] == "Q001" for s in cat)
+    assert r.destacadas == {"actividad": ["mineria"]}
+
+
+def test_doble_desagregacion_region_actividad(cat):
+    # activación simultánea: los cuadros región x actividad, uno por región
+    r = cat.resolve_consulta({"activ_cls": 1, "reg_cls": 1}, **PIB_T)
+    assert r.estado == "resuelto" and len(r.cuadros) == 16
+    assert all(s["region_fija"] for s in r.candidatos) and r.candidatos.values("frecuencia") == {"trimestral": len(r.candidatos)}
+
+
+def test_cada_eje_conserva_su_cardinalidad(cat):
+    # «minería por región»: la región se expande (cabeza), la actividad queda en lo mencionado (span)
+    r = cat.resolve_consulta({"reg_cls": 1}, actividad="mineria", **PIB_T)
+    assert r.estado == "resuelto" and set(r.candidatos.values("actividad")) == {"mineria"}
+    assert len(r.series) == len(r.cuadros) > 1
+
+
+def test_region_mencionada_con_cabeza_de_actividad(cat):
+    # «sectores en Valparaíso»: la mención de región selecciona el cuadro por actividad de esa región
+    r = cat.resolve_consulta({"activ_cls": 1}, region="valparaiso", **PIB_T)
+    assert r.estado == "resuelto" and len(r.cuadros) == 1
+    assert r.candidatos.collapse()["region_fija"] == "valparaiso"
+
+
+def test_combinacion_inexistente(cat):
+    assert cat.resolve_consulta({"gast_cls": 1}, region="valparaiso").estado == "no_existe"
+
+
+def test_cuadro_sin_resolver_pide_aclarar(cat):
+    r = cat.resolve_consulta({"activ_cls": 1}, indicador="imacec")
+    assert r.estado == "aclarar" and r.aclarar[0] == "estacionalidad"

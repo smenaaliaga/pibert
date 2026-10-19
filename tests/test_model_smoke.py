@@ -31,7 +31,7 @@ def test_forward_save_load(tiny, tmp_path, use_crf):
     out = m(ids, mask, torch.zeros_like(ids), heads, slots)
     assert out.loss.ndim == 0 and torch.isfinite(out.loss)
     assert set(out.head_logits) == set(s.heads)
-    assert out.head_logits["calculo"].shape == (B, 3)
+    assert all(out.head_logits[h].shape == (B, 2) for h in s.heads)
     assert out.slot_logits.shape == (B, L, len(s.slot_labels))
     assert len(m.decode_slots(out.slot_logits, mask)[0]) == L
 
@@ -39,4 +39,4 @@ def test_forward_save_load(tiny, tmp_path, use_crf):
     m2 = JointBERT.load(tmp_path)
     assert m2.schema.to_dict() == s.to_dict()
     out2 = m2(ids, mask, torch.zeros_like(ids))
-    assert torch.allclose(out.head_logits["calculo"], out2.head_logits["calculo"], atol=1e-5)
+    assert torch.allclose(out.head_logits["activ_cls"], out2.head_logits["activ_cls"], atol=1e-5)

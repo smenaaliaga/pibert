@@ -5,6 +5,7 @@ completas de las series publicadas (data/catalogo/series.csv).
     from catalog import Catalog
     cat = Catalog.load()
     cat.resolve(indicador="imacec")                 # -> Resolucion(estado="resuelto" | "aclarar" | "no_existe")
+    cat.resolve_consulta({"activ_cls": 1}, indicador="imacec", estacionalidad="original")   # Cuadro 2 del paper
     cat.espacio_trabajo().filter(frecuencia="trimestral").collapse()
 
 Catorce dimensiones por serie, de tres clases:
@@ -34,6 +35,12 @@ DIMS = DIMS_LINGUISTICAS + DIMS_RARAS + DIMS_ESTRUCTURALES
 # Dimensiones de identidad de un cuadro (la tupla del paper); las de categoría identifican la serie.
 DIMS_CATEGORIA = ["actividad", "region", "gasto"]
 DIMS_CUADRO = [d for d in DIMS if d not in DIMS_CATEGORIA]
+
+# Eje de desagregación (paper, sección 4.2): dimensión de categoría -> cabeza clasificadora
+CABEZAS_EJE = {"actividad": "activ_cls", "region": "reg_cls", "gasto": "gast_cls"}
+# Dimensiones en que difieren los cortes alternativos de un mismo dato (o los cuadros de cada región)
+CORTES = {"apertura", "region_fija"}
+_AGREGADO = (None, "total")
 
 # Valores que existen en el catálogo pero no en el vocabulario del modelo (nadie los pregunta).
 VALORES_MARGINALES: dict[str, set[Any]] = {
@@ -74,6 +81,8 @@ class Resolucion:
     colapsadas: dict[str, Any] = field(default_factory=dict)   # dims fijadas por propagación
     supuestos: dict[str, Any] = field(default_factory=dict)    # dims fijadas por preferencia
     aclarar: tuple[str, Counter] | None = None                 # eje y opciones de la pregunta aclaratoria
+    modo: str | None = None                       # resolve_consulta: "agregada" | "categorias" | "cuadro"
+    destacadas: dict[str, list[str]] = field(default_factory=dict)  # categorías mencionadas en modo "cuadro"
 
     @property
     def cuadros(self) -> dict[str, str]:
@@ -81,7 +90,8 @@ class Resolucion:
 
     @property
     def series(self) -> list[str]:
-        return [s["serie_id"] for s in self.candidatos]
+        """Series distintas; una misma serie puede figurar en más de un cuadro (pares cuadro-serie)."""
+        return list(dict.fromkeys(s["serie_id"] for s in self.candidatos))
 
 
 class Catalog:
@@ -157,15 +167,69 @@ class Catalog:
         return best
 
     # ---- resolución ----------------------------------------------------------
+    def _base(self, q: dict[str, Any]) -> "Catalog":
+        """Si q nombra una referencia se abre el universo histórico; si no, se trabaja sobre vigentes."""
+        return self.sin_marginales() if q.get("referencia") not in (None, 2018) else self.espacio_trabajo()
+
     def resolve(self, **q: Any) -> Resolucion:
         """
         Filtra la tupla parcial q, propaga restricciones y aplica preferencias sobre lo que queda
         indeterminado. Resuelve cuando queda un solo cuadro; si no, señala el eje a aclarar.
-        Si q nombra una referencia se abre el universo histórico; si no, se trabaja sobre vigentes.
         """
         q = {k: v for k, v in q.items() if v is not None}
-        base = self.sin_marginales() if q.get("referencia") not in (None, 2018) else self.espacio_trabajo()
-        cands = base.filter(**q)
+        return self._resolver(self._base(q).filter(**q), q)
+
+    def resolve_consulta(self, cabezas: dict[str, Any] | None = None, **q: Any) -> Resolucion:
+        """
+        Resolución de la salida del extractor con el eje de desagregación (paper, sección 4.2).
+        Un eje (actividad, región, gasto) está activo si hay un span de ese tipo o su cabeza vale 1,
+        y la combinación fija la cardinalidad de la respuesta (Cuadro 2):
+
+            span  cabeza
+             -      0     fila agregada del cuadro                              modo "agregada"
+             sí     0     las categorías mencionadas                            modo "categorias"
+             -      1     el cuadro en su totalidad                             modo "cuadro"
+             sí     1     el cuadro en su totalidad, con las mencionadas        modo "cuadro" + destacadas
+
+        `cabezas` trae activ_cls/reg_cls/gast_cls; q, las dimensiones normalizadas, donde
+        actividad/region/gasto admiten una lista de categorías. Los cortes alternativos de un
+        mismo dato (cuadros que difieren sólo en apertura o región fija) no piden aclaración.
+        """
+        cabezas = cabezas or {}
+        activa = {e: int(cabezas.get(h, 0)) == 1 for e, h in CABEZAS_EJE.items()}
+        q = {k: v for k, v in q.items() if v is not None}
+        menciones = {e: [q.pop(e)] if isinstance(q[e], str) else list(q.pop(e)) for e in CABEZAS_EJE if e in q}
+        ejes = set(menciones) | {e for e, a in activa.items() if a}
+
+        def abre(s: dict[str, Any], e: str) -> bool:
+            if e == "region":   # con actividad, los cuadros de cada región; sin ella, el cuadro por región
+                return s["region_fija"] is not None if "actividad" in ejes else s["apertura"] == "region"
+            return s["apertura"] == e
+
+        def ok(s: dict[str, Any]) -> bool:
+            for e in CABEZAS_EJE:
+                if activa[e]:
+                    if not abre(s, e):
+                        return False
+                elif e in menciones:
+                    if s[e] not in menciones[e]:
+                        return False
+                elif s[e] not in _AGREGADO:
+                    return False
+            return True
+
+        base = self._base(q)
+        r = self._resolver(Catalog([s for s in base.filter(**q) if ok(s)]), {**q, **menciones}, cortes=CORTES)
+        r.modo = "cuadro" if any(activa.values()) else "categorias" if ejes else "agregada"
+        if r.modo == "cuadro":
+            r.destacadas = {e: m for e, m in menciones.items() if activa[e]}
+            if r.estado == "resuelto":   # se expande el eje de cada cabeza; los demás conservan su mención
+                ids = set(r.cuadros)
+                r.candidatos = Catalog([s for s in base.filter(**q, **r.supuestos) if s["cuadro_id"] in ids and
+                                        all(s[e] in m for e, m in menciones.items() if not activa[e])])
+        return r
+
+    def _resolver(self, cands: "Catalog", q: dict[str, Any], cortes: Iterable[str] = ()) -> Resolucion:
         if not len(cands):
             return Resolucion("no_existe", q, cands)
 
@@ -179,6 +243,7 @@ class Catalog:
                 cands = nxt
 
         colapsadas = {d: v for d, v in cands.collapse().items() if d not in q and d not in supuestos}
-        if len(cands.cuadros()) == 1:
+        dims = [d for d in DIMS_CUADRO if d not in set(cortes)]
+        if len(cands.cuadros()) == 1 or (cortes and cands.widest_dim(dims) is None):
             return Resolucion("resuelto", q, cands, colapsadas, supuestos)
-        return Resolucion("aclarar", q, cands, colapsadas, supuestos, aclarar=cands.widest_dim())
+        return Resolucion("aclarar", q, cands, colapsadas, supuestos, aclarar=cands.widest_dim(dims))

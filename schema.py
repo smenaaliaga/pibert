@@ -5,7 +5,7 @@ El esquema es la única fuente de verdad para model_in/, data_loader.py, trainer
 predict_cli.py: agregar o quitar una cabeza es cambiar el esquema, no el código.
 
 Dos orígenes:
-  - Schema.from_catalog(vocabularios.json)      la definición nueva (3 cabezas binarias + calculo,
+  - Schema.from_catalog(vocabularios.json)      la definición del paper (3 cabezas binarias,
                                                  10 tipos de entidad)
   - Schema.from_split_files(data/<task>, heads)  la definición heredada de un dataset ya etiquetado
 
@@ -18,14 +18,15 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Iterable
 
-# Definición nueva (paper, sección 4): cabezas y tipos de entidad
+# Definición del paper (secciones 4.1-4.2): tres cabezas binarias sobre el eje de desagregación;
+# las ocho dimensiones de identidad y las dos de la solicitud (PERIODO, CALCULO) son entidades.
+# La referencia se resuelve fuera del modelo (normalizacion.detectar_referencia).
 CABEZAS_CATALOGO: dict[str, list[str]] = {
     "activ_cls": ["0", "1"],
     "reg_cls": ["0", "1"],
     "gast_cls": ["0", "1"],
-    "calculo": ["nivel", "var_anual", "var_periodo_anterior"],
 }
-ENTIDADES_SOLICITUD = ["PERIODO", "REFERENCIA"]
+ENTIDADES_SOLICITUD = ["PERIODO", "CALCULO"]
 
 # Cabezas del dataset heredado (pibimacecv3), en el orden de la columna `label`
 CABEZAS_LEGADO = ["calc_mode", "activity", "region", "investment", "req_form"]
