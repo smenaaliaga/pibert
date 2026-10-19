@@ -6,6 +6,7 @@ Cualquier etiqueta o tag BIO fuera del esquema es un error: nunca se mapea en si
 """
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 from dataclasses import dataclass
@@ -102,8 +103,13 @@ def convert_examples_to_features(examples: list[InputExample], max_seq_len: int,
 
 def load_and_cache_examples(args, tokenizer, schema: Schema, mode: str) -> TensorDataset:
     model_tag = [p for p in str(args.model_name_or_path).split("/") if p][-1]
+    # el contenido de los datos entra en la clave: editar el Excel y reprocesar invalida el caché
+    h = hashlib.sha1()
+    for name in ("seq.in", "label", "seq.out"):
+        with open(os.path.join(args.data_dir, args.task, mode, name), "rb") as f:
+            h.update(f.read())
     cached = os.path.join(args.data_dir, args.task,
-                          f"cached_{mode}_{model_tag}_{args.max_seq_len}_{schema.fingerprint()}")
+                          f"cached_{mode}_{model_tag}_{args.max_seq_len}_{schema.fingerprint()}_{h.hexdigest()[:10]}")
     if os.path.exists(cached):
         logger.info("Loading features from cached file %s", cached)
         features = torch.load(cached, weights_only=False)

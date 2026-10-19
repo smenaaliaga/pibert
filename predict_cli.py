@@ -29,10 +29,11 @@ class Predictor:
         self.schema = self.model.schema
         self.args = json.loads((Path(model_dir) / "training_args.json").read_text(encoding="utf-8"))
         self.max_seq_len = int(self.args.get("max_seq_len", 50))
-        # el tokenizer se guarda junto al checkpoint; el hub sólo como respaldo
-        try:
+        # el tokenizer se guarda junto al checkpoint al terminar el entrenamiento; el hub sólo como respaldo.
+        # Sin tokenizer_config.json, from_pretrained(model_dir) no falla: arma un tokenizer sin vocabulario.
+        if (Path(model_dir) / "tokenizer_config.json").exists():
             self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
-        except Exception:
+        else:
             logger.warning("Tokenizer no encontrado en %s; se carga %s", model_dir, self.args["model_name_or_path"])
             self.tokenizer = AutoTokenizer.from_pretrained(self.args["model_name_or_path"])
         logger.info("Model loaded from %s (%s)", model_dir, self.device)
