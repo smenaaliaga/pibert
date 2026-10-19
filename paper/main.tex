@@ -9,6 +9,7 @@
 \usepackage{url}            % simple URL typesetting
 \usepackage{booktabs}       % professional-quality tables
 \usepackage{amsfonts}       % blackboard math symbols
+\usepackage{amsmath}
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
 \usepackage{xcolor}         % colors
@@ -40,22 +41,22 @@ aplicación al Banco Central de Chile}
     El acceso a estadísticas económicas publicadas por bancos centrales requiere
     típicamente que el usuario conozca el catálogo de datos disponible, lo que
     representa una barrera para economistas y público general. En este trabajo se
-    propone un sistema de comprensión de consultas en lenguaje natural que detecta
-    de forma conjunta entidades e intenciones para identificar automáticamente la o
-    las series estadísticas solicitadas y el modo en que deben ser entregados sus valores,
-    aplicado a las series de la Base de Datos Estadísticos del Banco Central de Chile.
-    Las entidades y clasificaciones detectadas son normalizadas y mapeadas mediante
-    un catálogo estructurado hacia las series correspondientes. 
-    \begin{comment}    
-    El sistema es evaluado sobre
-    consultas del PIB e IMACEC comparando tres enfoques: TF-IDF con SVM, mDeBERTa
-    ajustado al dominio y FLAN-T5 como referencia generativa. Los resultados
-    muestran que el enfoque propuesto alcanza una precisión de [X] en identificación
-    de series y [X] en clasificación de intención, con potencial de extensión a
-    otros indicadores y catálogos estadísticos institucionales.   
-
-    == SE PODRÍA CAMBIAR CON LA COMPARACIÓN DE UN MODELO LLM CON MCP ==
-    \end{comment}
+    propone PIBERT, un sistema de comprensión de consultas en lenguaje natural que
+    detecta de forma conjunta entidades y clasificaciones para identificar
+    automáticamente la o las series estadísticas solicitadas y el modo en que deben
+    ser entregados sus valores, aplicado a las series del Producto Interno Bruto (PIB)
+    y del Imacec de la Base de Datos Estadísticos del Banco Central de Chile. Un
+    extractor de tipo JointBERT reconoce diez tipos de entidad y tres cabezas
+    binarias que indican si la consulta invoca una clasificación completa; las
+    menciones se normalizan y la tupla resultante se resuelve de forma simbólica
+    contra un catálogo derivado automáticamente de los códigos oficiales de serie,
+    mediante filtrado, propagación de restricciones y valores por defecto. Sobre
+    1.141 consultas de prueba, el extractor alcanza un F1 de 0,999 en el
+    reconocimiento de entidades y una exactitud de entre 0,960 y 1,000 en las
+    cabezas clasificadoras; por su parte, 88 de los 91 cuadros vigentes del catálogo
+    se recuperan de forma única a partir de sus dimensiones enunciables, y los tres
+    restantes corresponden a cortes alternativos de un mismo dato o a una
+    inconsistencia de la metadata de origen.
 \end{abstract}
 
 \section{Introducción}
@@ -79,61 +80,103 @@ de Valparaíso el último trimestre?''} contiene múltiples dimensiones de infor
 requerido--- que deben ser identificadas y normalizadas de forma conjunta para
 recuperar correctamente la serie solicitada.
 
-\begin{comment}  
-
-== MODIFICAR PARA QUE EL OBJETIVO SEA INCLUIR LA COMPARACIÓN DE MODELOS ==
-
 En este trabajo se propone un sistema de comprensión de consultas en lenguaje
 natural orientado a dos objetivos simultáneos: detectar \textit{qué serie
 estadística} está siendo solicitada y determinar \textit{de qué forma} se requieren
-sus datos. El sistema se basa en una arquitectura JointBERT multitarea que realiza
-extracción de entidades y clasificación de intención de forma conjunta,
-complementada con reglas de normalización y un diccionario estructurado para el
-mapeo final hacia el catálogo del Banco Central de Chile (BCCh). El enfoque es
-evaluado sobre series del Producto Interno Bruto (PIB) y el Índice Mensual de
-Actividad Económica (IMACEC).
+sus datos. El sistema separa ambas funciones en dos componentes de naturaleza
+distinta. Un extractor neuronal multitarea de tipo JointBERT~\citep{chen2019bert}
+reconoce las menciones de cada dimensión y decide, mediante cabezas
+clasificadoras, si la consulta invoca una clasificación en su conjunto. Un
+resolvedor simbólico filtra la tupla parcial resultante contra un catálogo
+estructurado y completa las dimensiones no enunciadas por propagación de
+restricciones y valores por defecto institucionales. El enfoque se aplica a las
+series del Producto Interno Bruto (PIB) y del Indicador Mensual de Actividad
+Económica (Imacec) del Banco Central de Chile (BCCh).
 
 Las principales contribuciones de este trabajo son las siguientes:
 
 \begin{itemize}
-    \item Se formula el problema de recuperación de series estadísticas
-    institucionales como una tarea conjunta de \textit{slot filling} y clasificación
-    de intención sobre consultas en lenguaje natural.
+    \item Se formula la recuperación de series estadísticas institucionales como
+    la construcción de una tupla parcial sobre las dimensiones del catálogo, que
+    se resuelve por filtrado contra las combinaciones efectivamente publicadas.
 
     \item Se propone una arquitectura multitarea basada en JointBERT adaptada al
-    dominio de estadísticas macroeconómicas, con entidades específicas al contexto
-    del BCCh.
+    dominio de cuentas nacionales, con diez tipos de entidad y tres cabezas
+    binarias cuya combinación con las menciones fija la cardinalidad de la
+    respuesta: una serie, un conjunto de categorías o un cuadro completo.
 
-    \item Se construye un conjunto de datos anotado de consultas en lenguaje natural
-    sobre series del PIB e IMACEC, junto con un esquema de normalización y mapeo
-    hacia el catálogo oficial.
+    \item Se muestra que el catálogo de resolución puede derivarse sin
+    construcción manual a partir de los códigos estructurados de serie, lo que
+    hace el procedimiento transferible a otras oficinas estadísticas.
 
-    \item Se evalúa el sistema y se muestra que el enfoque híbrido neural-simbólico
-    es efectivo para este tipo de recuperación en dominios acotados.
+    \item Se construye un conjunto de 7.618 consultas anotadas sobre series del
+    PIB y el Imacec, y se evalúan el extractor y la capacidad del catálogo para
+    identificar de forma única los cuadros publicados.
 \end{itemize}
 
-\end{comment}
+El resto del documento se organiza como sigue. La Sección~\ref{sec:estado-del-arte}
+revisa los antecedentes. La Sección~\ref{sec:taxonomia_bde} describe la
+organización de la Base de Datos Estadísticos y delimita el universo considerado.
+La Sección~\ref{sec:pibert} presenta la arquitectura de PIBERT. La
+Sección~\ref{sec:evaluacion} describe los datos y los resultados, la
+Sección~\ref{sec:discusion} discute las limitaciones y la
+Sección~\ref{sec:conclusiones} concluye.
 
 \section{Revisión del estado del arte}
 \label{sec:estado-del-arte}
 
-Investigadores del Banco Central Europeo (ECB) desarrollaron una interfaz de chatbot
-utilizando técnicas de LLM y RAG. El procesamiento se basa en varios pasos
-secuenciales. El primero, un procesamiento de la consulta que consiste en
-estandarizarla usando un modelo LLM con un \textit{system prompt} preparado para
-ello, con la finalidad de optimizarla para el \textit{data retrieval}. Luego, se
-realiza una partición de la consulta en diferentes partes de la información. El
-siguiente paso consiste en el \textit{data retrieval} para obtener las series
-relevantes, usando \textit{embeddings} para almacenar las series y recuperarlas
-mediante FAISS. Los investigadores solo incluyeron las 1.000 series más demandadas.
-Las series obtenidas son evaluadas por un agente que juzga la relevancia y calidad
-de la respuesta generada en contraste con la pregunta original; si es satisfactorio
-el sistema procede a construir la respuesta específica, en caso contrario, se
-realiza una segunda búsqueda que representa un subconjunto de aproximadamente
-300.000 series. Si sigue insatisfactorio se concluye que no se puede responder a la
+La comprensión de consultas en sistemas de diálogo orientados a tareas se ha
+abordado tradicionalmente como la combinación de dos subproblemas: la detección de
+intención, que asigna una etiqueta a la consulta completa, y el \textit{slot
+filling}, que etiqueta cada palabra con el atributo que expresa. El corpus
+ATIS~\citep{hemphill1990atis} fijó el formato de referencia de esta tarea, con
+etiquetas BIO~\citep{ramshaw1995text} a nivel de palabra y una intención por
+consulta. Los modelos conjuntos, que comparten la representación entre ambas
+tareas, superan a los que las resuelven por separado: primero con redes
+recurrentes con atención~\citep{liu2016attention} y mecanismos de compuerta entre
+intención y slots~\citep{goo2018slot}, y luego con codificadores Transformer
+preentrenados. JointBERT~\citep{chen2019bert} ajusta BERT~\citep{devlin2019bert}
+con una cabeza de clasificación sobre el token \texttt{[CLS]} y una cabeza de
+etiquetado por token, opcionalmente seguida de un CRF~\citep{lafferty2001conditional},
+y entrena ambas con la suma de sus pérdidas. Para el español se dispone de
+BETO~\citep{canete2020spanish}, un modelo BERT preentrenado sobre un corpus en
+español, que se usa como codificador en este trabajo.
+
+Una segunda línea de trabajo se ocupa de reconocer las consultas que el sistema no
+debe responder. La detección de consultas fuera de dominio
+(\textit{out-of-scope})~\citep{larson2019evaluation} y la de preguntas sin
+respuesta (\textit{answerability})~\citep{rajpurkar2018know} modelan el rechazo
+como una incapacidad del sistema: el dato no está, el esquema no lo soporta o la
+intención no fue entrenada. La Sección~\ref{sec:delimitacion} argumenta que en el
+contexto de un banco central el rechazo responde, además, a un mandato
+institucional.
+
+En el ámbito específico de los bancos centrales, investigadores del Banco Central
+Europeo (ECB) desarrollaron una interfaz de chatbot utilizando técnicas de LLM y
+RAG. El procesamiento se basa en varios pasos secuenciales. El primero, un
+procesamiento de la consulta que consiste en estandarizarla usando un modelo LLM
+con un \textit{system prompt} preparado para ello, con la finalidad de optimizarla
+para el \textit{data retrieval}. Luego, se realiza una partición de la consulta en
+diferentes partes de la información. El siguiente paso consiste en el
+\textit{data retrieval} para obtener las series relevantes, usando
+\textit{embeddings} para almacenar las series y recuperarlas mediante FAISS. Los
+investigadores solo incluyeron las 1.000 series más demandadas. Las series
+obtenidas son evaluadas por un agente que juzga la relevancia y calidad de la
+respuesta generada en contraste con la pregunta original; si es satisfactorio el
+sistema procede a construir la respuesta específica, en caso contrario, se realiza
+una segunda búsqueda que representa un subconjunto de aproximadamente 300.000
+series. Si sigue insatisfactorio se concluye que no se puede responder a la
 pregunta. Posteriormente, se obtiene la metadata de las series obtenidas y pasa por
 el agente de generación de SQL para obtener los datos relevantes. Finalmente, un
 agente redacta la respuesta al usuario.\footnote{\url{https://www.bis.org/ifc/publ/ifcb67_36.pdf}}
+
+El enfoque aquí propuesto difiere del anterior en dos aspectos. Primero, la
+recuperación no se basa en similitud semántica entre la consulta y la descripción
+de la serie, sino en la identificación explícita de cada dimensión y en el
+filtrado contra las combinaciones publicadas, de modo que la respuesta es
+verificable y los supuestos aplicados pueden explicitarse al usuario. Segundo, el
+componente neuronal se limita a la extracción, y la resolución, que codifica las
+convenciones del compilador, es simbólica y auditable.
 
 \section{La taxonomía de la BDE}
 \label{sec:taxonomia_bde}
@@ -158,12 +201,18 @@ disperso de las posibles: en el Imacec, por ejemplo, la contribución año/año 
 publica sobre series originales y la contribución mes/mes sobre series
 desestacionalizadas, sin que existan las combinaciones restantes.
 
-El universo considerado comprende 280 cuadros y 4.497 series, de las cuales 1.503
-corresponden a publicaciones vigentes y el resto a compilaciones de referencia y
-bases metodológicas ya superadas. Se excluyeron los cuadros de deflactor del PIB,
-agregados macroeconómicos, formación bruta de capital fijo, PIB e ingreso, y
-versiones sucesivas de publicación. El Cuadro~\ref{tab:delimitacion} presenta la
-composición del universo dentro del capítulo de Cuentas Nacionales.
+El universo considerado comprende 276 cuadros y 4.490 pares cuadro--serie, que
+corresponden a 4.298 códigos de serie distintos, dado que una misma serie puede
+figurar en más de un cuadro.\footnote{Exportación de la BDE de agosto de 2026. La
+exportación registra 279 nombres de cuadro; tres pares de nombres difieren sólo en
+espacios o puntuación y se consolidan en un mismo cuadro.} De ellos, 91 cuadros y
+1.510 pares corresponden a publicaciones vigentes, y el resto a compilaciones de
+referencia y bases metodológicas ya superadas. Se excluyeron las restantes familias
+del capítulo de Cuentas Nacionales: cuentas financieras y operaciones no
+financieras por sector institucional, gasto regionalizado, stock de capital e
+inversión, producto e ingreso nacional, deflactores, ratios sectoriales, bases de
+datos de revisiones e Imacec sectorial. El Cuadro~\ref{tab:delimitacion} presenta
+la composición del universo dentro del capítulo.
 
 \begin{table}[htbp]
 \centering
@@ -172,41 +221,30 @@ composición del universo dentro del capítulo de Cuentas Nacionales.
 \small
 \begin{tabular}{l rrr rrr}
 \toprule
-& \multicolumn{3}{c}{Cuadros} & \multicolumn{3}{c}{Series} \\
+& \multicolumn{3}{c}{Cuadros} & \multicolumn{3}{c}{Pares cuadro--serie} \\
 \cmidrule(lr){2-4}\cmidrule(lr){5-7}
 Familia & Vig. & Hist. & Total & Vig. & Hist. & Total \\
 \midrule
 \multicolumn{7}{l}{\textbf{Incluidos}} \\
 \addlinespace[2pt]
-\quad PIB regional por actividad económica  &  65 &  99 & 164 &  884 & 1.326 & 2.210 \\
-\quad Gasto del PIB                         &  10 &  35 &  45 &  238 &   664 &   902 \\
+\quad PIB regional por actividad económica  &  64 &  99 & 163 &  884 & 1.326 & 2.210 \\
+\quad Gasto del PIB                         &   8 &  34 &  42 &  226 &   669 &   895 \\
 \quad PIB por actividad económica           &   9 &  27 &  36 &  264 &   756 & 1.020 \\
 \quad Imacec                                &   4 &  13 &  17 &   38 &    59 &    97 \\
-\quad PIB por región                        &   5 &   9 &  14 &   76 &   160 &   236 \\
+\quad PIB por región                        &   5 &   9 &  14 &   95 &   160 &   255 \\
 \quad PIB agregado                          &   1 &   3 &   4 &    3 &    10 &    13 \\
 \addlinespace[2pt]
-\quad \emph{Subtotal} & \textbf{94} & \textbf{186} & \textbf{280} & \textbf{1.503} & \textbf{2.975} & \textbf{4.478} \\
+\quad \emph{Subtotal} & \textbf{91} & \textbf{185} & \textbf{276} & \textbf{1.510} & \textbf{2.980} & \textbf{4.490} \\
 \addlinespace[5pt]
-\multicolumn{7}{l}{\textbf{Excluidos}} \\
-\addlinespace[2pt]
-\quad Cuentas financieras por sector institucional & 50 &  80 & 130 & 1.417 & 2.215 & 3.632 \\
-\quad Gasto regionalizado                          & 104 &  0 & 104 &   651 &     0 &   651 \\
-\quad Stock de capital e inversión                 &  19 & 15 &  34 &   250 &   445 &   695 \\
-\quad Operaciones no financieras por sector        &  11 & 23 &  34 &    89 &   219 &   308 \\
-\quad Producto e ingreso nacional                  &   5 & 25 &  30 &    39 &   191 &   230 \\
-\quad Deflactores                                  &   6 & 20 &  26 &   160 &   511 &   671 \\
-\quad Ratios sectoriales                           &   5 & 10 &  15 &    31 &    53 &    84 \\
-\quad Bases de datos de revisiones                 &  11 &  0 &  11 &   858 &     0 &   858 \\
-\quad Imacec sectorial                             &   2 &  4 &   6 &    56 &   120 &   176 \\
-\addlinespace[2pt]
-\quad \emph{Subtotal} & \textbf{213} & \textbf{177} & \textbf{390} & \textbf{3.551} & \textbf{3.754} & \textbf{7.305} \\
+\quad Excluidos (otras familias)           & 215 & 176 & 391 & 3.846 & 3.832 & 7.678 \\
 \midrule
-Total capítulo Cuentas Nacionales & 307 & 363 & 670 & 5.054 & 6.729 & 11.783 \\
+Total capítulo Cuentas Nacionales & 306 & 361 & 667 & 5.356 & 6.812 & 12.168 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Delimitación del ámbito de la consulta}
+\label{sec:delimitacion}
 
 El primer objetivo es identificar si una pregunta pertenece al ámbito económico, si
 se relaciona con los indicadores del PIB o el IMACEC publicados por el Banco Central
@@ -224,7 +262,10 @@ rechazo obedece a un mandato institucional y no a una limitación de capacidad.
 Las tres condiciones se desagregan en: ¿es del ámbito económico?, ¿se relaciona con
 el PIB o el IMACEC?, y ¿se responde directamente a partir de lo publicado, sin
 análisis? En consecuencia, se propone un clasificador de tres cabezas binarias que
-etiqueten la pregunta según cada una de estas condiciones.
+etiqueten la pregunta según cada una de estas condiciones. Este clasificador se
+presenta como diseño y queda fuera de la evaluación de este trabajo, que supone
+consultas pertenecientes al ámbito del PIB y el Imacec
+(Sección~\ref{sec:discusion}).
 
 \section{Arquitectura del PIBERT}
 \label{sec:pibert}
@@ -245,9 +286,9 @@ Nombradas (NER) mediante un modelo de tipo JointBERT. La selección de las cabez
 clasificadoras y los tipos de entidad que participan en la identificación
 conllevó la iteración, basada en prueba y error, de diferentes arquitecturas
 capaces de generalizar y abarcar la mayor cantidad de casos posibles. La
-arquitectura final se compone de ocho dimensiones enunciables en la consulta,
-tres cabezas clasificadoras binarias, un catálogo estructurado de resolución y un
-conjunto de valores por defecto.
+arquitectura final se compone de ocho dimensiones enunciables en la consulta, dos
+dimensiones de la solicitud, tres cabezas clasificadoras binarias, un catálogo
+estructurado de resolución y un conjunto de valores por defecto.
 
 \subsection{Tipos de entidad y normalización}
 \label{sec:entidades}
@@ -276,19 +317,21 @@ GASTO           demanda_interna, consumo_total, fbcf, ...          (35)
 Dimensiones de la solicitud (no identifican la serie)
 PERIODO         fechas y expresiones temporales relativas
 CALCULO         nivel, var_periodo_anterior, var_anual
+                [la ausencia de mencion se resuelve a nivel]
 \end{verbatim}
 
 \medskip
 
 \noindent Las seis dimensiones restantes de la tupla no dan lugar a mención en
 el uso corriente y se resuelven fuera del modelo: la compilación de referencia
-(2018, 2013, 2008, \dots) sólo se enuncia excepcionalmente y toma por defecto la
-vigente; la vigencia de publicación, el empalme y la condición de información
-histórica se fijan por valores por defecto (Sección~\ref{sec:defaults}); y la
-apertura del cuadro y la región fija se derivan del propio catálogo. Los valores
-marginales del catálogo ---tasas, series de tendencia-ciclo y la fila
-extrarregional--- se conservan en la tabla de resolución pero se excluyen del
-vocabulario del modelo.
+(2018, 2013, 2008, \dots) sólo se enuncia excepcionalmente, se detecta mediante
+una regla sobre el texto (\emph{base 2013}, \emph{referencia 2008}) y toma por
+defecto la vigente; la vigencia de publicación, el empalme y la condición de
+información histórica se fijan por valores por defecto
+(Sección~\ref{sec:defaults}); y la apertura del cuadro y la región fija se derivan
+del propio catálogo. Los valores marginales del catálogo ---tasas, series de
+tendencia-ciclo y la fila extrarregional--- se conservan en la tabla de resolución
+pero se excluyen del vocabulario del modelo.
 
 Los vocabularios de ACTIVIDAD, REGION y GASTO no se exponen al modelo como
 clases: el extractor etiqueta un span genérico del tipo correspondiente y la
@@ -307,8 +350,52 @@ función es de muchos a uno y no reversible: las formas «sin estacionalidad»,
 pérdida de información deliberada que otorga al sistema invarianza frente al
 registro en que se formula la consulta.
 
-%%%% REVISAR !!!! %%%%
-Tres de los vocabularios son condicionales. El de ACTIVIDAD depende del cuadro, dado que el Imacec emplea una clasificación agregada por actividad económica  mientras que los cuadros de PIB emplean desagregaciones considerablemente más finas. El de PRECIO depende de la compilación de referencia, puesto que la valoración real se expresa en volumen encadenado desde la referencia 2008 y en precios constantes de año base en las compilaciones anteriores. El de REGION también depende de la referencia, en tanto la división político-administrativa vigente varía entre compilaciones.
+La normalización de CALCULO ilustra cómo se combinan varias menciones de un
+mismo tipo. Cada mención se asigna a una de tres clases: variación respecto del
+período anterior («aceleró», «en el margen», «respecto al trimestre anterior»),
+variación respecto de igual período del año anterior («a doce meses»,
+«interanual», «respecto al mismo período del año anterior») o variación sin
+calificar («creció», «variación», «cambio»). La consulta se normaliza a
+\texttt{var\_periodo\_anterior} si alguna mención pertenece a la primera clase, a
+\texttt{var\_anual} si alguna pertenece a las otras dos, y a \texttt{nivel} en
+ausencia de mención; la variación sin calificar se lee como anual por ser la
+lectura convencional en el uso institucional. Las expresiones del tipo
+«contribución al crecimiento» o «aporte al desempeño» no constituyen mención de
+cálculo, sino de presentación. El Apéndice~\ref{app:lexico} detalla el léxico.
+
+Tres de los vocabularios son condicionales. El de ACTIVIDAD depende del cuadro,
+dado que el Imacec emplea una clasificación agregada por actividad económica, de
+nueve categorías y el total en las publicaciones vigentes, mientras que los cuadros de PIB
+emplean desagregaciones considerablemente más finas. El de VALORACION depende de
+la compilación de referencia, puesto que la valoración real se expresa en volumen
+encadenado desde la referencia 2008 y en precios constantes de año base en las
+compilaciones anteriores. El de REGION también depende de la referencia, en tanto
+la división político-administrativa varía entre compilaciones: las bases 1986 a
+2003 publican trece regiones, las referencias 2008 y 2013 incorporan las regiones
+de Arica y Parinacota y de Los Ríos, y la referencia 2018 incorpora la Región de
+Ñuble.
+
+\subsection{Extractor}
+\label{sec:extractor}
+
+El extractor es un modelo JointBERT~\citep{chen2019bert} sobre el codificador
+BETO~\citep{canete2020spanish}. Sea $\mathbf{h}_0$ la representación del token
+\texttt{[CLS]} y $\mathbf{h}_t$ la del primer subtoken de la palabra $t$. Cada
+cabeza clasificadora $k \in \{\texttt{activ\_cls}, \texttt{reg\_cls},
+\texttt{gast\_cls}\}$ es una capa lineal con \textit{dropout} sobre
+$\mathbf{h}_0$, y el etiquetado de entidades es una capa lineal sobre cada
+$\mathbf{h}_t$ con 21 etiquetas BIO (la etiqueta \texttt{O} más el inicio y la
+continuación de cada uno de los diez tipos de entidad). Los subtokens que no
+inician palabra se excluyen de la pérdida. El modelo se entrena con la suma de las
+entropías cruzadas
+\[
+  \mathcal{L} \;=\; \sum_{k} \mathcal{L}_{k} \;+\; \lambda\, \mathcal{L}_{\mathrm{slot}},
+\]
+con $\lambda = 1$. La implementación admite un CRF sobre el etiquetado, que no se
+emplea en los resultados reportados. El esquema del modelo ---cabezas, etiquetas y
+tipos de entidad--- se declara en un archivo que acompaña a los datos y al
+modelo entrenado, de modo que modificar la arquitectura de extracción no requiere
+cambios de código.
 
 \subsection{Cabezas clasificadoras}
 \label{sec:cabezas}
@@ -319,7 +406,7 @@ Esta complementariedad se manifiesta con particular claridad en el eje de desagr
 
 Las cabezas se denotan \texttt{activ\_cls}, \texttt{reg\_cls} y \texttt{gast\_cls}, con valores en $\{0,1\}$, e indican si la consulta invoca la clasificación correspondiente en su conjunto. Las tres admiten activación simultánea, lo que permite representar los cuadros de doble desagregación por región y actividad, que constituyen la mayoría del catálogo considerado.
 
-El eje de desagregación queda determinado por la unión de ambas señales ---la presencia de un span de ese tipo o la activación de la cabeza correspondiente---, mientras que su combinación fija la cardinalidad de la respuesta, según muestra el Cuadro~\ref{tab:cardinalidad}.
+El eje de desagregación queda determinado por la unión de ambas señales ---la presencia de un span de ese tipo o la activación de la cabeza correspondiente---, mientras que su combinación fija la cardinalidad de la respuesta, según muestra el Cuadro~\ref{tab:cardinalidad}. La regla se aplica a cada eje por separado: en «la minería por región», la cabeza regional expande la respuesta a todas las regiones, mientras que la mención de la actividad la restringe a la minería, de modo que se obtiene la serie minera de cada región y no los cuadros regionales completos.
 
 \begin{table}[htbp]
 \centering
@@ -351,8 +438,11 @@ que el conjunto candidato queda definido por
   \forall i,\; q_i = \bot \;\lor\; q_i = c_i \,\}.
 \]
 
-La resolución concluye cuando $|\mathcal{C}(q)| = 1$. Si $|\mathcal{C}(q)| > 1$,
-la dimensión de mayor cardinalidad en el conjunto residual señala el eje sobre el
+La resolución concluye cuando $|\mathcal{C}(q)| = 1$, o cuando los cuadros
+candidatos difieren únicamente en la apertura o en la región fija, es decir,
+cuando constituyen cortes alternativos de un mismo dato o los cuadros regionales
+que la consulta solicita en conjunto. Si persiste una ambigüedad sustantiva, la
+dimensión de mayor cardinalidad en el conjunto residual señala el eje sobre el
 cual formular una pregunta aclaratoria. Si $\mathcal{C}(q) = \emptyset$, la
 combinación solicitada no existe en el catálogo, lo que constituye evidencia de
 un error de extracción o de una consulta ajena al universo publicado.
@@ -364,7 +454,6 @@ cuadros. Cabe observar que la proyección no es completamente inyectiva: un par
 de cuadros comparte tupla ---el PIB trimestral y el PIB anual por región de la
 referencia 2018--- por una inconsistencia de frecuencia en la metadata de
 origen, que codifica ambos como trimestrales.
-% TODO: cuadrar 276 con el Cuadro 1 (280).
 
 \subsection{Resolución de dimensiones no enunciadas}
 \label{sec:defaults}
@@ -394,25 +483,22 @@ Las \emph{constantes} actúan como filtro previo a toda inferencia lingüística
 el sistema trabaja sobre las publicaciones vigentes de la compilación de
 referencia actual, y sólo abre el universo histórico cuando la consulta nombra
 una compilación distinta. Este filtro reduce el espacio de resolución de 276 a
-91 cuadros.\footnote{Cifras de la exportación de la BDE de agosto de 2026; en la
-publicación vigente todos los cuadros corresponden a la referencia 2018 y
-ninguno a información histórica, de modo que la vigencia basta por sí sola para
-la reducción.}
-% TODO: cuadrar con el Cuadro 1 (280 / 94).
+91 cuadros.\footnote{En la publicación vigente todos los cuadros corresponden a
+la referencia 2018 y ninguno a información histórica, de modo que la vigencia
+basta por sí sola para la reducción.}
 
 Las \emph{preferencias} son defaults blandos: se imponen únicamente cuando el
 conjunto candidato contiene el valor preferido y no restringen en caso
 contrario, de modo que nunca lo vacían. Su naturaleza responde a que la
 convención no es uniforme en el catálogo. El empalme es el caso más claro: de
-los 91 cuadros vigentes sólo 20 publican series empalmadas, y las
-contribuciones y participaciones no lo hacen, por lo que imponerlo como
-constante anularía la mayoría de las resoluciones; como preferencia, en cambio,
-actúa sólo como desempate entre cuadros por lo demás equivalentes. Lo mismo
-ocurre con la valoración, donde un mismo cuadro puede ofrecer la serie a
-precios corrientes y en volumen encadenado, y la lectura convencional es la
-segunda. Las preferencias se aplican en un orden fijo y cada una que se impone
-queda registrada como supuesto, que se explicita en la respuesta entregada al
-usuario.
+los 91 cuadros vigentes sólo 16 publican series empalmadas, y las contribuciones
+no lo hacen, por lo que imponerlo como constante anularía la mayoría de las
+resoluciones; como preferencia, en cambio, actúa sólo como desempate entre
+cuadros por lo demás equivalentes. Lo mismo ocurre con la valoración, donde un
+mismo cuadro puede ofrecer la serie a precios corrientes y en volumen encadenado,
+y la lectura convencional es la segunda. Las preferencias se aplican en un orden
+fijo y cada una que se impone queda registrada como supuesto, que se explicita en
+la respuesta entregada al usuario.
 
 La \emph{tabla condicionada}, por último, recoge convenciones de lectura cuyo
 valor depende de otras dimensiones de la consulta: el tratamiento estacional se
@@ -448,61 +534,255 @@ mensual, compilación de referencia vigente y variación respecto de igual perí
 del año anterior, por tratarse de la lectura convencional de la pregunta en el
 uso institucional.
 
-\subsection{Catálogo de reglas de identificación}
+\subsection{Ejemplos de resolución}
+\label{sec:ejemplos}
 
-Se define un catálogo que describe los cuadros y series como una tupla de los
-valores posibles de las cabezas clasificadoras y las entidades normalizadas, desde
-los casos más explícitos y evidentes hasta los casos implícitos que requieren un
-conocimiento más especializado de interpretación.
+El Cuadro~\ref{tab:ejemplos} recorre cuatro consultas desde la salida del
+extractor hasta la respuesta. Las menciones y las cabezas son las predichas por
+el modelo entrenado (Sección~\ref{sec:evaluacion}); los valores canónicos
+corresponden a la normalización de esas menciones, y la resolución es la que
+entrega el catálogo con los mecanismos descritos.
 
-\begin{verbatim}
-# Identificación del indicador
-CONJ_IMACEC: (INDIC=[] y FREQ=([] o ["m"])) o
-             (INDIC=["imacec"] y FREQ=(["m"] o ["t"] o ["a"]))
-CONJ_PIB:    (INDIC=([] o ["pib"]) y FREQ=(["t"] o ["a"]))
+\begin{table}[htbp]
+\centering
+\caption{Resolución de cuatro consultas: salida del extractor y respuesta del catálogo}
+\label{tab:ejemplos}
+\small
+\begin{tabular}{p{0.27\linewidth} p{0.32\linewidth} p{0.33\linewidth}}
+\toprule
+Consulta & Extractor (menciones y cabezas) & Resolución \\
+\midrule
+«cuánto creció el comercio en la región de Valparaíso el último trimestre»
+& CALCULO «creció» $\to$ \texttt{var\_anual}; ACTIVIDAD «comercio»; REGION «Valparaíso»; PERIODO «último trimestre»; cabezas 0, 0, 0
+& Categorías: serie de comercio del cuadro de PIB por actividad de Valparaíso; la estacionalidad original y el PIB se obtienen por propagación; nivel y volumen encadenado por preferencia \\
+\addlinespace[3pt]
+«cuánto crecieron las actividades del Imacec desestacionalizado el mes pasado»
+& CALCULO «crecieron» $\to$ \texttt{var\_anual}; INDICADOR «Imacec»; ESTACIONALIDAD «desestacionalizado»; PERIODO «mes pasado»; \texttt{activ\_cls} $=1$
+& Cuadro completo: Imacec desestacionalizado, diez series; la frecuencia mensual se obtiene por propagación \\
+\addlinespace[3pt]
+«cuál fue el pib anual de la minería por región en 2024»
+& INDICADOR «pib»; FRECUENCIA «anual»; ACTIVIDAD «minería»; PERIODO «en 2024»; \texttt{reg\_cls} $=1$
+& Cuadro completo sobre la región y categoría sobre la actividad: la serie anual de minería de cada uno de los 16 cuadros regionales \\
+\addlinespace[3pt]
+«cuál fue el consumo de los hogares desestacionalizado el último trimestre»
+& GASTO «consumo de los hogares»; ESTACIONALIDAD «desestacionalizado»; PERIODO «último trimestre»; cabezas 0, 0, 0
+& Categorías: una serie del cuadro de gasto desestacionalizado; la frecuencia trimestral se obtiene por propagación \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-# Identificación de la estacionalidad
-CONJ_EST:  (EST=[] y CALC=([] o ["pct"])) o
-           (EST=["est"] y CALC=([] o ["pct"] o ["ypct"]))
-CONJ_DEST: (EST=[] y CALC=([] o ["pct"])) o
-           (EST=["dest"] y CALC=([] o ["pct"] o ["ypct"]))
-\end{verbatim}
+En la primera consulta el catálogo devuelve la serie de comercio en sus dos
+frecuencias publicadas, trimestral y anual, dado que la frecuencia sólo se
+desprende de la expresión temporal «último trimestre», cuya normalización no
+forma parte de esta versión (Sección~\ref{sec:discusion}). En la tercera, la
+combinación de una cabeza activa sobre la región y una mención sobre la
+actividad ilustra que cada eje conserva su propia cardinalidad.
 
-\noindent El tipo de cálculo informa directamente sobre el tipo de estacionalidad
-solicitada. Un cuadro se identifica con la combinación de las entidades y
-clasificadores INDIC, FREQ, DESC, EST, PREC, activ\_cls, reg\_cls, gast\_cls e
-hist\_cls. A continuación se presentan cuatro ejemplos de reglas:
+\section{Datos y evaluación}
+\label{sec:evaluacion}
 
-\begin{verbatim}
-Imacec, volumen a precios del año anterior encadenado,
-series empalmadas (promedio 2018=100)
-  NER:     CONJ_IMACEC y CONJ_EST y DESC=[] y PREC=([] o ["enc"])
-  Clasif.: activ_cls=1 ; reg_cls=0 ; gast_cls=0
+\subsection{Conjunto de datos}
 
-Imacec, contribución porcentual respecto de igual periodo
-del año anterior, referencia 2018
-  NER:     CONJ_IMACEC y DESC=["contr"] y ESTAC=([] o ["est"])
-           y PREC=([] o ["enc"])
-  Clasif.: activ_cls=1 ; reg_cls=0 ; gast_cls=0
+El conjunto de datos reúne 7.618 consultas en español sobre el PIB y el Imacec,
+de 17,8 palabras en promedio, anotadas con las tres cabezas binarias y con
+etiquetas BIO a nivel de palabra para los diez tipos de entidad. Las consultas
+combinan formulaciones de pregunta con variantes léxicas de cada dimensión
+---sinónimos del indicador, expresiones del tratamiento estacional, designaciones
+alternativas de regiones y actividades, y expresiones temporales absolutas y
+relativas---. Un subconjunto de 625 consultas se amplió con menciones de
+valoración y de compilación de referencia, ausentes en la versión original del
+conjunto. Las menciones de CALCULO se pre-anotaron con el léxico del
+Apéndice~\ref{app:lexico} sobre los tokens no etiquetados, y la anotación se
+contrastó con una etiqueta de intención de cálculo disponible para cada consulta:
+las 153 consultas en que ambas no coinciden, o que presentaban inconsistencias
+previas, quedan marcadas para revisión manual y se conservan en el conjunto. El
+Cuadro~\ref{tab:datos} resume la composición.
 
-Producto interno bruto, referencia 2018
-  NER:     CONJ_PIB y DESC=[] y ESTAC=([] o ["est"] o ["dest"])
-           y PREC=([] o ["enc"] o ["corr"])
-  Clasif.: activ_cls=0 ; reg_cls=0 ; gast_cls=0
+\begin{table}[htbp]
+\centering
+\caption{Composición del conjunto de datos: consultas, cabezas activas y menciones por tipo de entidad}
+\label{tab:datos}
+\small
+\begin{tabular}{l rrr r}
+\toprule
+& Entren. & Desarr. & Prueba & Total \\
+\midrule
+Consultas & 5.717 & 760 & 1.141 & 7.618 \\
+\addlinespace[2pt]
+\texttt{activ\_cls} $=1$ & 1.669 & 208 & 326 & 2.203 \\
+\texttt{reg\_cls} $=1$ & 1.417 & 176 & 316 & 1.909 \\
+\texttt{gast\_cls} $=1$ & 483 & 54 & 89 & 626 \\
+\addlinespace[2pt]
+INDICADOR & 5.717 & 760 & 1.141 & 7.618 \\
+FRECUENCIA & 2.397 & 326 & 485 & 3.208 \\
+ESTACIONALIDAD & 3.412 & 470 & 686 & 4.568 \\
+PRESENTACION & 1.294 & 193 & 261 & 1.748 \\
+VALORACION & 314 & 41 & 62 & 417 \\
+ACTIVIDAD & 1.613 & 231 & 332 & 2.176 \\
+REGION & 1.361 & 194 & 267 & 1.822 \\
+GASTO & 477 & 76 & 98 & 651 \\
+PERIODO & 3.843 & 492 & 757 & 5.092 \\
+CALCULO & 4.631 & 546 & 898 & 6.075 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-Participación por clase de actividad económica,
-series empalmadas, referencia 2018
-  NER:     CONJ_PIB y DESC=["part"] y ESTAC=([] o ["est"])
-           y PREC=([] o ["enc"] o ["corr"])
-  Clasif.: activ_cls=0 ; reg_cls=0 ; gast_cls=0
-\end{verbatim}
+\subsection{Protocolo}
 
-\begin{ack}
-Use unnumbered first level headings for the acknowledgments. All acknowledgments
-go at the end of the paper before the list of references. Moreover, you are required
-to declare funding (financial activities supporting the submitted work) and
-competing interests (related financial activities outside the submitted work).
-\end{ack}
+El conjunto se divide en entrenamiento (5.717 consultas), desarrollo (760) y
+prueba (1.141). El modelo se ajusta durante un máximo de diez épocas con
+AdamW, tasa de aprendizaje $2\times10^{-5}$ con 300 pasos de calentamiento,
+lotes de 16 consultas, longitud máxima de 64 subtokens, \textit{weight decay} de
+0,01 y \textit{dropout} de 0,2, conservando el modelo de menor pérdida en
+desarrollo con una paciencia de dos épocas. Se reporta, sobre el conjunto de
+prueba, la exactitud y el F1 macro de cada cabeza; la precisión, exhaustividad y
+F1 a nivel de entidad~\citep{nakayama2018seqeval}, donde una entidad cuenta como
+correcta sólo si coinciden su tipo y sus límites; la exactitud de la
+normalización de CALCULO; la exactitud de la celda del Cuadro~\ref{tab:cardinalidad}
+por eje; y la exactitud de marco semántico, que exige acertar todas las cabezas y
+todas las etiquetas de la consulta.
+
+\subsection{Resultados del extractor}
+
+El Cuadro~\ref{tab:resultados} resume el desempeño del extractor sobre las
+1.141 consultas de prueba. El entrenamiento se detuvo en la octava época y se
+conservó el modelo de la sexta.
+
+\begin{table}[htbp]
+\centering
+\caption{Desempeño del extractor sobre el conjunto de prueba}
+\label{tab:resultados}
+\small
+\begin{tabular}{l rrr}
+\toprule
+\multicolumn{4}{l}{\textbf{Cabezas clasificadoras}} \\
+& Exactitud & F1 macro & \\
+\midrule
+\texttt{activ\_cls} & 1,000 & 1,000 & \\
+\texttt{reg\_cls}   & 0,960 & 0,948 & \\
+\texttt{gast\_cls}  & 0,998 & 0,994 & \\
+\addlinespace[4pt]
+\multicolumn{4}{l}{\textbf{Entidades}} \\
+& Precisión & Exhaustividad & F1 \\
+\midrule
+INDICADOR, ESTACIONALIDAD, PERIODO,  & 1,000 & 1,000 & 1,000 \\
+\quad PRESENTACION, VALORACION, ACTIVIDAD, GASTO & & & \\
+FRECUENCIA      & 0,998 & 1,000 & 0,999 \\
+CALCULO         & 0,998 & 1,000 & 0,999 \\
+REGION          & 0,996 & 0,978 & 0,987 \\
+\emph{Micro promedio} & 0,999 & 0,999 & 0,999 \\
+\addlinespace[4pt]
+\multicolumn{4}{l}{\textbf{Medidas compuestas}} \\
+& Exactitud & & \\
+\midrule
+Normalización de CALCULO (respecto de los spans anotados) & 1,000 & & \\
+Normalización de CALCULO (respecto de la intención anotada) & 0,987 & & \\
+Celda del Cuadro~\ref{tab:cardinalidad}, los tres ejes a la vez & 0,954 & & \\
+Marco semántico exacto & 0,951 & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El reconocimiento de entidades es prácticamente exacto, con la región como único
+tipo bajo 0,99 de F1, y la normalización de CALCULO reproduce sin error el valor
+que se desprende de los spans anotados. Las diferencias respecto de la intención
+anotada (0,987) se concentran en las consultas marcadas para revisión: excluidas
+éstas, la concordancia es total.
+
+El componente más débil es la cabeza regional, que explica casi la totalidad de
+los errores de cardinalidad y de marco semántico. El análisis de sus 46 errores
+muestra que 38 corresponden a consultas cuya anotación es inconsistente con el
+texto: consultas por actividad del PIB nacional, sin mención regional alguna,
+anotadas con \texttt{reg\_cls} $=1$ (por ejemplo, «dame el cambio a 12 meses de
+las actividades del producto interno bruto»), y consultas sobre el «PIB
+regional» anotadas con \texttt{reg\_cls} $=0$. El conjunto completo contiene 332
+consultas de este tipo, 56 de ellas en prueba; excluidas éstas, la exactitud de
+la cabeza regional asciende a 0,993. El error residual del extractor es, por
+tanto, menor que la inconsistencia de la anotación, y su corrección es la mejora
+de mayor rendimiento disponible.
+
+Cabe notar, además, que la cuarta fila del Cuadro~\ref{tab:cardinalidad} ---una
+mención y la cabeza activas sobre el mismo eje--- no tiene ocurrencias en el
+conjunto de datos, de modo que ese comportamiento queda garantizado por el
+resolvedor pero no evaluado en el extractor.
+
+\subsection{Identificabilidad del catálogo}
+
+La segunda evaluación mide si el catálogo permite recuperar cada cuadro a partir
+de lo que una consulta puede enunciar. Para cada uno de los 91 cuadros vigentes se
+construye la tupla parcial con sus cinco dimensiones lingüísticas de cuadro
+---indicador, frecuencia, estacionalidad, presentación y valoración---, la región
+cuando se trata de un cuadro regional, y la cabeza correspondiente a su apertura,
+y se resuelve contra el catálogo. En 88 de los 91 casos la resolución devuelve
+exactamente el cuadro de origen. El resultado se mantiene cuando se omiten de la
+tupla las dimensiones cuyo valor coincide con una preferencia (presentación en
+nivel y valoración en volumen encadenado), lo que confirma que las preferencias
+reconstruyen la lectura convencional sin ambigüedad. Los tres casos restantes no
+constituyen errores de resolución: el PIB agregado (sin cabeza activa) se
+resuelve en una única serie que figura también en los cuadros por actividad y por
+gasto, como corte alternativo del mismo dato; y los cuadros de PIB trimestral y
+anual por región se devuelven juntos por la colisión de tupla descrita en la
+Sección~\ref{sec:catalogo}.
+
+\section{Discusión y limitaciones}
+\label{sec:discusion}
+
+Los resultados del extractor se obtienen sobre consultas construidas a partir de
+formulaciones y variantes léxicas, cuya distribución es más regular que la de las
+consultas reales de usuarios. Las cifras deben leerse, por tanto, como una cota
+superior del desempeño en uso, y su validación sobre consultas reales es la
+principal tarea pendiente.
+
+La evaluación se realiza por componente. La exactitud de punta a punta ---la
+proporción de consultas para las cuales el sistema entrega el par cuadro--serie
+correcto--- requiere anotar la serie esperada de cada consulta y disponer de los
+normalizadores de todos los tipos de entidad; en esta versión sólo se implementan
+la normalización de CALCULO y la detección de la referencia, mientras que la
+normalización de las demás menciones contra los vocabularios del catálogo se
+encuentra en desarrollo. Del mismo modo, la tabla condicionada de estacionalidad
+se especifica en la Sección~\ref{sec:defaults}, pero en la versión evaluada los
+casos que dependen de ella se derivan a una pregunta aclaratoria.
+
+Una parte de las anotaciones de cálculo no tiene correlato en el texto: consultas
+como «dame la apertura por rubro del PIB» o «cuál fue el resultado por regiones»
+se etiquetaron originalmente como variaciones anuales sin que la consulta
+contenga una mención de cálculo. Bajo la arquitectura propuesta estas consultas
+se resuelven a nivel, y la decisión sobre su lectura convencional corresponde a
+la tabla institucional antes que al extractor.
+
+El clasificador del ámbito de la consulta (Sección~\ref{sec:delimitacion}) no
+forma parte de la evaluación, y su implementación requiere un conjunto de
+consultas fuera de dominio y de consultas que demandan análisis. Tampoco se
+compara el extractor con enfoques alternativos, como clasificadores clásicos
+sobre representaciones dispersas o modelos de lenguaje de gran tamaño con acceso
+al catálogo mediante herramientas; dicha comparación, junto con la extensión a
+otros indicadores de la BDE, constituye la agenda de trabajo futuro.
+
+\section{Conclusiones}
+\label{sec:conclusiones}
+
+Este trabajo presentó PIBERT, un sistema que traduce consultas en lenguaje
+natural sobre el PIB y el Imacec a los cuadros y series de la Base de Datos
+Estadísticos del Banco Central de Chile. La arquitectura separa la extracción,
+a cargo de un modelo JointBERT con diez tipos de entidad y tres cabezas binarias,
+de la resolución, que filtra la tupla parcial contra un catálogo derivado de los
+códigos oficiales de serie y completa las dimensiones no enunciadas mediante
+propagación de restricciones y valores por defecto explícitos. La combinación de
+menciones y cabezas sobre cada eje de desagregación fija la cardinalidad de la
+respuesta, de modo que una misma arquitectura atiende consultas por una serie,
+por un conjunto de categorías o por un cuadro completo.
+
+La dispersión del catálogo hace que la mayor parte del conocimiento del dominio
+resida en las combinaciones publicadas y no en el modelo: 88 de los 91 cuadros
+vigentes se identifican de forma única a partir de sus dimensiones enunciables,
+y convenciones como la estacionalidad de las variaciones intraperíodo emergen del
+filtrado sin reglas adicionales. Esta propiedad, junto con la derivación
+automática del catálogo, hace el enfoque transferible a otras oficinas
+estadísticas que difundan sus series mediante claves estructuradas.
+
+% \begin{ack}
+% Agradecimientos y declaración de financiamiento e intereses.
+% \end{ack}
 
 \medskip
 
@@ -510,9 +790,26 @@ competing interests (related financial activities outside the submitted work).
 
 \appendix
 
-\section{Appendix / supplemental material}
+\section{Léxico de CALCULO}
+\label{app:lexico}
 
-Optionally include supplemental material (complete proofs, additional experiments
-and plots) in appendix.
+Las menciones se reconocen sobre el texto normalizado (minúsculas, sin tildes)
+y se asignan a una clase; entre paréntesis se indican elementos opcionales.
+
+\begin{verbatim}
+Periodo anterior   (respecto|frente|vs) (al) (periodo|trimestre|mes) anterior
+                   (periodo|trimestre|mes) (inmediatamente) (anterior|previo)
+                   en el margen;  de(l) ultimo periodo;  de corto plazo
+                   t/t-1;  t vs t-1;  mensual o trimestral
+                   acelero, aceleracion, desacelero, ...;  dinamismo;  pulso
+Igual periodo      (respecto|frente) (al) mismo periodo del ano anterior
+del ano anterior   (respecto|frente) (al) ano anterior;  a/en 12 meses
+                   t-12;  interanual(mente);  a nivel anual;  anual
+Sin calificar      variacion, vario;  crecio, crecimiento;  cambio
+                   aumento, incremento;  movimiento, movio;  evoluciono
+                   expandio, cayo, contraccion;  avance;  comportamiento
+                   tasa (de variacion)
+No es CALCULO      (al|sobre|en) (el) (crecimiento|desempeno|resultado)
+\end{verbatim}
 
 \end{document}
